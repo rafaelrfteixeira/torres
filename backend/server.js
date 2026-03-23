@@ -25,12 +25,16 @@ app.use(express.urlencoded({ extended: true }));
 // ---------------------
 // Sessão (necessário para OAuth 2.0)
 // ---------------------
+// Necessário para o Express entender conexões HTTPS que vêm de um Proxy Reverso (Easypanel/Traefik)
+app.set('trust proxy', 1);
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-trocar-em-producao',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS em produção
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Permite que o cookie viaje cross-origin no frontend
     httpOnly: true,
     maxAge: 1000 * 60 * 60, // 1 hora
   },
