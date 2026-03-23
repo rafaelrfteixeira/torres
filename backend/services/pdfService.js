@@ -1,4 +1,17 @@
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
+
+// Pré-carrega o logo em Base64 para embedar diretamente no HTML do PDF
+// Isso evita problemas de caminhos locais quando o Puppeteer rodar no Docker
+let logoBase64 = '';
+try {
+  const logoPath = path.join(__dirname, '..', 'assets', 'logo.png');
+  const bitmap = fs.readFileSync(logoPath);
+  logoBase64 = `data:image/png;base64,${Buffer.from(bitmap).toString('base64')}`;
+} catch (error) {
+  console.error('⚠️ Aviso: logo.png não encontrado na pasta assets. O PDF será gerado sem logo.', error.message);
+}
 
 /**
  * pdfService.js — Geração de PDF a partir de HTML
@@ -226,11 +239,7 @@ function generateHTML(data) {
         <!-- Header -->
         <div class="header">
           <div class="logo-area">
-            <div class="logo-box"><span>Cx</span></div>
-            <div class="brand-text">
-              <h1>TORRES | Cx</h1>
-              <p>sistemas de automação</p>
-            </div>
+            ${logoBase64 ? `<img src="${logoBase64}" alt="TORRES | Cx" style="height: 50px; object-fit: contain;" />` : '<h1>TORRES | Cx</h1>'}
           </div>
           <div class="header-right">
             <div class="header-date">
