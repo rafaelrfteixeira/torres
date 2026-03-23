@@ -14,10 +14,16 @@ const PORT = process.env.PORT || 3001;
 // Middlewares Globais
 // ---------------------
 app.use(helmet());
+
+// Garantir que a URL do frontend não tenha barra no final para o CORS não falhar
+const rawFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+const corsOrigin = rawFrontendUrl.replace(/\/$/, '');
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: corsOrigin,
   credentials: true,
 }));
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -25,8 +31,8 @@ app.use(express.urlencoded({ extended: true }));
 // ---------------------
 // Sessão (necessário para OAuth 2.0)
 // ---------------------
-// Necessário para o Express entender conexões HTTPS que vêm de um Proxy Reverso (Easypanel/Traefik)
-app.set('trust proxy', 1);
+// Confiar em qualquer proxy (essencial no Easypanel/Docker)
+app.set('trust proxy', true);
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-trocar-em-producao',
