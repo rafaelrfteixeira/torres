@@ -394,7 +394,12 @@ async function generatePDFBuffer(formData) {
   // Puppeteer usa argumentos específicos para contornar bloqueios comuns de SO/Docker
   const browser = await puppeteer.launch({
     headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: [
+      '--no-sandbox', 
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage', // Previne crash de memória no Docker (/dev/shm)
+      '--disable-gpu'
+    ]
   });
 
   try {
