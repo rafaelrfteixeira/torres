@@ -170,8 +170,8 @@ export default function ChecklistForm({ user }) {
         {/* ============================================ */}
         <div className="bg-gradient-to-r from-brand-800 to-brand-700 px-6 py-5 text-white">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center">
-              <img src="/logo.png" alt="Torres Cx" className="h-10 sm:h-12 object-contain filter brightness-0 invert" />
+            <div className="flex items-center bg-white rounded px-2 py-1 shadow-sm">
+              <img src="/logo.png" alt="Torres Cx" className="h-10 sm:h-12 object-contain" />
             </div>
             <div className="text-right">
               <p className="text-lg font-semibold">RELATÓRIO OPERACIONAL</p>
