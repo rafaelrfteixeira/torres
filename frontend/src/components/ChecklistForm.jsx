@@ -143,7 +143,7 @@ export default function ChecklistForm({ user }) {
       if (response.ok && result.success) {
         // 3. Limpar Formulário e Exibir Sucesso
         setSubmitStatus({ type: 'success', message: '🚀 Relatório salvo no Lists e enviado por e-mail com sucesso!' });
-        reset({ ...formData, engTecnico: user?.name || '' }); // Limpa o formulário mas mantem os campos padrãol
+        reset(); // Limpa todos os campos, retornando aos defaultValues definidos (vazios)
         console.log('✅ Resposta do backend:', result);
       } else {
         setSubmitStatus({ type: 'error', message: result.message || 'Erro ao processar o relatório.' });

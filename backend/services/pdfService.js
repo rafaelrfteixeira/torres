@@ -9,10 +9,11 @@ const puppeteer = require('puppeteer');
 
 /**
  * Helper para renderizar checkboxes (marcado ou vazio)
- * No papel físico, é preenchido um X. Aqui usaremos um caractere especial ou X.
+ * No papel físico, é preenchido um X. Em Linux/Docker, evitamos caracteres Unicode
+ * exóticos (como ballot boxes) pois muitas vezes a fonte não os têm. Usamos CSS border e um X.
  */
 function checkbox(isChecked) {
-  return isChecked ? '<span class="box checked">☑</span>' : '<span class="box">☐</span>';
+  return `<span class="box">${isChecked ? 'X' : '&nbsp;'}</span>`;
 }
 
 function field(value) {
@@ -199,16 +200,22 @@ function generateHTML(data) {
         .page-num { text-align: right; font-weight: bold; font-size: 9pt;}
         .page-num span { display: inline-block; width: 30px; border-bottom: 1px solid #000;text-align:center;}
 
-        /* Checkbox Box Element */
+        /* Checkbox Box Element (CSS puro para evitar erros de fonte no Linux) */
         .box {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           font-family: Arial, sans-serif;
-          font-size: 14pt;
+          font-size: 10pt;
+          font-weight: bold;
           vertical-align: middle;
-          margin-right: 2px;
+          margin-right: 3px;
           line-height: 1;
+          width: 14px;
+          height: 14px;
+          border: 1px solid #000;
+          color: #000;
         }
-        .box.checked { color: #000; }
         
         .chk-label { font-size: 8pt; }
       </style>
