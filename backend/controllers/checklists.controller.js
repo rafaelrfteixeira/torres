@@ -279,4 +279,54 @@ const listColumns = async (req, res, next) => {
   }
 };
 
-module.exports = { create, listColumns };
+/**
+ * GET /api/checklists
+ * Busca os itens da lista no Microsoft Lists para exibir na página inicial.
+ */
+const list = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+
+    if (!accessToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado. Faça login em /api/auth/signin',
+      });
+    }
+
+    const graphClient = getGraphClient(accessToken);
+    const { siteId, listId } = await resolveSharePointIds(graphClient);
+
+    const result = await graphClient
+      .api(`/sites/${siteId}/lists/${listId}/items`)
+      .expand('fields')
+      .top(50)
+      .get(); // Sorting doesn't always work without index, so we get newest first via sort below if needed
+
+    // Mapear os campos confidenciais baseando-se no mapeamento interno da controler
+    const checklists = result.value.map(item => {
+      const f = item.fields || {};
+      return {
+        id: item.id,
+        data: f.Title || f.DataInspecao || '',
+        loja: f.field_1 || '',
+        solicitante: f.field_2 || '',
+        engTecnico: f.field_45 || '',
+        statusLoja: {
+          'Sistema Funcionando Normalmente': f.field_33 === 'Sim',
+          'Sistema Funcionando Parcialmente': f.field_34 === 'Sim',
+          'Sistema com Defeito': f.field_35 === 'Sim',
+          'Não Possui Detecção': f.field_36 === 'Sim'
+        }
+      };
+    });
+
+    // Sort by ID naturally sorts by creation time if sequential, or just return as is
+    res.json({ success: true, data: checklists.reverse() }); // Simplest way to get newest if appending at the bottom
+  } catch (error) {
+    console.error('❌ Erro ao listar checklists:', error.message);
+    next(error);
+  }
+};
+
+module.exports = { create, listColumns, list };

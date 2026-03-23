@@ -10,6 +10,7 @@ const { isAuthenticated } = require('../middlewares/auth.middleware');
  */
 
 // Protegida por autenticação
+router.get('/', isAuthenticated, checklistsController.list);
 router.get('/columns', isAuthenticated, checklistsController.listColumns);
 router.post('/', isAuthenticated, checklistsController.create);
 
