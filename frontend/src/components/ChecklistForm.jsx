@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+
 
 /**
  * ChecklistForm — Relatório Operacional / Check List Lojas
@@ -48,6 +51,7 @@ const ESPECIFICACOES = [
 ];
 
 export default function ChecklistForm({ user }) {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // { type: 'success'|'error', message: '' }
 
@@ -170,8 +174,19 @@ export default function ChecklistForm({ user }) {
         {/* ============================================ */}
         <div className="bg-gradient-to-r from-brand-800 to-brand-700 px-6 py-5 text-white">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center bg-white rounded px-2 py-1 shadow-sm">
-              <img src="/logo.png" alt="Torres Cx" className="h-10 sm:h-12 object-contain" />
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+                title="Voltar para o Painel"
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+              <div className="flex items-center bg-white rounded px-2 py-1 shadow-sm">
+                <img src="/logo.png" alt="Torres Cx" className="h-10 sm:h-12 object-contain" />
+              </div>
             </div>
             <div className="text-right">
               <p className="text-lg font-semibold">RELATÓRIO OPERACIONAL</p>

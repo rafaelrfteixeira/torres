@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import ChecklistForm from './components/ChecklistForm';
+import Home from './pages/Home';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -68,7 +70,7 @@ function App() {
     );
   }
 
-  // --- TELA PRINCIPAL (FORMULÁRIO) ---
+  // --- NAVEGAÇÃO E ROTAS ---
   return (
     <>
       {/* Topbar do Usuário */}
@@ -86,14 +88,17 @@ function App() {
           className="text-sm text-slate-300 hover:text-white flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800"
         >
           Sair
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
         </a>
       </div>
 
-      {/* Formulário */}
-      <ChecklistForm user={user} />
+      {/* Rotas */}
+      <Routes>
+        <Route path="/" element={<Home user={user} />} />
+        <Route path="/nova-loja" element={<ChecklistForm user={user} />} />
+      </Routes>
     </>
   );
 }
