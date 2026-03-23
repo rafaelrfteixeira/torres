@@ -33,9 +33,11 @@ export default function Home() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não informada';
+    if (dateString.includes('/') && dateString.split('/').length === 3) return dateString;
     const parts = dateString.split('-');
     if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    const d = new Date(dateString);
+    return isNaN(d.getTime()) ? dateString : d.toLocaleDateString('pt-BR');
   };
 
   return (
@@ -101,7 +103,11 @@ export default function Home() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {checklists.map((item, index) => (
-                    <tr key={item.id || index} className="hover:bg-slate-50 transition-colors">
+                    <tr 
+                      key={item.id || index} 
+                      onClick={() => item.id && navigate(`/visualizar/${item.id}`)}
+                      className={`hover:bg-slate-50 transition-colors ${item.id ? 'cursor-pointer' : ''}`}
+                    >
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-2 text-slate-600">
                           <Calendar className="w-4 h-4 text-slate-400" />

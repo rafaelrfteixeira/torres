@@ -98,6 +98,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home user={user} />} />
         <Route path="/nova-loja" element={<ChecklistForm user={user} />} />
+        <Route path="/visualizar/:id" element={<ChecklistForm user={user} />} />
       </Routes>
     </>
   );

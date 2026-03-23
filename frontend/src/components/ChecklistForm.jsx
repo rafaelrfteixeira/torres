@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+
 
 
 /**
@@ -52,6 +53,8 @@ const ESPECIFICACOES = [
 
 export default function ChecklistForm({ user }) {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isReadOnly = !!id;
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // { type: 'success'|'error', message: '' }
 
@@ -85,6 +88,31 @@ export default function ChecklistForm({ user }) {
   });
 
   const sistemasWatch = watch('sistemas');
+
+  useEffect(() => {
+    if (id) {
+      const fetchChecklist = async () => {
+        setIsLoading(true);
+        try {
+          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+          const response = await fetch(`${API_URL}/checklists/${id}`, {
+            credentials: 'include',
+          });
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data) {
+              reset(result.data);
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao buscar checklist:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchChecklist();
+    }
+  }, [id, reset]);
 
   const onSubmit = async (formData) => {
     // 1. Validação Prévia Simples
@@ -196,9 +224,10 @@ export default function ChecklistForm({ user }) {
         </div>
 
         <div className="p-6 space-y-6">
-          {/* ============================================ */}
-          {/* MANUTENÇÃO CORRETIVA / PREVENTIVA            */}
-          {/* ============================================ */}
+          <fieldset disabled={isReadOnly} className="contents break-inside-avoid">
+            {/* ============================================ */}
+            {/* MANUTENÇÃO CORRETIVA / PREVENTIVA            */}
+            {/* ============================================ */}
           <div className="flex flex-wrap gap-6 items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
             <span className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Tipo de Manutenção:</span>
             <label className="flex items-center gap-2 cursor-pointer">
@@ -485,32 +514,36 @@ export default function ChecklistForm({ user }) {
             </div>
           )}
 
+          </fieldset>
+          
           {/* ============================================ */}
-          {/* BOTÃO SALVAR                                 */}
+          {/* BOTÃO SALVAR (Oculto em visualização)        */}
           {/* ============================================ */}
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full sm:w-auto px-10 py-5 text-white font-bold rounded-2xl shadow-xl text-base sm:text-lg uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-                isLoading
-                  ? 'bg-slate-400 cursor-not-allowed shadow-none'
-                  : 'bg-gradient-to-r from-brand-600 to-brand-800 shadow-brand-500/30 hover:from-brand-500 hover:to-brand-700 hover:shadow-2xl hover:shadow-brand-500/40 active:scale-[0.98]'
-              }`}
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-3">
-                  <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Gerando PDF e Processando...
-                </span>
-              ) : (
-                '💾 Salvar e Enviar Relatório'
-              )}
-            </button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full sm:w-auto px-10 py-5 text-white font-bold rounded-2xl shadow-xl text-base sm:text-lg uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                  isLoading
+                    ? 'bg-slate-400 cursor-not-allowed shadow-none'
+                    : 'bg-gradient-to-r from-brand-600 to-brand-800 shadow-brand-500/30 hover:from-brand-500 hover:to-brand-700 hover:shadow-2xl hover:shadow-brand-500/40 active:scale-[0.98]'
+                }`}
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-3">
+                    <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Gerando PDF e Processando...
+                  </span>
+                ) : (
+                  '💾 Salvar e Enviar Relatório'
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </form>
     </div>

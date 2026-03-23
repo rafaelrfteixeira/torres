@@ -105,6 +105,84 @@ function mapFormToListFields(formData) {
 }
 
 /**
+ * Faz o caminho inverso: Mapeia as colunas do Microsoft Lists
+ * para o JSON que o formulário React (react-hook-form) entende.
+ */
+function mapListFieldsToForm(fields) {
+  const textToBool = (text) => text === 'Sim';
+  return {
+    data: fields.Title ? fields.Title.split('/').reverse().join('-') : fields.DataInspecao ? fields.DataInspecao.split('/').reverse().join('-') : '',
+    loja: fields.field_1 || '',
+    solicitante: fields.field_2 || '',
+    telefone: fields.field_3 || '',
+    email: fields.Email || '',
+    tipoManutencao: fields.field_5 === 'Sim' ? 'corretiva' : fields.field_6 === 'Sim' ? 'preventiva' : '',
+    tipoLoja: fields.field_7 || '',
+    sistemas: {
+      alarme_do_shopping: {
+        existenteSim: fields.field_8 === 'Sim', existenteNao: fields.field_8 === 'Não',
+        funcionandoSim: fields.field_9 === 'Sim', funcionandoNao: fields.field_9 === 'Não',
+      },
+      alarme_da_loja: {
+        existenteSim: fields.field_10 === 'Sim', existenteNao: fields.field_10 === 'Não',
+        funcionandoSim: fields.field_11 === 'Sim', funcionandoNao: fields.field_11 === 'Não',
+      },
+      extração_de_fumaça: {
+        existenteSim: fields.field_12 === 'Sim', existenteNao: fields.field_12 === 'Não',
+        funcionandoSim: fields.field_13 === 'Sim', funcionandoNao: fields.field_13 === 'Não',
+      },
+      insuflamento_de_ar: {
+        existenteSim: fields.field_14 === 'Sim', existenteNao: fields.field_14 === 'Não',
+        funcionandoSim: fields.field_15 === 'Sim', funcionandoNao: fields.field_15 === 'Não',
+      },
+      ar_condicionado: {
+        existenteSim: fields.field_16 === 'Sim', existenteNao: fields.field_16 === 'Não',
+        funcionandoSim: fields.field_17 === 'Sim', funcionandoNao: fields.field_17 === 'Não',
+      },
+      comando_de_gás: {
+        existenteSim: fields.field_18 === 'Sim', existenteNao: fields.field_18 === 'Não',
+        funcionandoSim: fields.field_19 === 'Sim', funcionandoNao: fields.field_19 === 'Não',
+      },
+      damper_extração: {
+        existenteSim: fields.field_20 === 'Sim', existenteNao: fields.field_20 === 'Não',
+        funcionandoSim: fields.field_21 === 'Sim', funcionandoNao: fields.field_21 === 'Não',
+      },
+      damper_insuflamento: {
+        existenteSim: fields.field_22 === 'Sim', existenteNao: fields.field_22 === 'Não',
+        funcionandoSim: fields.field_23 === 'Sim', funcionandoNao: fields.field_23 === 'Não',
+      }
+    },
+    centralPropria: fields.field_24 === 'Sim' ? 'sim' : fields.field_24 === 'Não' ? 'nao' : '',
+    especificacoes: {
+      nDF: fields.field_25 || '',
+      nDT: fields.field_26 || '',
+      nAM: fields.field_27 || '',
+      nSirenes: fields.field_28 || '',
+      nDG: fields.field_29 || '',
+      nModulos: fields.field_30 || '',
+      outrosDispositivos: fields.field_31 || ''
+    },
+    observacoes: fields.field_32 || '',
+    statusLojaOpcao: fields.field_33 === 'Sim' ? 'Sistema Funcionando Normalmente' : fields.field_34 === 'Sim' ? 'Sistema Funcionando Parcialmente' : fields.field_35 === 'Sim' ? 'Sistema com Defeito' : fields.field_36 === 'Sim' ? 'Não Possui Detecção' : '',
+    statusOutros: fields.field_37 || '',
+    pendencias: {
+      'Necessário Abertura do Forro': textToBool(fields.field_38),
+      'Verificar Integridade do Cabo de Alimentação': textToBool(fields.field_39),
+      'Verificar Integridade do Cabo de Sinal': textToBool(fields.field_40),
+      'Interligar o Sistema da Loja com do Shopping': textToBool(fields.field_41),
+      'Necessário Verificar o Sistema da Loja': textToBool(fields.field_42),
+      'Troca de Dispositivo': textToBool(fields.field_43)
+    },
+    pendenciasOutros: fields.field_44 || '',
+    engTecnico: fields.field_45 || '',
+    horarioInicio: fields.field_46 || '',
+    horarioTermino: fields.field_47 || '',
+    totalHoras: fields.field_48 || '',
+    aceitoPor: fields.field_49 || ''
+  };
+}
+
+/**
  * Cache dos IDs resolvidos (evita chamar o Graph em toda requisição)
  */
 let _cachedSiteId = null;
@@ -329,4 +407,37 @@ const list = async (req, res, next) => {
   }
 };
 
-module.exports = { create, listColumns, list };
+/**
+ * GET /api/checklists/:id
+ * Busca um único formulário e retorna seus dados mapeados
+ */
+const getById = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+
+    if (!accessToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado. Faça login em /api/auth/signin',
+      });
+    }
+
+    const { id } = req.params;
+    const graphClient = getGraphClient(accessToken);
+    const { siteId, listId } = await resolveSharePointIds(graphClient);
+
+    const result = await graphClient
+      .api(`/sites/${siteId}/lists/${listId}/items/${id}`)
+      .expand('fields')
+      .get();
+
+    const formData = mapListFieldsToForm(result.fields || {});
+
+    res.json({ success: true, data: formData });
+  } catch (error) {
+    console.error('❌ Erro ao buscar checklist por ID:', error.message);
+    next(error);
+  }
+};
+
+module.exports = { create, listColumns, list, getById };
