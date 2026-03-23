@@ -15,7 +15,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instala as dependências Node da aplicação
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copia o restante do código fonte
 COPY . .
