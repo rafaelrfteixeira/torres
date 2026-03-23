@@ -1,0 +1,33 @@
+{
+  "name": "torres-backend",
+  "version": "1.0.0",
+  "description": "Backend API para o sistema de checklist de inspeção de incêndio — Torres Complexo Comercial",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "inspection",
+    "fire-detection",
+    "checklist",
+    "express"
+  ],
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@azure/msal-node": "^3.8.10",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-session": "^1.19.0",
+    "helmet": "^8.0.0",
+    "isomorphic-fetch": "^3.0.0",
+    "morgan": "^1.10.0",
+    "puppeteer": "^24.40.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
