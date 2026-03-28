@@ -1,5 +1,6 @@
 const { getGraphClient } = require('../services/graphClient');
 const { generatePDFBase64 } = require('../services/pdfService');
+const { generatePDFBase64: generatePDFBase64BMS } = require('../services/pdfServiceBMS');
 const { sendChecklistEmail } = require('../services/emailService');
 
 /**
@@ -102,6 +103,82 @@ function mapFormToListFields(formData) {
 }
 
 /**
+ * Mapeia o JSON do formulário React BMS para o formato
+ * de colunas (fields) do Microsoft Lists.
+ */
+function mapBMSFormToListFields(formData) {
+  const boolToSimNao = (sim, nao) => {
+    if (sim) return 'Sim';
+    if (nao) return 'Não';
+    return '';
+  };
+  const boolToText = (val) => val ? 'Sim' : 'Não';
+  const toPhoneNumber = (val) => {
+    if (!val) return null;
+    const digits = String(val).replace(/\D/g, '');
+    return digits ? Number(digits) : null;
+  };
+
+  const sistemas = formData.sistemas || {};
+
+  return {
+    Title: formData.data ? formData.data.split('-').reverse().join('/') : '',
+    field_1: formData.loja || '',
+    field_2: formData.codigoLoja || '',
+    field_3: formData.responsavelShopping?.solicitante || '',
+    field_4: toPhoneNumber(formData.responsavelShopping?.telefone),
+    field_5: formData.responsavelShopping?.email || '',
+    field_6: formData.responsavelLoja?.solicitante || '',
+    field_7: toPhoneNumber(formData.responsavelLoja?.telefone),
+    field_8: formData.responsavelLoja?.email || '',
+    field_9: boolToText(formData.manutencaoCorretiva),
+    field_10: boolToText(formData.manutencaoPreventiva),
+    field_11: formData.tipoLoja || '',
+    
+    // Sistemas
+    field_12: boolToSimNao(sistemas.sensor_de_temperatura_ambiente?.existenteSim,  sistemas.sensor_de_temperatura_ambiente?.existenteNao),
+    field_13: boolToSimNao(sistemas.sensor_de_temperatura_ambiente?.funcionandoSim, sistemas.sensor_de_temperatura_ambiente?.funcionandoNao),
+    field_14: boolToSimNao(sistemas.sensor_de_duto?.existenteSim,       sistemas.sensor_de_duto?.existenteNao),
+    field_15: boolToSimNao(sistemas.sensor_de_duto?.funcionandoSim,     sistemas.sensor_de_duto?.funcionandoNao),
+    field_16: boolToSimNao(sistemas.botão_de_pânico?.existenteSim,       sistemas.botão_de_pânico?.existenteNao),
+    field_17: boolToSimNao(sistemas.botão_de_pânico?.funcionandoSim,     sistemas.botão_de_pânico?.funcionandoNao),
+    field_18: boolToSimNao(sistemas.sensor_de_movimento?.existenteSim,   sistemas.sensor_de_movimento?.existenteNao),
+    field_19: boolToSimNao(sistemas.sensor_de_movimento?.funcionandoSim, sistemas.sensor_de_movimento?.funcionandoNao),
+    field_20: boolToSimNao(sistemas.sensor_de_porta?.existenteSim,       sistemas.sensor_de_porta?.existenteNao),
+    field_21: boolToSimNao(sistemas.sensor_de_porta?.funcionandoSim,     sistemas.sensor_de_porta?.funcionandoNao),
+    field_22: boolToSimNao(sistemas.sensor_de_barreira?.existenteSim,    sistemas.sensor_de_barreira?.existenteNao),
+    field_23: boolToSimNao(sistemas.sensor_de_barreira?.funcionandoSim,  sistemas.sensor_de_barreira?.funcionandoNao),
+    field_24: boolToSimNao(sistemas.falta_de_fase?.existenteSim,         sistemas.falta_de_fase?.existenteNao),
+    field_25: boolToSimNao(sistemas.falta_de_fase?.funcionandoSim,       sistemas.falta_de_fase?.funcionandoNao),
+    
+    field_26: formData.observacoes || '',
+    
+    // Status
+    field_27: boolToText(formData.statusLoja?.['Sistema Funcionando Normalmente']),
+    field_28: boolToText(formData.statusLoja?.['Sistema Funcionando Parcialmente']),
+    field_29: boolToText(formData.statusLoja?.['Sistema com Defeito']),
+    field_30: boolToText(formData.statusLoja?.['Não Possui BMS']),
+    field_31: formData.statusOutros || '',
+    
+    // Pendencias
+    field_32: boolToText(formData.pendencias?.['Necessário Abertura do Forro']),
+    field_33: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Alimentação']),
+    field_34: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Sinal']),
+    field_35: boolToText(formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']),
+    field_36: boolToText(formData.pendencias?.['Necessário Verificar o Sistema da Loja']),
+    field_37: boolToText(formData.pendencias?.['Troca de Dispositivo']),
+    field_38: formData.pendenciasOutros || '',
+    
+    // Footer
+    field_39: formData.engTecnico || '',
+    field_40: formData.horarioInicio || '',
+    field_41: formData.horarioTermino || '',
+    field_42: formData.totalHoras || '',
+    field_43: formData.aceitoPor || '',
+  };
+}
+
+/**
  * Faz o caminho inverso: Mapeia as colunas do Microsoft Lists
  * para o JSON que o formulário React (react-hook-form) entende.
  */
@@ -190,13 +267,13 @@ let _cachedListName = null; // rastreia qual lista está em cache
  * usando hostname, site path e list name do .env.
  * Os resultados são cacheados em memória.
  */
-async function resolveSharePointIds(graphClient) {
-  const { SHAREPOINT_HOSTNAME, SHAREPOINT_SITE_PATH, SHAREPOINT_LIST_NAME } = process.env;
+async function resolveSharePointIds(graphClient, targetListName) {
+  const { SHAREPOINT_HOSTNAME, SHAREPOINT_SITE_PATH } = process.env;
 
-  if (!SHAREPOINT_HOSTNAME || !SHAREPOINT_SITE_PATH || !SHAREPOINT_LIST_NAME) {
+  if (!SHAREPOINT_HOSTNAME || !SHAREPOINT_SITE_PATH || !targetListName) {
     throw new Error(
-      '⚠️  Variáveis SharePoint não configuradas. ' +
-      'Preencha SHAREPOINT_HOSTNAME, SHAREPOINT_SITE_PATH e SHAREPOINT_LIST_NAME no .env'
+      '⚠️  Variáveis SharePoint não configuradas ou nome da lista ausente. ' +
+      'Preencha SHAREPOINT_HOSTNAME e SHAREPOINT_SITE_PATH no .env e forneça o targetListName corretamente.'
     );
   }
 
@@ -211,9 +288,9 @@ async function resolveSharePointIds(graphClient) {
   }
 
   // Resolver List ID (se não cacheado ou se a lista mudou)
-  if (!_cachedListId || _cachedListName !== SHAREPOINT_LIST_NAME) {
+  if (!_cachedListId || _cachedListName !== targetListName) {
     _cachedListId = null; // invalida cache se a lista mudou
-    console.log(`🔍 Resolvendo List ID: "${SHAREPOINT_LIST_NAME}"`);
+    console.log(`🔍 Resolvendo List ID: "${targetListName}"`);
 
     // Busca TODAS as listas e filtra no lado do Node comparando
     // tanto displayName quanto o name (segmento de URL) — o Graph API filter
@@ -224,8 +301,8 @@ async function resolveSharePointIds(graphClient) {
 
     const found = (allLists.value || []).find(
       (l) =>
-        l.displayName === SHAREPOINT_LIST_NAME ||
-        l.name === SHAREPOINT_LIST_NAME
+        l.displayName === targetListName ||
+        l.name === targetListName
     );
 
     if (!found) {
@@ -234,13 +311,13 @@ async function resolveSharePointIds(graphClient) {
         .map((l) => `"${l.displayName}" (name: ${l.name})`)
         .join('\n  ');
       throw new Error(
-        `Lista "${SHAREPOINT_LIST_NAME}" não encontrada no site.\n` +
+        `Lista "${targetListName}" não encontrada no site.\n` +
         `Listas disponíveis:\n  ${available}`
       );
     }
 
     _cachedListId = found.id;
-    _cachedListName = SHAREPOINT_LIST_NAME;
+    _cachedListName = targetListName;
     console.log(`✅ List ID resolvido: "${found.displayName}" → ${_cachedListId}`);
   }
 
@@ -262,13 +339,30 @@ const create = async (req, res, next) => {
       });
     }
 
-    const graphClient = getGraphClient(accessToken);
-
-    // Resolver IDs do SharePoint dinamicamente
-    const { siteId, listId } = await resolveSharePointIds(graphClient);
-
     const formData = req.body;
-    const fields = mapFormToListFields(formData);
+    const { shopping_slug, checklist_type } = formData;
+
+    let targetListName;
+
+    // Roteador Dinâmico
+    if (shopping_slug === 'riomar_recife' && checklist_type === 'sdai') {
+      targetListName = process.env.SHAREPOINT_LIST_SDAI_RIOMAR_RECIFE;
+    } else if (shopping_slug === 'riomar_recife' && checklist_type === 'bms') {
+      targetListName = process.env.SHAREPOINT_LIST_BMS_RIOMAR_RECIFE;
+    } else {
+      return res.status(400).json({ success: false, error: 'Cliente ou tipo de checklist não reconhecido.' });
+    }
+
+    if (!targetListName) {
+      return res.status(500).json({ success: false, error: 'Lista do SharePoint (targetListName) não definida nas variáveis de ambiente.' });
+    }
+
+    const graphClient = getGraphClient(accessToken);
+    const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
+
+    const fields = checklist_type === 'bms' 
+      ? mapBMSFormToListFields(formData) 
+      : mapFormToListFields(formData);
 
     console.log('📋 Enviando checklist para Microsoft Lists...');
 
@@ -289,7 +383,9 @@ const create = async (req, res, next) => {
       try {
         fs.appendFileSync(logFile, `[${new Date().toISOString()}] 📄 Gerando PDF...\n`);
         console.log('📄 Gerando PDF...');
-        const pdfBase64 = await generatePDFBase64(formData);
+        const pdfBase64 = checklist_type === 'bms' 
+          ? await generatePDFBase64BMS(formData) 
+          : await generatePDFBase64(formData);
         fs.appendFileSync(logFile, `[${new Date().toISOString()}] ✅ PDF gerado. Buffer Base64 Size: ${pdfBase64.length}\n`);
         console.log('✅ PDF gerado. Buffer Base64 Size:', pdfBase64.length);
 
@@ -352,10 +448,10 @@ const listColumns = async (req, res, next) => {
     }
 
     const graphClient = getGraphClient(accessToken);
-    const { siteId, listId } = await resolveSharePointIds(graphClient);
-
+    
+    // Rota direta solicitada temporariamente para debug do BMS:
     const columnsResponse = await graphClient
-      .api(`/sites/${siteId}/lists/${listId}/columns`)
+      .api(`/sites/${process.env.SHAREPOINT_HOSTNAME}:${process.env.SHAREPOINT_SITE_PATH}:/lists/${process.env.SHAREPOINT_LIST_BMS_RIOMAR_RECIFE}/columns`)
       .get();
 
     const columns = columnsResponse.value.map(col => ({
@@ -392,7 +488,13 @@ const list = async (req, res, next) => {
     }
 
     const graphClient = getGraphClient(accessToken);
-    const { siteId, listId } = await resolveSharePointIds(graphClient);
+    
+    const checklist_type = req.query.checklist_type || 'sdai';
+    const targetListName = checklist_type === 'bms' 
+      ? process.env.SHAREPOINT_LIST_BMS_RIOMAR_RECIFE 
+      : process.env.SHAREPOINT_LIST_SDAI_RIOMAR_RECIFE;
+
+    const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
 
     const result = await graphClient
       .api(`/sites/${siteId}/lists/${listId}/items`)
@@ -442,8 +544,13 @@ const getById = async (req, res, next) => {
     }
 
     const { id } = req.params;
+    const checklist_type = req.query.checklist_type || 'sdai';
+    const targetListName = checklist_type === 'bms' 
+      ? process.env.SHAREPOINT_LIST_BMS_RIOMAR_RECIFE 
+      : process.env.SHAREPOINT_LIST_SDAI_RIOMAR_RECIFE;
+
     const graphClient = getGraphClient(accessToken);
-    const { siteId, listId } = await resolveSharePointIds(graphClient);
+    const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
 
     const result = await graphClient
       .api(`/sites/${siteId}/lists/${listId}/items/${id}`)

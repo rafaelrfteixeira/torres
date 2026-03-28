@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ChecklistForm from './components/ChecklistForm';
-import Home from './pages/Home';
+import ShoppingSelection from './pages/ShoppingSelection';
+import FormSelection from './pages/FormSelection';
+import FormBMS from './pages/FormBMS';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -96,9 +98,10 @@ function App() {
 
       {/* Rotas */}
       <Routes>
-        <Route path="/" element={<Home user={user} />} />
-        <Route path="/nova-loja" element={<ChecklistForm user={user} />} />
-        <Route path="/visualizar/:id" element={<ChecklistForm user={user} />} />
+        <Route path="/" element={<ShoppingSelection />} />
+        <Route path="/riomar_recife/selecionar-form" element={<FormSelection />} />
+        <Route path="/riomar_recife/sdai/novo" element={<ChecklistForm user={user} />} />
+        <Route path="/riomar_recife/bms/novo" element={<FormBMS user={user} />} />
       </Routes>
     </>
   );

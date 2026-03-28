@@ -6,25 +6,32 @@ import { ArrowLeft } from 'lucide-react';
 
 
 /**
- * ChecklistForm — Relatório Operacional / Check List Lojas
+ * FormBMS — Relatório Operacional / Check List Lojas (BMS)
  *
- * Reprodução digital do formulário físico de inspeção de incêndio.
+ * Reprodução digital do formulário BMS.
  * Utiliza react-hook-form para gerenciamento de estado.
  */
 
-const SISTEMAS = [
-  'Alarme do Shopping',
-  'Alarme da Loja',
-  'Comando de Gás',
+const SISTEMAS_PADRAO = [
+  'Sensor de temperatura ambiente',
+  'Sensor de duto',
+  'Botão de pânico',
+  'Sensor de movimento',
+  'Sensor de porta'
 ];
 
-const TIPOS_LOJA = ['Âncora', 'Megaloja', 'Satélite', 'Fast Food', 'Restaurante', 'Clínica'];
+const SISTEMAS_VALORES = [
+  'Sensor de barreira',
+  'Falta de fase'
+];
+
+const TIPOS_LOJA = ['Âncora', 'Megaloja', 'Satélite', 'Fast Food', 'Restaurante', 'Clínica', 'Valores'];
 
 const STATUS_LOJA = [
   'Sistema Funcionando Normalmente',
   'Sistema Funcionando Parcialmente',
   'Sistema com Defeito',
-  'Não Possui Detecção',
+  'Não Possui BMS',
 ];
 
 const PENDENCIAS = [
@@ -36,17 +43,7 @@ const PENDENCIAS = [
   'Troca de Dispositivo',
 ];
 
-const ESPECIFICACOES = [
-  { key: 'nDF', label: 'N° DF' },
-  { key: 'nDT', label: 'N° DT' },
-  { key: 'nAM', label: 'N° AM' },
-  { key: 'nSirenes', label: 'N° Sirenes' },
-  { key: 'nDG', label: 'N° DG' },
-  { key: 'nModulos', label: 'N° Módulos' },
-  { key: 'outrosDispositivos', label: 'Outros Dispositivos' },
-];
-
-export default function ChecklistForm({ user }) {
+export default function FormBMS({ user }) {
   const navigate = useNavigate();
   const { id } = useParams();
   const isReadOnly = !!id;
@@ -66,13 +63,11 @@ export default function ChecklistForm({ user }) {
       responsavelLoja: { solicitante: '', telefone: '', email: '' },
       tipoManutencao: '', // 'corretiva' ou 'preventiva'
       tipoLoja: '',
-      sistemas: SISTEMAS.reduce((acc, s) => {
+      sistemas: [...SISTEMAS_PADRAO, ...SISTEMAS_VALORES].reduce((acc, s) => {
         const key = s.replace(/\s+/g, '_').toLowerCase();
         acc[key] = { existenteSim: false, existenteNao: false, funcionandoSim: false, funcionandoNao: false };
         return acc;
       }, {}),
-      centralPropria: '',
-      especificacoes: ESPECIFICACOES.reduce((acc, e) => { acc[e.key] = ''; return acc; }, {}),
       observacoes: '',
       statusLojaOpcao: '', // Opção selecionada
       statusOutros: '',
@@ -87,6 +82,17 @@ export default function ChecklistForm({ user }) {
   });
 
   const sistemasWatch = watch('sistemas');
+  const tipoLojaSelected = watch('tipoLoja');
+
+  // Lógica condicional: Limpar estado quando desmarcar Valores
+  useEffect(() => {
+    if (tipoLojaSelected !== 'Valores') {
+      SISTEMAS_VALORES.forEach(s => {
+        const key = s.replace(/\s+/g, '_').toLowerCase();
+        setValue(`sistemas.${key}`, { existenteSim: false, existenteNao: false, funcionandoSim: false, funcionandoNao: false });
+      });
+    }
+  }, [tipoLojaSelected, setValue]);
 
   useEffect(() => {
     if (id) {
@@ -154,7 +160,7 @@ export default function ChecklistForm({ user }) {
     const formMapped = {
       ...formData,
       shopping_slug: 'riomar_recife',
-      checklist_type: 'sdai',
+      checklist_type: 'bms',
       manutencaoCorretiva: formData.tipoManutencao === 'corretiva',
       manutencaoPreventiva: formData.tipoManutencao === 'preventiva',
       statusLoja: {}
@@ -181,9 +187,9 @@ export default function ChecklistForm({ user }) {
 
       if (response.ok && result.success) {
         // 3. Limpar Formulário e Exibir Sucesso
-        setSubmitStatus({ type: 'success', message: '🚀 Relatório salvo no Lists e enviado por e-mail com sucesso!' });
+        setSubmitStatus({ type: 'success', message: '🚀 A interface do BMS está pronta, aguardando integração com o banco de dados.' });
         reset(); // Limpa todos os campos, retornando aos defaultValues definidos (vazios)
-        console.log('✅ Resposta do backend:', result);
+        console.log('✅ Resposta do backend BMS:', result);
       } else {
         setSubmitStatus({ type: 'error', message: result.message || 'Erro ao processar o relatório.' });
         console.error('❌ Erro do backend:', result);
@@ -207,14 +213,14 @@ export default function ChecklistForm({ user }) {
         {/* ============================================ */}
         {/* CABEÇALHO DO FORMULÁRIO                      */}
         {/* ============================================ */}
-        <div className="bg-gradient-to-r from-red-800 to-red-600 px-4 sm:px-6 py-4 sm:py-5 text-white">
+        <div className="bg-gradient-to-r from-brand-800 to-brand-700 px-4 sm:px-6 py-4 sm:py-5 text-white">
           {/* Breadcrumb / Contexto */}
           <div className="flex items-center gap-2 mb-4 px-2.5 py-1.5 bg-black/10 w-fit rounded-md border border-white/10 backdrop-blur-sm">
             <div className="bg-white rounded p-0.5">
               <img src="/logo_riomar_recife.png" alt="RioMar" className="h-3 sm:h-4 object-contain" />
             </div>
-            <span className="text-xs sm:text-sm font-medium text-red-50 tracking-wide">
-              Shopping RioMar Recife <span className="text-red-200 mx-1">&gt;</span> Inspeção SDAI
+            <span className="text-xs sm:text-sm font-medium text-blue-50 tracking-wide">
+              Shopping RioMar Recife <span className="text-blue-200 mx-1">&gt;</span> Inspeção BMS
             </span>
           </div>
 
@@ -235,7 +241,7 @@ export default function ChecklistForm({ user }) {
             </div>
             <div className="text-center">
               <p className="text-base sm:text-lg font-bold tracking-wide">RELATÓRIO OPERACIONAL</p>
-              <p className="text-red-200 text-xs sm:text-sm mt-0.5">Check List — SDAI</p>
+              <p className="text-blue-200 text-xs sm:text-sm mt-0.5">Check List — BMS</p>
             </div>
           </div>
         </div>
@@ -337,112 +343,70 @@ export default function ChecklistForm({ user }) {
           </div>
 
           {/* ============================================ */}
-          {/* TABELA DE SISTEMAS + ESPECIFICAÇÕES          */}
+          {/* TABELA DE SISTEMAS                           */}
           {/* ============================================ */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            {/* Tabela de Sistemas (2/3) */}
-            <div className="lg:col-span-2">
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                {/* Header da tabela */}
-                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sistemas</h3>
-                </div>
-                <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-red-800 text-white text-xs font-semibold uppercase tracking-wider">
-                  <div className="px-4 py-3">Sistema</div>
-                  <div className="px-2 py-3 text-center col-span-2 border-l border-red-700">Existente</div>
-                  <div className="px-2 py-3 text-center col-span-2 border-l border-red-700">Funcionando</div>
-                </div>
-                <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-red-700 text-red-200 text-xs font-medium">
-                  <div className="px-4 py-1.5"></div>
-                  <div className="px-2 py-1.5 text-center border-l border-red-600">Sim</div>
-                  <div className="px-2 py-1.5 text-center">Não</div>
-                  <div className="px-2 py-1.5 text-center border-l border-red-600">Sim</div>
-                  <div className="px-2 py-1.5 text-center">Não</div>
-                </div>
-
-                {/* Linhas dos sistemas */}
-                {SISTEMAS.map((sistema, index) => {
-                  const key = sistema.replace(/\s+/g, '_').toLowerCase();
-                  
-                  // Se "Existente=Não" está marcado para esta linha, desabilitamos os checkboxes de "Funcionando"
-                  const existenteNaoMarcado = sistemasWatch?.[key]?.existenteNao;
-
-                  return (
-                    <div
-                      key={sistema}
-                      className={`grid grid-cols-[2fr_repeat(4,_1fr)] items-center border-t border-slate-200 ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
-                      } hover:bg-blue-50 transition-colors ${existenteNaoMarcado ? 'opacity-70' : ''}`}
-                    >
-                      <div className="px-4 py-3 text-sm font-medium text-slate-800">{sistema}</div>
-                      <CheckboxCell 
-                        register={register(`sistemas.${key}.existenteSim`, {
-                          onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteNao`, false); }
-                        })} 
-                      />
-                      <CheckboxCell 
-                        register={register(`sistemas.${key}.existenteNao`, {
-                          onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteSim`, false); }
-                        })} 
-                      />
-                      <CheckboxCell 
-                        register={register(`sistemas.${key}.funcionandoSim`, {
-                          onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoNao`, false); }
-                        })} 
-                        borderLeft 
-                        disabled={existenteNaoMarcado} 
-                      />
-                      <CheckboxCell 
-                        register={register(`sistemas.${key}.funcionandoNao`, {
-                          onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoSim`, false); }
-                        })} 
-                        disabled={existenteNaoMarcado} 
-                      />
-                    </div>
-                  );
-                })}
+          <div className="w-full">
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+              {/* Header da tabela */}
+              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sistemas BMS</h3>
               </div>
-            </div>
+              <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-brand-800 text-white text-xs font-semibold uppercase tracking-wider">
+                <div className="px-4 py-3">Sistema</div>
+                <div className="px-2 py-3 text-center col-span-2 border-l border-brand-700">Existente</div>
+                <div className="px-2 py-3 text-center col-span-2 border-l border-brand-700">Funcionando</div>
+              </div>
+              <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-brand-700 text-blue-200 text-xs font-medium">
+                <div className="px-4 py-1.5"></div>
+                <div className="px-2 py-1.5 text-center border-l border-brand-600">Sim</div>
+                <div className="px-2 py-1.5 text-center">Não</div>
+                <div className="px-2 py-1.5 text-center border-l border-brand-600">Sim</div>
+                <div className="px-2 py-1.5 text-center">Não</div>
+              </div>
 
-            {/* Especificações (1/3) */}
-            <div>
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Especificações</h3>
-                </div>
-                <div className="p-4 space-y-4">
-                {/* Central Própria */}
-                <fieldset>
-                  <legend className="text-sm font-semibold text-slate-700 mb-2">Central Própria</legend>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" value="sim" {...register('centralPropria')} className="w-4 h-4 text-brand-600 focus:ring-brand-500" />
-                      <span className="text-sm text-slate-700">Sim</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" value="nao" {...register('centralPropria')} className="w-4 h-4 text-brand-600 focus:ring-brand-500" />
-                      <span className="text-sm text-slate-700">Não</span>
-                    </label>
+              {/* Linhas dos sistemas padrão */}
+              {SISTEMAS_PADRAO.map((sistema, index) => {
+                const key = sistema.replace(/\s+/g, '_').toLowerCase();
+                const existenteNaoMarcado = sistemasWatch?.[key]?.existenteNao;
+
+                return (
+                  <div
+                    key={sistema}
+                    className={`grid grid-cols-[2fr_repeat(4,_1fr)] items-center border-t border-slate-200 ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                    } hover:bg-blue-50 transition-colors ${existenteNaoMarcado ? 'opacity-70' : ''}`}
+                  >
+                    <div className="px-4 py-3 text-sm font-medium text-slate-800">{sistema}</div>
+                    <CheckboxCell register={register(`sistemas.${key}.existenteSim`, { onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteNao`, false); } })} />
+                    <CheckboxCell register={register(`sistemas.${key}.existenteNao`, { onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteSim`, false); } })} />
+                    <CheckboxCell register={register(`sistemas.${key}.funcionandoSim`, { onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoNao`, false); } })} borderLeft disabled={existenteNaoMarcado} />
+                    <CheckboxCell register={register(`sistemas.${key}.funcionandoNao`, { onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoSim`, false); } })} disabled={existenteNaoMarcado} />
                   </div>
-                </fieldset>
+                );
+              })}
 
-                <hr className="border-slate-200" />
+              {/* Linhas condicionais (se Valores selecionado) */}
+              {tipoLojaSelected === 'Valores' && SISTEMAS_VALORES.map((sistema, index) => {
+                const key = sistema.replace(/\s+/g, '_').toLowerCase();
+                const existenteNaoMarcado = sistemasWatch?.[key]?.existenteNao;
 
-                {/* Campos numéricos */}
-                {ESPECIFICACOES.map(({ key, label }) => (
-                  <div key={key} className="flex items-center justify-between gap-3">
-                    <label className="text-sm font-medium text-slate-700 whitespace-nowrap">{label}</label>
-                    <input
-                      type="number"
-                      min="0"
-                      {...register(`especificacoes.${key}`)}
-                      className="w-20 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-center focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
-                      placeholder="0"
-                    />
+                const globalIndex = index + SISTEMAS_PADRAO.length;
+
+                return (
+                  <div
+                    key={sistema}
+                    className={`grid grid-cols-[2fr_repeat(4,_1fr)] items-center border-t border-slate-200 ${
+                      globalIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                    } hover:bg-blue-50 transition-colors ${existenteNaoMarcado ? 'opacity-70' : ''}`}
+                  >
+                    <div className="px-4 py-3 text-sm font-medium text-slate-800">{sistema}</div>
+                    <CheckboxCell register={register(`sistemas.${key}.existenteSim`, { onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteNao`, false); } })} />
+                    <CheckboxCell register={register(`sistemas.${key}.existenteNao`, { onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteSim`, false); } })} />
+                    <CheckboxCell register={register(`sistemas.${key}.funcionandoSim`, { onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoNao`, false); } })} borderLeft disabled={existenteNaoMarcado} />
+                    <CheckboxCell register={register(`sistemas.${key}.funcionandoNao`, { onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoSim`, false); } })} disabled={existenteNaoMarcado} />
                   </div>
-                ))}
-              </div>
-              </div>
+                );
+              })}
             </div>
           </div>
 
@@ -555,15 +519,6 @@ export default function ChecklistForm({ user }) {
           </div>
 
           {/* ============================================ */}
-          {/* NOTA LEGAL                                   */}
-          {/* ============================================ */}
-          <p className="text-xs text-slate-400 leading-relaxed">
-            * Conforme NBR 17240 – 10.3 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio
-            esteja em pleno funcionamento, ou registrar no relatório as suas restrições ou falhas. Neste último caso recomenda‑se
-            que as correções necessárias sejam executadas de imediato. (Associação Brasileira de Normas Técnicas, 2010, p. 47).
-          </p>
-
-        {/* ============================================ */}
           {/* TOAST NOTIFICATION                            */}
           {/* ============================================ */}
           {submitStatus && (
@@ -605,7 +560,7 @@ export default function ChecklistForm({ user }) {
                 className={`w-full sm:w-auto px-10 py-5 text-white font-bold rounded-2xl shadow-xl text-base sm:text-lg uppercase tracking-wider transition-all duration-300 cursor-pointer ${
                   isLoading
                     ? 'bg-slate-400 cursor-not-allowed shadow-none'
-                    : 'bg-gradient-to-r from-red-600 to-red-800 shadow-red-500/30 hover:from-red-500 hover:to-red-700 hover:shadow-2xl hover:shadow-red-500/40 active:scale-[0.98]'
+                    : 'bg-gradient-to-r from-brand-600 to-brand-800 shadow-brand-500/30 hover:from-brand-500 hover:to-brand-700 hover:shadow-2xl hover:shadow-brand-500/40 active:scale-[0.98]'
                 }`}
               >
                 {isLoading ? (
