@@ -19,88 +19,79 @@ const { sendChecklistEmail } = require('../services/emailService');
  *     exatamente ao "internal name" de cada coluna.
  */
 function mapFormToListFields(formData) {
-  // Helper: converte checkbox Sim/Não do formulário para string
   const boolToSimNao = (sim, nao) => {
     if (sim) return 'Sim';
     if (nao) return 'Não';
     return '';
   };
-
-  // Helper: converte boolean para "Sim"/"Não" (colunas são do tipo texto no Lists)
   const boolToText = (val) => val ? 'Sim' : 'Não';
 
   const sistemas = formData.sistemas || {};
 
-  // ⚠️ Os nomes internos no SharePoint Lists são field_1, field_2, etc.
-  //    Os nomes de exibição são diferentes dos nomes internos.
-  //    Mapeamento completo: displayName → internalName
   return {
-    // Title (interno: Title) — O usuário renomeou no SharePoint para "DataInspecao"
-    // Formatar 'YYYY-MM-DD' para 'DD/MM/YYYY'
+    // Identificação
     Title: formData.data ? formData.data.split('-').reverse().join('/') : '',
+    field_1:  formData.loja || '',                              // Loja
+    field_2:  formData.codigoLoja || '',                        // Código Loja
 
-    // --- Cabeçalho ---
-    field_1: formData.loja || '',                  // Loja
-    field_2: formData.solicitante || '',            // Solicitante
-    field_3: formData.telefone || '',               // Telefone
-    Email: formData.email || '',                    // Email (Usuário alterou para Texto simples)
-    field_5: boolToText(formData.manutencaoCorretiva),   // ManutencaoCorretiva (texto)
-    field_6: boolToText(formData.manutencaoPreventiva),  // ManutencaoPreventiva (texto)
-    field_7: formData.tipoLoja || '',               // TipoLoja
+    // Responsável Loja
+    field_3:  formData.responsavelLoja?.solicitante || '',       // Resp. Loja - Solicitante
+    field_4:  formData.responsavelLoja?.telefone || '',          // Resp. Loja - Telefone
+    field_5:  formData.responsavelLoja?.email || '',             // Resp. Loja - E-mail
 
-    // --- Sistemas — Existente ---
-    field_8: boolToSimNao(sistemas.alarme_do_shopping?.existenteSim, sistemas.alarme_do_shopping?.existenteNao),       // AlarmeShopping_Existente
-    field_9: boolToSimNao(sistemas.alarme_do_shopping?.funcionandoSim, sistemas.alarme_do_shopping?.funcionandoNao),    // AlarmeShopping_Funcionando
-    field_10: boolToSimNao(sistemas.alarme_da_loja?.existenteSim, sistemas.alarme_da_loja?.existenteNao),              // AlarmeLoja_Existente
-    field_11: boolToSimNao(sistemas.alarme_da_loja?.funcionandoSim, sistemas.alarme_da_loja?.funcionandoNao),           // AlarmeLoja_Funcionando
-    field_12: boolToSimNao(sistemas.extração_de_fumaça?.existenteSim, sistemas.extração_de_fumaça?.existenteNao),       // ExtracaoFumaca_Existente
-    field_13: boolToSimNao(sistemas.extração_de_fumaça?.funcionandoSim, sistemas.extração_de_fumaça?.funcionandoNao),    // ExtracaoFumaca_Funcionando
-    field_14: boolToSimNao(sistemas.insuflamento_de_ar?.existenteSim, sistemas.insuflamento_de_ar?.existenteNao),       // InsuflamentoAr_Existente
-    field_15: boolToSimNao(sistemas.insuflamento_de_ar?.funcionandoSim, sistemas.insuflamento_de_ar?.funcionandoNao),    // InsuflamentoAr_Funcionando
-    field_16: boolToSimNao(sistemas.ar_condicionado?.existenteSim, sistemas.ar_condicionado?.existenteNao),             // ArCondicionado_Existente
-    field_17: boolToSimNao(sistemas.ar_condicionado?.funcionandoSim, sistemas.ar_condicionado?.funcionandoNao),          // ArCondicionado_Funcionando
-    field_18: boolToSimNao(sistemas.comando_de_gás?.existenteSim, sistemas.comando_de_gás?.existenteNao),               // ComandoGas_Existente
-    field_19: boolToSimNao(sistemas.comando_de_gás?.funcionandoSim, sistemas.comando_de_gás?.funcionandoNao),            // ComandoGas_Funcionando
-    field_20: boolToSimNao(sistemas.damper_extração?.existenteSim, sistemas.damper_extração?.existenteNao),              // DamperExtracao_Existente
-    field_21: boolToSimNao(sistemas.damper_extração?.funcionandoSim, sistemas.damper_extração?.funcionandoNao),           // DamperExtracao_Funcionando
-    field_22: boolToSimNao(sistemas.damper_insuflamento?.existenteSim, sistemas.damper_insuflamento?.existenteNao),      // DamperInsuflamento_Existente
-    field_23: boolToSimNao(sistemas.damper_insuflamento?.funcionandoSim, sistemas.damper_insuflamento?.funcionandoNao),   // DamperInsuflamento_Funcionando
+    // Responsável Shopping
+    field_6:  formData.responsavelShopping?.solicitante || '',   // Resp. Shopping - Solicitante
+    field_7:  formData.responsavelShopping?.telefone || '',      // Resp. Shopping - Telefone
+    field_8:  formData.responsavelShopping?.email || '',         // Resp. Shopping - E-mail
 
-    // --- Especificações ---
-    field_24: formData.centralPropria === 'sim' ? 'Sim' : formData.centralPropria === 'nao' ? 'Não' : '',  // CentralPropria
-    field_25: Number(formData.especificacoes?.nDF) || 0,           // NumDF
-    field_26: Number(formData.especificacoes?.nDT) || 0,           // NumDT
-    field_27: Number(formData.especificacoes?.nAM) || 0,           // NumAM
-    field_28: Number(formData.especificacoes?.nSirenes) || 0,      // NumSirenes
-    field_29: Number(formData.especificacoes?.nDG) || 0,           // NumDG
-    field_30: Number(formData.especificacoes?.nModulos) || 0,      // NumModulos
-    field_31: Number(formData.especificacoes?.outrosDispositivos) || 0, // OutrosDispositivos
+    // Tipo de Manutenção
+    field_9:  boolToText(formData.manutencaoCorretiva),          // Manutenção Corretiva
+    field_10: boolToText(formData.manutencaoPreventiva),         // Manutenção Preventiva
+    field_11: formData.tipoLoja || '',                           // Tipo da Loja
 
-    // --- Observações ---
-    field_32: formData.observacoes || '',                          // Observacoes
+    // Sistemas
+    field_12: boolToSimNao(sistemas.alarme_do_shopping?.existenteSim,  sistemas.alarme_do_shopping?.existenteNao),   // Alarme Shopping - Existente
+    field_13: boolToSimNao(sistemas.alarme_do_shopping?.funcionandoSim, sistemas.alarme_do_shopping?.funcionandoNao), // Alarme Shopping - Funcionando
+    field_14: boolToSimNao(sistemas.alarme_da_loja?.existenteSim,       sistemas.alarme_da_loja?.existenteNao),       // Alarme Loja - Existente
+    field_15: boolToSimNao(sistemas.alarme_da_loja?.funcionandoSim,     sistemas.alarme_da_loja?.funcionandoNao),     // Alarme Loja - Funcionando
+    field_16: boolToSimNao(sistemas.comando_de_gás?.existenteSim,       sistemas.comando_de_gás?.existenteNao),       // Comando de Gás - Existente
+    field_17: boolToSimNao(sistemas.comando_de_gás?.funcionandoSim,     sistemas.comando_de_gás?.funcionandoNao),     // Comando de Gás - Funcionando
 
-    // --- Status da Loja (tipo texto no Lists) ---
-    field_33: boolToText(formData.statusLoja?.['Sistema Funcionando Normalmente']),    // StatusFuncionandoNormalmente
-    field_34: boolToText(formData.statusLoja?.['Sistema Funcionando Parcialmente']),   // StatusFuncionandoParcialmente
-    field_35: boolToText(formData.statusLoja?.['Sistema com Defeito']),                // StatusComDefeito
-    field_36: boolToText(formData.statusLoja?.['Não Possui Detecção']),                // StatusNaoPossuiDeteccao
-    field_37: formData.statusOutros || '',                         // StatusOutros
+    // Especificações
+    field_18: formData.centralPropria === 'sim' ? 'Sim' : formData.centralPropria === 'nao' ? 'Não' : '',  // Central Própria
+    field_19: Number(formData.especificacoes?.nDF) || 0,         // Nº DF
+    field_20: Number(formData.especificacoes?.nDT) || 0,         // Nº DT
+    field_21: Number(formData.especificacoes?.nAM) || 0,         // Nº AM
+    field_22: Number(formData.especificacoes?.nSirenes) || 0,    // Nº Sirenes
+    field_23: Number(formData.especificacoes?.nDG) || 0,         // Nº DG
+    field_24: Number(formData.especificacoes?.nModulos) || 0,    // Nº Módulos
+    field_25: Number(formData.especificacoes?.outrosDispositivos) || 0, // Outros Dispositivos
 
-    // --- Pendências (tipo texto no Lists) ---
-    field_38: boolToText(formData.pendencias?.['Necessário Abertura do Forro']),                          // PendAberturaForro
-    field_39: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Alimentação']),          // PendCaboAlimentacao
-    field_40: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Sinal']),                // PendCaboSinal
-    field_41: boolToText(formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']),          // PendInterligarSistema
-    field_42: boolToText(formData.pendencias?.['Necessário Verificar o Sistema da Loja']),                // PendVerificarSistemaLoja
-    field_43: boolToText(formData.pendencias?.['Troca de Dispositivo']),                                  // PendTrocaDispositivo
-    field_44: formData.pendenciasOutros || '',                     // PendOutros
+    // Observações
+    field_26: formData.observacoes || '',
 
-    // --- Rodapé ---
-    field_45: formData.engTecnico || '',                           // EngTecnico
-    field_46: formData.horarioInicio || '',                        // HorarioInicio
-    field_47: formData.horarioTermino || '',                       // HorarioTermino
-    field_48: formData.totalHoras || '',                           // TotalHoras
-    field_49: formData.aceitoPor || '',                            // AceitoPor
+    // Status da Loja
+    field_27: boolToText(formData.statusLoja?.['Sistema Funcionando Normalmente']),
+    field_28: boolToText(formData.statusLoja?.['Sistema Funcionando Parcialmente']),
+    field_29: boolToText(formData.statusLoja?.['Sistema com Defeito']),
+    field_30: boolToText(formData.statusLoja?.['Não Possui Detecção']),
+    field_31: formData.statusOutros || '',
+
+    // Pendências
+    field_32: boolToText(formData.pendencias?.['Necessário Abertura do Forro']),
+    field_33: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Alimentação']),
+    field_34: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Sinal']),
+    field_35: boolToText(formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']),
+    field_36: boolToText(formData.pendencias?.['Necessário Verificar o Sistema da Loja']),
+    field_37: boolToText(formData.pendencias?.['Troca de Dispositivo']),
+    field_38: formData.pendenciasOutros || '',
+
+    // Rodapé
+    field_39: formData.engTecnico || '',
+    field_40: formData.horarioInicio || '',
+    field_41: formData.horarioTermino || '',
+    field_42: formData.totalHoras || '',
+    field_43: formData.aceitoPor || '',
   };
 }
 
@@ -109,76 +100,75 @@ function mapFormToListFields(formData) {
  * para o JSON que o formulário React (react-hook-form) entende.
  */
 function mapListFieldsToForm(fields) {
-  const textToBool = (text) => text === 'Sim';
   return {
-    data: fields.Title ? fields.Title.split('/').reverse().join('-') : fields.DataInspecao ? fields.DataInspecao.split('/').reverse().join('-') : '',
-    loja: fields.field_1 || '',
-    solicitante: fields.field_2 || '',
-    telefone: fields.field_3 || '',
-    email: fields.Email || '',
-    tipoManutencao: fields.field_5 === 'Sim' ? 'corretiva' : fields.field_6 === 'Sim' ? 'preventiva' : '',
-    tipoLoja: fields.field_7 || '',
+    data: fields.Title ? fields.Title.split('/').reverse().join('-') : '',
+    loja:       fields.field_1 || '',
+    codigoLoja: fields.field_2 || '',
+
+    responsavelLoja: {
+      solicitante: fields.field_3 || '',
+      telefone:    String(fields.field_4 || ''),
+      email:       fields.field_5 || '',
+    },
+    responsavelShopping: {
+      solicitante: fields.field_6 || '',
+      telefone:    String(fields.field_7 || ''),
+      email:       fields.field_8 || '',
+    },
+
+    tipoManutencao: fields.field_9 === 'Sim' ? 'corretiva' : fields.field_10 === 'Sim' ? 'preventiva' : '',
+    tipoLoja: fields.field_11 || '',
+
     sistemas: {
       alarme_do_shopping: {
-        existenteSim: fields.field_8 === 'Sim', existenteNao: fields.field_8 === 'Não',
-        funcionandoSim: fields.field_9 === 'Sim', funcionandoNao: fields.field_9 === 'Não',
+        existenteSim:   fields.field_12 === 'Sim', existenteNao:    fields.field_12 === 'Não',
+        funcionandoSim: fields.field_13 === 'Sim', funcionandoNao:  fields.field_13 === 'Não',
       },
       alarme_da_loja: {
-        existenteSim: fields.field_10 === 'Sim', existenteNao: fields.field_10 === 'Não',
-        funcionandoSim: fields.field_11 === 'Sim', funcionandoNao: fields.field_11 === 'Não',
+        existenteSim:   fields.field_14 === 'Sim', existenteNao:    fields.field_14 === 'Não',
+        funcionandoSim: fields.field_15 === 'Sim', funcionandoNao:  fields.field_15 === 'Não',
       },
-      extração_de_fumaça: {
-        existenteSim: fields.field_12 === 'Sim', existenteNao: fields.field_12 === 'Não',
-        funcionandoSim: fields.field_13 === 'Sim', funcionandoNao: fields.field_13 === 'Não',
+      'comando_de_gás': {
+        existenteSim:   fields.field_16 === 'Sim', existenteNao:    fields.field_16 === 'Não',
+        funcionandoSim: fields.field_17 === 'Sim', funcionandoNao:  fields.field_17 === 'Não',
       },
-      insuflamento_de_ar: {
-        existenteSim: fields.field_14 === 'Sim', existenteNao: fields.field_14 === 'Não',
-        funcionandoSim: fields.field_15 === 'Sim', funcionandoNao: fields.field_15 === 'Não',
-      },
-      ar_condicionado: {
-        existenteSim: fields.field_16 === 'Sim', existenteNao: fields.field_16 === 'Não',
-        funcionandoSim: fields.field_17 === 'Sim', funcionandoNao: fields.field_17 === 'Não',
-      },
-      comando_de_gás: {
-        existenteSim: fields.field_18 === 'Sim', existenteNao: fields.field_18 === 'Não',
-        funcionandoSim: fields.field_19 === 'Sim', funcionandoNao: fields.field_19 === 'Não',
-      },
-      damper_extração: {
-        existenteSim: fields.field_20 === 'Sim', existenteNao: fields.field_20 === 'Não',
-        funcionandoSim: fields.field_21 === 'Sim', funcionandoNao: fields.field_21 === 'Não',
-      },
-      damper_insuflamento: {
-        existenteSim: fields.field_22 === 'Sim', existenteNao: fields.field_22 === 'Não',
-        funcionandoSim: fields.field_23 === 'Sim', funcionandoNao: fields.field_23 === 'Não',
-      }
     },
-    centralPropria: fields.field_24 === 'Sim' ? 'sim' : fields.field_24 === 'Não' ? 'nao' : '',
+
+    centralPropria: fields.field_18 === 'Sim' ? 'sim' : fields.field_18 === 'Não' ? 'nao' : '',
     especificacoes: {
-      nDF: fields.field_25 || '',
-      nDT: fields.field_26 || '',
-      nAM: fields.field_27 || '',
-      nSirenes: fields.field_28 || '',
-      nDG: fields.field_29 || '',
-      nModulos: fields.field_30 || '',
-      outrosDispositivos: fields.field_31 || ''
+      nDF:               fields.field_19 || '',
+      nDT:               fields.field_20 || '',
+      nAM:               fields.field_21 || '',
+      nSirenes:          fields.field_22 || '',
+      nDG:               fields.field_23 || '',
+      nModulos:          fields.field_24 || '',
+      outrosDispositivos: fields.field_25 || '',
     },
-    observacoes: fields.field_32 || '',
-    statusLojaOpcao: fields.field_33 === 'Sim' ? 'Sistema Funcionando Normalmente' : fields.field_34 === 'Sim' ? 'Sistema Funcionando Parcialmente' : fields.field_35 === 'Sim' ? 'Sistema com Defeito' : fields.field_36 === 'Sim' ? 'Não Possui Detecção' : '',
-    statusOutros: fields.field_37 || '',
+
+    observacoes: fields.field_26 || '',
+
+    statusLojaOpcao:
+      fields.field_27 === 'Sim' ? 'Sistema Funcionando Normalmente'  :
+      fields.field_28 === 'Sim' ? 'Sistema Funcionando Parcialmente' :
+      fields.field_29 === 'Sim' ? 'Sistema com Defeito'              :
+      fields.field_30 === 'Sim' ? 'Não Possui Detecção'              : '',
+    statusOutros: fields.field_31 || '',
+
     pendencias: {
-      'Necessário Abertura do Forro': textToBool(fields.field_38),
-      'Verificar Integridade do Cabo de Alimentação': textToBool(fields.field_39),
-      'Verificar Integridade do Cabo de Sinal': textToBool(fields.field_40),
-      'Interligar o Sistema da Loja com do Shopping': textToBool(fields.field_41),
-      'Necessário Verificar o Sistema da Loja': textToBool(fields.field_42),
-      'Troca de Dispositivo': textToBool(fields.field_43)
+      'Necessário Abertura do Forro':                    fields.field_32 === 'Sim',
+      'Verificar Integridade do Cabo de Alimentação':    fields.field_33 === 'Sim',
+      'Verificar Integridade do Cabo de Sinal':          fields.field_34 === 'Sim',
+      'Interligar o Sistema da Loja com do Shopping':    fields.field_35 === 'Sim',
+      'Necessário Verificar o Sistema da Loja':          fields.field_36 === 'Sim',
+      'Troca de Dispositivo':                            fields.field_37 === 'Sim',
     },
-    pendenciasOutros: fields.field_44 || '',
-    engTecnico: fields.field_45 || '',
-    horarioInicio: fields.field_46 || '',
-    horarioTermino: fields.field_47 || '',
-    totalHoras: fields.field_48 || '',
-    aceitoPor: fields.field_49 || ''
+    pendenciasOutros: fields.field_38 || '',
+
+    engTecnico:     fields.field_39 || '',
+    horarioInicio:  fields.field_40 || '',
+    horarioTermino: fields.field_41 || '',
+    totalHoras:     fields.field_42 || '',
+    aceitoPor:      fields.field_43 || '',
   };
 }
 
@@ -187,6 +177,7 @@ function mapListFieldsToForm(fields) {
  */
 let _cachedSiteId = null;
 let _cachedListId = null;
+let _cachedListName = null; // rastreia qual lista está em cache
 
 /**
  * Resolve o Site ID e List ID do SharePoint via Graph API
@@ -213,20 +204,38 @@ async function resolveSharePointIds(graphClient) {
     console.log(`✅ Site ID resolvido: ${_cachedSiteId}`);
   }
 
-  // Resolver List ID (se não cacheado)
-  if (!_cachedListId) {
+  // Resolver List ID (se não cacheado ou se a lista mudou)
+  if (!_cachedListId || _cachedListName !== SHAREPOINT_LIST_NAME) {
+    _cachedListId = null; // invalida cache se a lista mudou
     console.log(`🔍 Resolvendo List ID: "${SHAREPOINT_LIST_NAME}"`);
-    const lists = await graphClient
+
+    // Busca TODAS as listas e filtra no lado do Node comparando
+    // tanto displayName quanto o name (segmento de URL) — o Graph API filter
+    // funciona apenas para displayName e pode falhar com nomes especiais.
+    const allLists = await graphClient
       .api(`/sites/${_cachedSiteId}/lists`)
-      .filter(`displayName eq '${SHAREPOINT_LIST_NAME}'`)
       .get();
 
-    if (!lists.value || lists.value.length === 0) {
-      throw new Error(`Lista "${SHAREPOINT_LIST_NAME}" não encontrada no site.`);
+    const found = (allLists.value || []).find(
+      (l) =>
+        l.displayName === SHAREPOINT_LIST_NAME ||
+        l.name === SHAREPOINT_LIST_NAME
+    );
+
+    if (!found) {
+      // Loga as listas disponíveis para facilitar o diagnóstico
+      const available = (allLists.value || [])
+        .map((l) => `"${l.displayName}" (name: ${l.name})`)
+        .join('\n  ');
+      throw new Error(
+        `Lista "${SHAREPOINT_LIST_NAME}" não encontrada no site.\n` +
+        `Listas disponíveis:\n  ${available}`
+      );
     }
 
-    _cachedListId = lists.value[0].id;
-    console.log(`✅ List ID resolvido: ${_cachedListId}`);
+    _cachedListId = found.id;
+    _cachedListName = SHAREPOINT_LIST_NAME;
+    console.log(`✅ List ID resolvido: "${found.displayName}" → ${_cachedListId}`);
   }
 
   return { siteId: _cachedSiteId, listId: _cachedListId };
@@ -381,20 +390,20 @@ const list = async (req, res, next) => {
       .top(50)
       .get(); // Sorting doesn't always work without index, so we get newest first via sort below if needed
 
-    // Mapear os campos confidenciais baseando-se no mapeamento interno da controler
+    // Mapear os campos para exibição no painel
     const checklists = result.value.map(item => {
       const f = item.fields || {};
       return {
         id: item.id,
-        data: f.Title || f.DataInspecao || '',
-        loja: f.field_1 || '',
-        solicitante: f.field_2 || '',
-        engTecnico: f.field_45 || '',
+        data:        f.Title || '',
+        loja:        f.field_1  || '',
+        solicitante: f.field_3  || '',   // Resp. Loja - Solicitante
+        engTecnico:  f.field_39 || '',
         statusLoja: {
-          'Sistema Funcionando Normalmente': f.field_33 === 'Sim',
-          'Sistema Funcionando Parcialmente': f.field_34 === 'Sim',
-          'Sistema com Defeito': f.field_35 === 'Sim',
-          'Não Possui Detecção': f.field_36 === 'Sim'
+          'Sistema Funcionando Normalmente':  f.field_27 === 'Sim',
+          'Sistema Funcionando Parcialmente': f.field_28 === 'Sim',
+          'Sistema com Defeito':              f.field_29 === 'Sim',
+          'Não Possui Detecção':              f.field_30 === 'Sim',
         }
       };
     });

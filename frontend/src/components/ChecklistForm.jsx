@@ -15,15 +15,10 @@ import { ArrowLeft } from 'lucide-react';
 const SISTEMAS = [
   'Alarme do Shopping',
   'Alarme da Loja',
-  'Extração de Fumaça',
-  'Insuflamento de Ar',
-  'Ar Condicionado',
   'Comando de Gás',
-  'Damper Extração',
-  'Damper Insuflamento',
 ];
 
-const TIPOS_LOJA = ['Âncora', 'Megaloja', 'Satélite', 'Fast Food', 'Quiosque'];
+const TIPOS_LOJA = ['Âncora', 'Megaloja', 'Satélite', 'Fast Food', 'Restaurante', 'Clínica'];
 
 const STATUS_LOJA = [
   'Sistema Funcionando Normalmente',
@@ -62,9 +57,9 @@ export default function ChecklistForm({ user }) {
     defaultValues: {
       data: new Date().toISOString().split('T')[0],
       loja: '',
-      solicitante: '',
-      telefone: '',
-      email: '',
+      codigoLoja: '',
+      responsavelShopping: { solicitante: '', telefone: '', email: '' },
+      responsavelLoja: { solicitante: '', telefone: '', email: '' },
       tipoManutencao: '', // 'corretiva' ou 'preventiva'
       tipoLoja: '',
       sistemas: SISTEMAS.reduce((acc, s) => {
@@ -116,10 +111,10 @@ export default function ChecklistForm({ user }) {
 
   const onSubmit = async (formData) => {
     // 1. Validação Prévia Simples
-    if (!formData.loja?.trim() || !formData.email?.trim()) {
+    if (!formData.loja?.trim()) {
       setSubmitStatus({
         type: 'error',
-        message: '⚠️ Campos Obrigatórios: Preencha o Nome da Loja e o E-mail do Solicitante antes de enviar.'
+        message: '⚠️ Campo Obrigatório: Preencha o Nome da Loja antes de enviar.'
       });
       // Auto-dismiss após 5 segundos
       setTimeout(() => setSubmitStatus(null), 5000);
@@ -192,7 +187,7 @@ export default function ChecklistForm({ user }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 py-6 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 py-4 sm:py-6 px-3 sm:px-4">
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden"
@@ -200,9 +195,9 @@ export default function ChecklistForm({ user }) {
         {/* ============================================ */}
         {/* CABEÇALHO DO FORMULÁRIO                      */}
         {/* ============================================ */}
-        <div className="bg-gradient-to-r from-brand-800 to-brand-700 px-6 py-5 text-white">
+        <div className="bg-gradient-to-r from-brand-800 to-brand-700 px-4 sm:px-6 py-4 sm:py-5 text-white">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 type="button"
                 onClick={() => navigate('/')}
@@ -217,18 +212,18 @@ export default function ChecklistForm({ user }) {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-lg font-semibold">RELATÓRIO OPERACIONAL</p>
-              <p className="text-blue-200 text-sm">Check List — Lojas</p>
+              <p className="text-base sm:text-lg font-semibold">RELATÓRIO OPERACIONAL</p>
+              <p className="text-blue-200 text-xs sm:text-sm">Check List — Lojas</p>
             </div>
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
-          <fieldset disabled={isReadOnly} className="contents break-inside-avoid">
+        <div className="p-4 sm:p-6 space-y-7">
+          <fieldset disabled={isReadOnly} className="space-y-7 break-inside-avoid border-0 p-0 m-0">
             {/* ============================================ */}
             {/* MANUTENÇÃO CORRETIVA / PREVENTIVA            */}
             {/* ============================================ */}
-          <div className="flex flex-wrap gap-6 items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="flex flex-wrap gap-4 sm:gap-6 items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
             <span className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Tipo de Manutenção:</span>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -253,49 +248,86 @@ export default function ChecklistForm({ user }) {
           {/* ============================================ */}
           {/* DADOS DA LOJA                                */}
           {/* ============================================ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InputField label="Data" type="date" register={register('data')} />
             <InputField label="Loja" register={register('loja')} placeholder="Nome da loja" />
-            <InputField label="Solicitante" register={register('solicitante')} placeholder="Nome do solicitante" />
-            <InputField label="Telefone" type="tel" register={register('telefone')} placeholder="(00) 00000-0000" />
-            <InputField label="E-mail" type="email" register={register('email')} placeholder="email@exemplo.com" className="md:col-span-2" />
+            <InputField label="Código Loja" register={register('codigoLoja')} placeholder="Código da loja" />
+          </div>
+
+          {/* ============================================ */}
+          {/* CONTATOS — RESPONSÁVEIS                      */}
+          {/* ============================================ */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Responsável Shopping */}
+            <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável Shopping</h3>
+              </div>
+              <div className="p-4 space-y-3">
+                <InputField label="Solicitante" register={register('responsavelShopping.solicitante')} placeholder="Nome do responsável" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <InputField label="Telefone" type="tel" register={register('responsavelShopping.telefone')} placeholder="(00) 00000-0000" />
+                  <InputField label="E-mail" type="email" register={register('responsavelShopping.email')} placeholder="email@exemplo.com" />
+                </div>
+              </div>
+            </div>
+
+            {/* Responsável Loja */}
+            <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável Loja</h3>
+              </div>
+              <div className="p-4 space-y-3">
+                <InputField label="Solicitante" register={register('responsavelLoja.solicitante')} placeholder="Nome do responsável" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <InputField label="Telefone" type="tel" register={register('responsavelLoja.telefone')} placeholder="(00) 00000-0000" />
+                  <InputField label="E-mail" type="email" register={register('responsavelLoja.email')} placeholder="email@exemplo.com" />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* ============================================ */}
           {/* TIPO DA LOJA                                 */}
           {/* ============================================ */}
-          <fieldset className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <legend className="text-sm font-semibold text-slate-600 uppercase tracking-wide px-2">Tipo da Loja</legend>
-            <div className="flex flex-wrap gap-4 mt-2">
-              {TIPOS_LOJA.map((tipo) => (
-                <label key={tipo} className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="radio"
-                    value={tipo}
-                    {...register('tipoLoja')}
-                    className="w-5 h-5 border-slate-300 text-brand-600 focus:ring-brand-500"
-                  />
-                  <span className="text-sm font-medium text-slate-700 group-hover:text-brand-700 transition-colors">{tipo}</span>
-                </label>
-              ))}
+          <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo da Loja</h3>
             </div>
-          </fieldset>
+            <div className="p-4">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4">
+                {TIPOS_LOJA.map((tipo) => (
+                  <label key={tipo} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="radio"
+                      value={tipo}
+                      {...register('tipoLoja')}
+                      className="w-4 h-4 sm:w-5 sm:h-5 border-slate-300 text-brand-600 focus:ring-brand-500 shrink-0"
+                    />
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-brand-700 transition-colors">{tipo}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* ============================================ */}
           {/* TABELA DE SISTEMAS + ESPECIFICAÇÕES          */}
           {/* ============================================ */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Tabela de Sistemas (2/3) */}
             <div className="lg:col-span-2">
-              <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">Sistemas</h2>
               <div className="border border-slate-200 rounded-xl overflow-hidden">
                 {/* Header da tabela */}
-                <div className="grid grid-cols-[1fr_repeat(4,_minmax(0,_1fr))] bg-brand-800 text-white text-xs font-semibold uppercase tracking-wider">
+                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sistemas</h3>
+                </div>
+                <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-brand-800 text-white text-xs font-semibold uppercase tracking-wider">
                   <div className="px-4 py-3">Sistema</div>
                   <div className="px-2 py-3 text-center col-span-2 border-l border-brand-700">Existente</div>
                   <div className="px-2 py-3 text-center col-span-2 border-l border-brand-700">Funcionando</div>
                 </div>
-                <div className="grid grid-cols-[1fr_repeat(4,_minmax(0,_1fr))] bg-brand-700 text-blue-200 text-xs font-medium">
+                <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-brand-700 text-blue-200 text-xs font-medium">
                   <div className="px-4 py-1.5"></div>
                   <div className="px-2 py-1.5 text-center border-l border-brand-600">Sim</div>
                   <div className="px-2 py-1.5 text-center">Não</div>
@@ -313,7 +345,7 @@ export default function ChecklistForm({ user }) {
                   return (
                     <div
                       key={sistema}
-                      className={`grid grid-cols-[1fr_repeat(4,_minmax(0,_1fr))] items-center border-t border-slate-200 ${
+                      className={`grid grid-cols-[2fr_repeat(4,_1fr)] items-center border-t border-slate-200 ${
                         index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
                       } hover:bg-blue-50 transition-colors ${existenteNaoMarcado ? 'opacity-70' : ''}`}
                     >
@@ -337,8 +369,11 @@ export default function ChecklistForm({ user }) {
 
             {/* Especificações (1/3) */}
             <div>
-              <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">Especificações</h2>
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white p-4 space-y-4">
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Especificações</h3>
+                </div>
+                <div className="p-4 space-y-4">
                 {/* Central Própria */}
                 <fieldset>
                   <legend className="text-sm font-semibold text-slate-700 mb-2">Central Própria</legend>
@@ -370,6 +405,7 @@ export default function ChecklistForm({ user }) {
                   </div>
                 ))}
               </div>
+              </div>
             </div>
           </div>
 
@@ -391,11 +427,13 @@ export default function ChecklistForm({ user }) {
           {/* ============================================ */}
           {/* STATUS DA LOJA + PENDÊNCIAS                  */}
           {/* ============================================ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Status da Loja */}
-            <fieldset className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <legend className="text-sm font-semibold text-slate-600 uppercase tracking-wide px-2">Status da Loja</legend>
-              <div className="space-y-2 mt-2">
+            <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status da Loja</h3>
+              </div>
+              <div className="p-4 space-y-2">
                 {STATUS_LOJA.map((status) => (
                   <label key={status} className="flex items-center gap-3 cursor-pointer group">
                     <input
@@ -408,22 +446,24 @@ export default function ChecklistForm({ user }) {
                   </label>
                 ))}
                 {/* Outros */}
-                <div className="flex items-center gap-3 mt-1">
-                  <label className="text-sm font-medium text-slate-600">Outros:</label>
+                <div className="flex items-center gap-3 pt-1">
+                  <label className="text-sm font-medium text-slate-600 shrink-0">Outros:</label>
                   <input
                     type="text"
                     {...register('statusOutros')}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                    className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     placeholder="Especifique..."
                   />
                 </div>
               </div>
-            </fieldset>
+            </div>
 
             {/* Pendências */}
-            <fieldset className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <legend className="text-sm font-semibold text-slate-600 uppercase tracking-wide px-2">Pendências</legend>
-              <div className="space-y-2 mt-2">
+            <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pendências</h3>
+              </div>
+              <div className="p-4 space-y-2">
                 {PENDENCIAS.map((pendencia) => (
                   <label key={pendencia} className="flex items-center gap-3 cursor-pointer group">
                     <input
@@ -435,29 +475,30 @@ export default function ChecklistForm({ user }) {
                   </label>
                 ))}
                 {/* Outros */}
-                <div className="flex items-center gap-3 mt-1">
-                  <label className="text-sm font-medium text-slate-600">Outros:</label>
+                <div className="flex items-center gap-3 pt-1">
+                  <label className="text-sm font-medium text-slate-600 shrink-0">Outros:</label>
                   <input
                     type="text"
                     {...register('pendenciasOutros')}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                    className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
                     placeholder="Especifique..."
                   />
                 </div>
               </div>
-            </fieldset>
+            </div>
           </div>
 
           {/* ============================================ */}
           {/* RODAPÉ — ENG/TÉC, HORÁRIOS, ACEITE           */}
           {/* ============================================ */}
-          <div className="border-t-2 border-slate-200 pt-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="border-t-2 border-slate-200 pt-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InputField label="Eng. / Técnico" register={register('engTecnico')} placeholder="Nome completo" />
+              <InputField label="Aceito Por" register={register('aceitoPor')} placeholder="Nome de quem aceita" />
               <div className="grid grid-cols-2 gap-3">
-                <InputField label="Início" type="time" register={register('horarioInicio')} />
+                <InputField label="Horário Início" type="time" register={register('horarioInicio')} />
                 <InputField 
-                  label="Término" 
+                  label="Horário Término" 
                   type="time" 
                   register={register('horarioTermino')} 
                   placeholder="Automático" 
@@ -472,7 +513,6 @@ export default function ChecklistForm({ user }) {
                 disabled 
                 className="opacity-70 bg-slate-100 placeholder-slate-500" 
               />
-              <InputField label="Aceito Por" register={register('aceitoPor')} placeholder="Nome de quem aceita" />
             </div>
           </div>
 
