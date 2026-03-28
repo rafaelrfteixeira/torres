@@ -293,9 +293,13 @@ const create = async (req, res, next) => {
         fs.appendFileSync(logFile, `[${new Date().toISOString()}] ✅ PDF gerado. Buffer Base64 Size: ${pdfBase64.length}\n`);
         console.log('✅ PDF gerado. Buffer Base64 Size:', pdfBase64.length);
 
-        if (formData.email) {
-          fs.appendFileSync(logFile, `[${new Date().toISOString()}] ✉️ Preparando disparo de email...\n`);
-          await sendChecklistEmail(accessToken, formData, pdfBase64);
+        // Enviar e-mail apenas para o Responsável Shopping
+        const shoppingEmail = formData.responsavelShopping?.email;
+        const recipientEmails = shoppingEmail && shoppingEmail.trim() ? [shoppingEmail] : [];
+
+        if (recipientEmails.length > 0) {
+          fs.appendFileSync(logFile, `[${new Date().toISOString()}] ✉️ Preparando disparo de email para Responsável Shopping: ${shoppingEmail}...\n`);
+          await sendChecklistEmail(accessToken, formData, pdfBase64, recipientEmails);
           fs.appendFileSync(logFile, `[${new Date().toISOString()}] ✅ E-mail enviado com sucesso!\n`);
         } else {
           fs.appendFileSync(logFile, `[${new Date().toISOString()}] ⏭️ Sem endereço de e-mail.\n`);
