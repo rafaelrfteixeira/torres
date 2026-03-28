@@ -258,9 +258,23 @@ function generateHTML(data) {
           </div>
           <div class="info-grid">
             <div class="info-cell"><span class="info-label">LOJA:</span> ${field(data.loja)}</div>
-            <div class="info-cell"><span class="info-label">SOLICITANTE:</span> ${field(data.solicitante)}</div>
-            <div class="info-cell" style="border-bottom:none;"><span class="info-label">TELEFONE:</span> ${field(data.telefone)}</div>
-            <div class="info-cell" style="border-bottom:none;"><span class="info-label">E-MAIL:</span> ${field(data.email)}</div>
+            <div class="info-cell"><span class="info-label">CÓDIGO LOJA:</span> ${field(data.codigoLoja)}</div>
+          </div>
+
+          <!-- Responsável Shopping -->
+          <div class="info-grid" style="border-top: none;">
+            <div class="info-cell" style="grid-column: 1 / -1; background: #f0f0f0; font-weight: bold; font-size: 8pt; text-transform: uppercase; letter-spacing: 1px;">Responsável Shopping</div>
+            <div class="info-cell"><span class="info-label">SOLICITANTE:</span> ${field(data.responsavelShopping?.solicitante)}</div>
+            <div class="info-cell"><span class="info-label">TELEFONE:</span> ${field(data.responsavelShopping?.telefone)}</div>
+            <div class="info-cell" style="grid-column: 1 / -1; border-bottom: none;"><span class="info-label">E-MAIL:</span> ${field(data.responsavelShopping?.email)}</div>
+          </div>
+
+          <!-- Responsável Loja -->
+          <div class="info-grid" style="border-top: none;">
+            <div class="info-cell" style="grid-column: 1 / -1; background: #f0f0f0; font-weight: bold; font-size: 8pt; text-transform: uppercase; letter-spacing: 1px;">Responsável Loja</div>
+            <div class="info-cell"><span class="info-label">SOLICITANTE:</span> ${field(data.responsavelLoja?.solicitante)}</div>
+            <div class="info-cell"><span class="info-label">TELEFONE:</span> ${field(data.responsavelLoja?.telefone)}</div>
+            <div class="info-cell" style="grid-column: 1 / -1; border-bottom: none;"><span class="info-label">E-MAIL:</span> ${field(data.responsavelLoja?.email)}</div>
           </div>
         </div>
 
@@ -271,7 +285,8 @@ function generateHTML(data) {
           <div>${checkbox(data.tipoLoja === 'Megaloja')} MEGALOJA</div>
           <div>${checkbox(data.tipoLoja === 'Satélite')} SATÉLITE</div>
           <div>${checkbox(data.tipoLoja === 'Fast Food')} FAST FOOD</div>
-          <div>${checkbox(data.tipoLoja === 'Quiosque')} QUIOSQUE</div>
+          <div>${checkbox(data.tipoLoja === 'Restaurante')} RESTAURANTE</div>
+          <div>${checkbox(data.tipoLoja === 'Clínica')} CLÍNICA</div>
         </div>
 
         <!-- Main Areas -->
@@ -288,12 +303,7 @@ function generateHTML(data) {
               ${[
                 { id: 'alarme_do_shopping', name: 'ALARME DO SHOPPING' },
                 { id: 'alarme_da_loja', name: 'ALARME DA LOJA' },
-                { id: 'extração_de_fumaça', name: 'EXTRAÇÃO DE FUMAÇA' },
-                { id: 'insuflamento_de_ar', name: 'INSUFLAMENTO DE AR' },
-                { id: 'ar_condicionado', name: 'AR CONDICIONADO' },
                 { id: 'comando_de_gás', name: 'COMANDO DE GÁS' },
-                { id: 'damper_extração', name: 'DAMPER EXTRAÇÃO' },
-                { id: 'damper_insuflamento', name: 'DAMPER INSUFLAMENTO' }
               ].map(sys => `
               <tr>
                 <td class="sys-name">${sys.name}</td>
