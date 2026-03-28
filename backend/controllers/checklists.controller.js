@@ -25,6 +25,12 @@ function mapFormToListFields(formData) {
     return '';
   };
   const boolToText = (val) => val ? 'Sim' : 'Não';
+  // Telefone: campo é do tipo number no SharePoint — remove máscara e converte
+  const toPhoneNumber = (val) => {
+    if (!val) return null;
+    const digits = String(val).replace(/\D/g, '');
+    return digits ? Number(digits) : null;
+  };
 
   const sistemas = formData.sistemas || {};
 
@@ -36,12 +42,12 @@ function mapFormToListFields(formData) {
 
     // Responsável Loja
     field_3:  formData.responsavelLoja?.solicitante || '',       // Resp. Loja - Solicitante
-    field_4:  formData.responsavelLoja?.telefone || '',          // Resp. Loja - Telefone
+    field_4:  toPhoneNumber(formData.responsavelLoja?.telefone),  // Resp. Loja - Telefone (number)
     field_5:  formData.responsavelLoja?.email || '',             // Resp. Loja - E-mail
 
     // Responsável Shopping
     field_6:  formData.responsavelShopping?.solicitante || '',   // Resp. Shopping - Solicitante
-    field_7:  formData.responsavelShopping?.telefone || '',      // Resp. Shopping - Telefone
+    field_7:  toPhoneNumber(formData.responsavelShopping?.telefone),  // Resp. Shopping - Telefone (number)
     field_8:  formData.responsavelShopping?.email || '',         // Resp. Shopping - E-mail
 
     // Tipo de Manutenção
