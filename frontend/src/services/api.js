@@ -5,7 +5,7 @@
  * Centraliza todas as chamadas HTTP para a API.
  */
 
-const API_BASE_URL = 'https://torrescx-backend-checklist-lojas.zj3i1b.easypanel.host/api';
+const API_BASE_URL = 'https://dinastia-teste.zj3i1b.easypanel.host/api';
 
 const api = {
   /**
