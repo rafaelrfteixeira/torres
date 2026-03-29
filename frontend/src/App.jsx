@@ -34,7 +34,7 @@ function App() {
     checkAuth();
   }, []);
 
-  const loginUrl = 'https:dinastia-teste.zj3i1b.easypanel.host/api/auth/login';
+  const loginUrl = 'https://dinastia-teste.zj3i1b.easypanel.host/api/auth/login';
   const logoutUrl = 'https://dinastia-teste.zj3i1b.easypanel.host/api/auth/signout';
 
   if (isLoading) {

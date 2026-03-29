@@ -58,10 +58,10 @@ export default function ChecklistForm({ user }) {
       data: new Date().toISOString().split('T')[0],
       loja: '',
       codigoLoja: '',
-      responsavelShopping: { 
-        solicitante: 'Flávia Barbosa', 
-        telefone: '81993230472', 
-        email: 'flavia.barbosa@riomarrecife.com.br' 
+      responsavelShopping: {
+        solicitante: 'Flávia Barbosa',
+        telefone: '81993230472',
+        email: 'flavia.barbosa@riomarrecife.com.br'
       },
       responsavelLoja: { solicitante: '', telefone: '', email: '' },
       tipoManutencao: '', // 'corretiva' ou 'preventiva'
@@ -93,7 +93,7 @@ export default function ChecklistForm({ user }) {
       const fetchChecklist = async () => {
         setIsLoading(true);
         try {
-      const API_URL = 'https://torrescx-backend-checklist-lojas.zj3i1b.easypanel.host/api';
+          const API_URL = 'https://dinastia-teste.zj3i1b.easypanel.host/api';
           const response = await fetch(`${API_URL}/checklists/${id}`, {
             credentials: 'include',
           });
@@ -245,355 +245,353 @@ export default function ChecklistForm({ user }) {
             {/* ============================================ */}
             {/* MANUTENÇÃO CORRETIVA / PREVENTIVA            */}
             {/* ============================================ */}
-          <div className="flex flex-wrap gap-4 sm:gap-6 items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <span className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Tipo de Manutenção:</span>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                value="corretiva"
-                {...register('tipoManutencao', { required: true })}
-                required
-                className="w-5 h-5 border-slate-300 text-brand-600 focus:ring-brand-500"
-              />
-              <span className="text-sm font-medium text-slate-700">Corretiva</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                value="preventiva"
-                {...register('tipoManutencao', { required: true })}
-                required
-                className="w-5 h-5 border-slate-300 text-brand-600 focus:ring-brand-500"
-              />
-              <span className="text-sm font-medium text-slate-700">Manutenção Preventiva</span>
-            </label>
-          </div>
-
-          {/* ============================================ */}
-          {/* DADOS DA LOJA                                */}
-          {/* ============================================ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InputField label="Data" type="date" register={register('data')} />
-            <InputField label="Loja" register={register('loja')} placeholder="Nome da loja" />
-            <InputField label="Código Loja" register={register('codigoLoja')} placeholder="Código da loja" />
-          </div>
-
-          {/* ============================================ */}
-          {/* CONTATOS — RESPONSÁVEIS                      */}
-          {/* ============================================ */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Responsável Shopping */}
-            <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável Shopping</h3>
-              </div>
-              <div className="p-4 space-y-3">
-                <InputField label="Solicitante" register={register('responsavelShopping.solicitante')} placeholder="Nome do responsável" readOnly={true} />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <InputField label="Telefone" type="tel" register={register('responsavelShopping.telefone')} placeholder="(00) 00000-0000" readOnly={true} />
-                  <InputField label="E-mail" type="email" register={register('responsavelShopping.email')} placeholder="email@exemplo.com" />
-                </div>
-              </div>
+            <div className="flex flex-wrap gap-4 sm:gap-6 items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Tipo de Manutenção:</span>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="corretiva"
+                  {...register('tipoManutencao', { required: true })}
+                  required
+                  className="w-5 h-5 border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                <span className="text-sm font-medium text-slate-700">Corretiva</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="preventiva"
+                  {...register('tipoManutencao', { required: true })}
+                  required
+                  className="w-5 h-5 border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                <span className="text-sm font-medium text-slate-700">Manutenção Preventiva</span>
+              </label>
             </div>
 
-            {/* Responsável Loja */}
-            <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável Loja</h3>
-              </div>
-              <div className="p-4 space-y-3">
-                <InputField label="Solicitante" register={register('responsavelLoja.solicitante', { required: true })} required={true} placeholder="Nome do responsável" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <InputField label="Telefone" type="tel" register={register('responsavelLoja.telefone', { required: true })} required={true} placeholder="(00) 00000-0000" />
-                  <InputField label="E-mail" type="email" register={register('responsavelLoja.email', { required: true })} required={true} placeholder="email@exemplo.com" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ============================================ */}
-          {/* TIPO DA LOJA                                 */}
-          {/* ============================================ */}
-          <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo da Loja</h3>
-            </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4">
-                {TIPOS_LOJA.map((tipo) => (
-                  <label key={tipo} className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="radio"
-                      value={tipo}
-                      {...register('tipoLoja', { required: true })}
-                      required
-                      className="w-4 h-4 sm:w-5 sm:h-5 border-slate-300 text-brand-600 focus:ring-brand-500 shrink-0"
-                    />
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-brand-700 transition-colors">{tipo}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ============================================ */}
-          {/* TABELA DE SISTEMAS + ESPECIFICAÇÕES          */}
-          {/* ============================================ */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            {/* Tabela de Sistemas (2/3) */}
-            <div className="lg:col-span-2">
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                {/* Header da tabela */}
-                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sistemas</h3>
-                </div>
-                <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-red-800 text-white text-xs font-semibold uppercase tracking-wider">
-                  <div className="px-4 py-3">Sistema</div>
-                  <div className="px-2 py-3 text-center col-span-2 border-l border-red-700">Existente</div>
-                  <div className="px-2 py-3 text-center col-span-2 border-l border-red-700">Funcionando</div>
-                </div>
-                <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-red-700 text-red-200 text-xs font-medium">
-                  <div className="px-4 py-1.5"></div>
-                  <div className="px-2 py-1.5 text-center border-l border-red-600">Sim</div>
-                  <div className="px-2 py-1.5 text-center">Não</div>
-                  <div className="px-2 py-1.5 text-center border-l border-red-600">Sim</div>
-                  <div className="px-2 py-1.5 text-center">Não</div>
-                </div>
-
-                {/* Linhas dos sistemas */}
-                {SISTEMAS.map((sistema, index) => {
-                  const key = sistema.replace(/\s+/g, '_').toLowerCase();
-                  
-                  // Se "Existente=Não" está marcado para esta linha, desabilitamos os checkboxes de "Funcionando"
-                  const existenteNaoMarcado = sistemasWatch?.[key]?.existenteNao;
-
-                  return (
-                    <div
-                      key={sistema}
-                      className={`grid grid-cols-[2fr_repeat(4,_1fr)] items-center border-t border-slate-200 ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
-                      } hover:bg-blue-50 transition-colors ${existenteNaoMarcado ? 'opacity-70' : ''}`}
-                    >
-                      <div className="px-4 py-3 text-sm font-medium text-slate-800">{sistema}</div>
-                      <CheckboxCell 
-                        register={register(`sistemas.${key}.existenteSim`, {
-                          onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteNao`, false); }
-                        })} 
-                      />
-                      <CheckboxCell 
-                        register={register(`sistemas.${key}.existenteNao`, {
-                          onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteSim`, false); }
-                        })} 
-                      />
-                      <CheckboxCell 
-                        register={register(`sistemas.${key}.funcionandoSim`, {
-                          onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoNao`, false); }
-                        })} 
-                        borderLeft 
-                        disabled={existenteNaoMarcado} 
-                      />
-                      <CheckboxCell 
-                        register={register(`sistemas.${key}.funcionandoNao`, {
-                          onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoSim`, false); }
-                        })} 
-                        disabled={existenteNaoMarcado} 
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Especificações (1/3) */}
-            <div>
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Especificações</h3>
-                </div>
-                <div className="p-4 space-y-4">
-                {/* Central Própria */}
-                <fieldset>
-                  <legend className="text-sm font-semibold text-slate-700 mb-2">Central Própria</legend>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" value="sim" {...register('centralPropria')} className="w-4 h-4 text-brand-600 focus:ring-brand-500" />
-                      <span className="text-sm text-slate-700">Sim</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" value="nao" {...register('centralPropria')} className="w-4 h-4 text-brand-600 focus:ring-brand-500" />
-                      <span className="text-sm text-slate-700">Não</span>
-                    </label>
-                  </div>
-                </fieldset>
-
-                <hr className="border-slate-200" />
-
-                {/* Campos numéricos */}
-                {ESPECIFICACOES.map(({ key, label }) => (
-                  <div key={key} className="flex items-center justify-between gap-3">
-                    <label className="text-sm font-medium text-slate-700 whitespace-nowrap">{label}</label>
-                    <input
-                      type="number"
-                      min="0"
-                      {...register(`especificacoes.${key}`)}
-                      className="w-20 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-center focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
-                      placeholder="0"
-                    />
-                  </div>
-                ))}
-              </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ============================================ */}
-          {/* OBSERVAÇÕES                                  */}
-          {/* ============================================ */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 uppercase tracking-wide mb-2">
-              Observações
-            </label>
-            <textarea
-              {...register('observacoes')}
-              rows={4}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none resize-y placeholder:text-slate-400"
-              placeholder="Descreva observações relevantes sobre a inspeção..."
-            />
-          </div>
-
-          {/* ============================================ */}
-          {/* STATUS DA LOJA + PENDÊNCIAS                  */}
-          {/* ============================================ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Status da Loja */}
-            <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status da Loja</h3>
-              </div>
-              <div className="p-4 space-y-2">
-                {STATUS_LOJA.map((status) => (
-                  <label key={status} className="flex items-center gap-3 cursor-pointer group">
-                    <input
-                      type="radio"
-                      value={status}
-                      {...register('statusLojaOpcao', { required: true })}
-                      required
-                      className="w-5 h-5 border-slate-300 text-brand-600 focus:ring-brand-500"
-                    />
-                    <span className="text-sm text-slate-700 group-hover:text-brand-700 transition-colors">{status}</span>
-                  </label>
-                ))}
-                {/* Outros */}
-                <div className="flex items-center gap-3 pt-1">
-                  <label className="text-sm font-medium text-slate-600 shrink-0">Outros:</label>
-                  <input
-                    type="text"
-                    {...register('statusOutros')}
-                    className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
-                    placeholder="Especifique..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Pendências */}
-            <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pendências</h3>
-              </div>
-              <div className="p-4 space-y-2">
-                {PENDENCIAS.map((pendencia) => (
-                  <label key={pendencia} className="flex items-center gap-3 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      {...register(`pendencias.${pendencia}`)}
-                      className="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                    />
-                    <span className="text-sm text-slate-700 group-hover:text-brand-700 transition-colors">{pendencia}</span>
-                  </label>
-                ))}
-                {/* Outros */}
-                <div className="flex items-center gap-3 pt-1">
-                  <label className="text-sm font-medium text-slate-600 shrink-0">Outros:</label>
-                  <input
-                    type="text"
-                    {...register('pendenciasOutros')}
-                    className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
-                    placeholder="Especifique..."
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ============================================ */}
-          {/* RODAPÉ — ENG/TÉC, HORÁRIOS, ACEITE           */}
-          {/* ============================================ */}
-          <div className="border-t-2 border-slate-200 pt-5">
+            {/* ============================================ */}
+            {/* DADOS DA LOJA                                */}
+            {/* ============================================ */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InputField label="Eng. / Técnico" register={register('engTecnico')} placeholder="Nome completo" />
-              <InputField label="Aceito Por" register={register('aceitoPor', { required: true })} required={true} placeholder="Nome de quem aceita" />
-              <div className="grid grid-cols-2 gap-3">
-                <InputField label="Horário Início" type="time" register={register('horarioInicio', { required: true })} required={true} />
-                <InputField 
-                  label="Horário Término" 
-                  type="time" 
-                  register={register('horarioTermino')} 
-                  placeholder="Automático" 
-                  disabled 
-                  className="opacity-70 bg-slate-100 placeholder-slate-500" 
+              <InputField label="Data" type="date" register={register('data')} />
+              <InputField label="Loja" register={register('loja')} placeholder="Nome da loja" />
+              <InputField label="Código Loja" register={register('codigoLoja')} placeholder="Código da loja" />
+            </div>
+
+            {/* ============================================ */}
+            {/* CONTATOS — RESPONSÁVEIS                      */}
+            {/* ============================================ */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Responsável Shopping */}
+              <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável Shopping</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  <InputField label="Solicitante" register={register('responsavelShopping.solicitante')} placeholder="Nome do responsável" readOnly={true} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <InputField label="Telefone" type="tel" register={register('responsavelShopping.telefone')} placeholder="(00) 00000-0000" readOnly={true} />
+                    <InputField label="E-mail" type="email" register={register('responsavelShopping.email')} placeholder="email@exemplo.com" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Responsável Loja */}
+              <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável Loja</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  <InputField label="Solicitante" register={register('responsavelLoja.solicitante', { required: true })} required={true} placeholder="Nome do responsável" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <InputField label="Telefone" type="tel" register={register('responsavelLoja.telefone', { required: true })} required={true} placeholder="(00) 00000-0000" />
+                    <InputField label="E-mail" type="email" register={register('responsavelLoja.email', { required: true })} required={true} placeholder="email@exemplo.com" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ============================================ */}
+            {/* TIPO DA LOJA                                 */}
+            {/* ============================================ */}
+            <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo da Loja</h3>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4">
+                  {TIPOS_LOJA.map((tipo) => (
+                    <label key={tipo} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="radio"
+                        value={tipo}
+                        {...register('tipoLoja', { required: true })}
+                        required
+                        className="w-4 h-4 sm:w-5 sm:h-5 border-slate-300 text-brand-600 focus:ring-brand-500 shrink-0"
+                      />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-brand-700 transition-colors">{tipo}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ============================================ */}
+            {/* TABELA DE SISTEMAS + ESPECIFICAÇÕES          */}
+            {/* ============================================ */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Tabela de Sistemas (2/3) */}
+              <div className="lg:col-span-2">
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  {/* Header da tabela */}
+                  <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sistemas</h3>
+                  </div>
+                  <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-red-800 text-white text-xs font-semibold uppercase tracking-wider">
+                    <div className="px-4 py-3">Sistema</div>
+                    <div className="px-2 py-3 text-center col-span-2 border-l border-red-700">Existente</div>
+                    <div className="px-2 py-3 text-center col-span-2 border-l border-red-700">Funcionando</div>
+                  </div>
+                  <div className="grid grid-cols-[2fr_repeat(4,_1fr)] bg-red-700 text-red-200 text-xs font-medium">
+                    <div className="px-4 py-1.5"></div>
+                    <div className="px-2 py-1.5 text-center border-l border-red-600">Sim</div>
+                    <div className="px-2 py-1.5 text-center">Não</div>
+                    <div className="px-2 py-1.5 text-center border-l border-red-600">Sim</div>
+                    <div className="px-2 py-1.5 text-center">Não</div>
+                  </div>
+
+                  {/* Linhas dos sistemas */}
+                  {SISTEMAS.map((sistema, index) => {
+                    const key = sistema.replace(/\s+/g, '_').toLowerCase();
+
+                    // Se "Existente=Não" está marcado para esta linha, desabilitamos os checkboxes de "Funcionando"
+                    const existenteNaoMarcado = sistemasWatch?.[key]?.existenteNao;
+
+                    return (
+                      <div
+                        key={sistema}
+                        className={`grid grid-cols-[2fr_repeat(4,_1fr)] items-center border-t border-slate-200 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                          } hover:bg-blue-50 transition-colors ${existenteNaoMarcado ? 'opacity-70' : ''}`}
+                      >
+                        <div className="px-4 py-3 text-sm font-medium text-slate-800">{sistema}</div>
+                        <CheckboxCell
+                          register={register(`sistemas.${key}.existenteSim`, {
+                            onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteNao`, false); }
+                          })}
+                        />
+                        <CheckboxCell
+                          register={register(`sistemas.${key}.existenteNao`, {
+                            onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.existenteSim`, false); }
+                          })}
+                        />
+                        <CheckboxCell
+                          register={register(`sistemas.${key}.funcionandoSim`, {
+                            onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoNao`, false); }
+                          })}
+                          borderLeft
+                          disabled={existenteNaoMarcado}
+                        />
+                        <CheckboxCell
+                          register={register(`sistemas.${key}.funcionandoNao`, {
+                            onChange: (e) => { if (e.target.checked) setValue(`sistemas.${key}.funcionandoSim`, false); }
+                          })}
+                          disabled={existenteNaoMarcado}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Especificações (1/3) */}
+              <div>
+                <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                  <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Especificações</h3>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {/* Central Própria */}
+                    <fieldset>
+                      <legend className="text-sm font-semibold text-slate-700 mb-2">Central Própria</legend>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" value="sim" {...register('centralPropria')} className="w-4 h-4 text-brand-600 focus:ring-brand-500" />
+                          <span className="text-sm text-slate-700">Sim</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" value="nao" {...register('centralPropria')} className="w-4 h-4 text-brand-600 focus:ring-brand-500" />
+                          <span className="text-sm text-slate-700">Não</span>
+                        </label>
+                      </div>
+                    </fieldset>
+
+                    <hr className="border-slate-200" />
+
+                    {/* Campos numéricos */}
+                    {ESPECIFICACOES.map(({ key, label }) => (
+                      <div key={key} className="flex items-center justify-between gap-3">
+                        <label className="text-sm font-medium text-slate-700 whitespace-nowrap">{label}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          {...register(`especificacoes.${key}`)}
+                          className="w-20 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-center focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                          placeholder="0"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ============================================ */}
+            {/* OBSERVAÇÕES                                  */}
+            {/* ============================================ */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                Observações
+              </label>
+              <textarea
+                {...register('observacoes')}
+                rows={4}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none resize-y placeholder:text-slate-400"
+                placeholder="Descreva observações relevantes sobre a inspeção..."
+              />
+            </div>
+
+            {/* ============================================ */}
+            {/* STATUS DA LOJA + PENDÊNCIAS                  */}
+            {/* ============================================ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Status da Loja */}
+              <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status da Loja</h3>
+                </div>
+                <div className="p-4 space-y-2">
+                  {STATUS_LOJA.map((status) => (
+                    <label key={status} className="flex items-center gap-3 cursor-pointer group">
+                      <input
+                        type="radio"
+                        value={status}
+                        {...register('statusLojaOpcao', { required: true })}
+                        required
+                        className="w-5 h-5 border-slate-300 text-brand-600 focus:ring-brand-500"
+                      />
+                      <span className="text-sm text-slate-700 group-hover:text-brand-700 transition-colors">{status}</span>
+                    </label>
+                  ))}
+                  {/* Outros */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <label className="text-sm font-medium text-slate-600 shrink-0">Outros:</label>
+                    <input
+                      type="text"
+                      {...register('statusOutros')}
+                      className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                      placeholder="Especifique..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pendências */}
+              <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pendências</h3>
+                </div>
+                <div className="p-4 space-y-2">
+                  {PENDENCIAS.map((pendencia) => (
+                    <label key={pendencia} className="flex items-center gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        {...register(`pendencias.${pendencia}`)}
+                        className="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                      />
+                      <span className="text-sm text-slate-700 group-hover:text-brand-700 transition-colors">{pendencia}</span>
+                    </label>
+                  ))}
+                  {/* Outros */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <label className="text-sm font-medium text-slate-600 shrink-0">Outros:</label>
+                    <input
+                      type="text"
+                      {...register('pendenciasOutros')}
+                      className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+                      placeholder="Especifique..."
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ============================================ */}
+            {/* RODAPÉ — ENG/TÉC, HORÁRIOS, ACEITE           */}
+            {/* ============================================ */}
+            <div className="border-t-2 border-slate-200 pt-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InputField label="Eng. / Técnico" register={register('engTecnico')} placeholder="Nome completo" />
+                <InputField label="Aceito Por" register={register('aceitoPor', { required: true })} required={true} placeholder="Nome de quem aceita" />
+                <div className="grid grid-cols-2 gap-3">
+                  <InputField label="Horário Início" type="time" register={register('horarioInicio', { required: true })} required={true} />
+                  <InputField
+                    label="Horário Término"
+                    type="time"
+                    register={register('horarioTermino')}
+                    placeholder="Automático"
+                    disabled
+                    className="opacity-70 bg-slate-100 placeholder-slate-500"
+                  />
+                </div>
+                <InputField
+                  label="Total de Horas"
+                  register={register('totalHoras')}
+                  placeholder="Calculado ao salvar"
+                  disabled
+                  className="opacity-70 bg-slate-100 placeholder-slate-500"
                 />
               </div>
-              <InputField 
-                label="Total de Horas" 
-                register={register('totalHoras')} 
-                placeholder="Calculado ao salvar" 
-                disabled 
-                className="opacity-70 bg-slate-100 placeholder-slate-500" 
-              />
             </div>
-          </div>
 
-          {/* ============================================ */}
-          {/* NOTA LEGAL                                   */}
-          {/* ============================================ */}
-          <p className="text-xs text-slate-400 leading-relaxed">
-            * Conforme NBR 17240 – 10.3 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio
-            esteja em pleno funcionamento, ou registrar no relatório as suas restrições ou falhas. Neste último caso recomenda‑se
-            que as correções necessárias sejam executadas de imediato. (Associação Brasileira de Normas Técnicas, 2010, p. 47).
-          </p>
+            {/* ============================================ */}
+            {/* NOTA LEGAL                                   */}
+            {/* ============================================ */}
+            <p className="text-xs text-slate-400 leading-relaxed">
+              * Conforme NBR 17240 – 10.3 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio
+              esteja em pleno funcionamento, ou registrar no relatório as suas restrições ou falhas. Neste último caso recomenda‑se
+              que as correções necessárias sejam executadas de imediato. (Associação Brasileira de Normas Técnicas, 2010, p. 47).
+            </p>
 
-        {/* ============================================ */}
-          {/* TOAST NOTIFICATION                            */}
-          {/* ============================================ */}
-          {submitStatus && (
-            <div
-              className={`fixed top-6 right-6 z-50 max-w-md px-6 py-4 rounded-xl shadow-2xl animate-slide-in ${
-                submitStatus.type === 'success'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-red-600 text-white'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-xl mt-0.5">{submitStatus.type === 'success' ? '✅' : '❌'}</span>
-                <div>
-                  <p className="font-semibold text-sm">
-                    {submitStatus.type === 'success' ? 'Sucesso!' : 'Erro'}
-                  </p>
-                  <p className="text-sm opacity-90 mt-0.5">{submitStatus.message}</p>
+            {/* ============================================ */}
+            {/* TOAST NOTIFICATION                            */}
+            {/* ============================================ */}
+            {submitStatus && (
+              <div
+                className={`fixed top-6 right-6 z-50 max-w-md px-6 py-4 rounded-xl shadow-2xl animate-slide-in ${submitStatus.type === 'success'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-red-600 text-white'
+                  }`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-xl mt-0.5">{submitStatus.type === 'success' ? '✅' : '❌'}</span>
+                  <div>
+                    <p className="font-semibold text-sm">
+                      {submitStatus.type === 'success' ? 'Sucesso!' : 'Erro'}
+                    </p>
+                    <p className="text-sm opacity-90 mt-0.5">{submitStatus.message}</p>
+                  </div>
+                  <button
+                    onClick={() => setSubmitStatus(null)}
+                    className="ml-auto text-white/70 hover:text-white text-lg leading-none cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button
-                  onClick={() => setSubmitStatus(null)}
-                  className="ml-auto text-white/70 hover:text-white text-lg leading-none cursor-pointer"
-                >
-                  ✕
-                </button>
               </div>
-            </div>
-          )}
+            )}
 
           </fieldset>
-          
+
           {/* ============================================ */}
           {/* BOTÃO SALVAR (Oculto em visualização)        */}
           {/* ============================================ */}
@@ -602,11 +600,10 @@ export default function ChecklistForm({ user }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full sm:w-auto px-10 py-5 text-white font-bold rounded-2xl shadow-xl text-base sm:text-lg uppercase tracking-wider transition-all duration-300 cursor-pointer ${
-                  isLoading
+                className={`w-full sm:w-auto px-10 py-5 text-white font-bold rounded-2xl shadow-xl text-base sm:text-lg uppercase tracking-wider transition-all duration-300 cursor-pointer ${isLoading
                     ? 'bg-slate-400 cursor-not-allowed shadow-none'
                     : 'bg-gradient-to-r from-red-600 to-red-800 shadow-red-500/30 hover:from-red-500 hover:to-red-700 hover:shadow-2xl hover:shadow-red-500/40 active:scale-[0.98]'
-                }`}
+                  }`}
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-3">
