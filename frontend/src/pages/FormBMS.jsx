@@ -131,7 +131,17 @@ export default function FormBMS({ user }) {
     }
 
     // 2. Validação da Seção Sistemas
-    const sistemasNaoPreenchidos = Object.values(formData.sistemas).some(s => !s.existenteSim && !s.existenteNao);
+    let chavesRequeridas = SISTEMAS_PADRAO.map(s => s.replace(/\s+/g, '_').toLowerCase());
+    if (formData.tipoLoja === 'Valores') {
+      const chavesValores = SISTEMAS_VALORES.map(s => s.replace(/\s+/g, '_').toLowerCase());
+      chavesRequeridas = [...chavesRequeridas, ...chavesValores];
+    }
+
+    const sistemasNaoPreenchidos = chavesRequeridas.some(key => {
+      const s = formData.sistemas[key];
+      return !s?.existenteSim && !s?.existenteNao;
+    });
+
     if (sistemasNaoPreenchidos) {
       alert("Por favor, preencha se os sistemas são existentes (Sim ou Não) para todas as linhas da tabela de Sistemas.");
       return;
