@@ -99,7 +99,7 @@ export default function FormBMS({ user }) {
       const fetchChecklist = async () => {
         setIsLoading(true);
         try {
-          const API_URL = 'https://dinastia-teste.zj3i1b.easypanel.host/api';
+          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
           const response = await fetch(`${API_URL}/checklists/${id}`, {
             credentials: 'include',
           });
