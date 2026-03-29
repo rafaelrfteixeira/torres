@@ -13,7 +13,7 @@ function App() {
     // Verifica se o usuário já está autenticado
     const checkAuth = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        const API_URL = 'https://torrescx-backend-checklist-lojas.zj3i1b.easypanel.host/api';
         const response = await fetch(`${API_URL}/auth/profile`, {
           credentials: 'include', // Envia os cookies de sessão!
         });
@@ -34,8 +34,8 @@ function App() {
     checkAuth();
   }, []);
 
-  const loginUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/signin`;
-  const logoutUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/signout`;
+  const loginUrl = 'https://torrescx-backend-checklist-lojas.zj3i1b.easypanel.host/api/auth/login';
+  const logoutUrl = 'https://torrescx-backend-checklist-lojas.zj3i1b.easypanel.host/api/auth/signout';
 
   if (isLoading) {
     return (
