@@ -60,7 +60,7 @@ export default function ChecklistForm({ user }) {
       codigoLoja: '',
       responsavelShopping: {
         solicitante: 'Flávia Barbosa',
-        telefone: '81993230472',
+        telefone: '81992643095',
         email: 'flavia.barbosa@riomarrecife.com.br'
       },
       responsavelLoja: { solicitante: '', telefone: '', email: '' },
@@ -304,8 +304,8 @@ export default function ChecklistForm({ user }) {
                 <div className="p-4 space-y-3">
                   <InputField label="Solicitante" register={register('responsavelLoja.solicitante', { required: true })} required={true} placeholder="Nome do responsável" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <InputField label="Telefone" type="tel" register={register('responsavelLoja.telefone', { required: true })} required={true} placeholder="(00) 00000-0000" />
-                    <InputField label="E-mail" type="email" register={register('responsavelLoja.email', { required: true })} required={true} placeholder="email@exemplo.com" />
+                    <InputField label="Telefone" type="tel" register={register('responsavelLoja.telefone')} placeholder="(00) 00000-0000" />
+                    <InputField label="E-mail" type="email" register={register('responsavelLoja.email')} placeholder="email@exemplo.com" />
                   </div>
                 </div>
               </div>
@@ -568,8 +568,8 @@ export default function ChecklistForm({ user }) {
             {submitStatus && (
               <div
                 className={`fixed top-6 right-6 z-50 max-w-md px-6 py-4 rounded-xl shadow-2xl animate-slide-in ${submitStatus.type === 'success'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-red-600 text-white'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-red-600 text-white'
                   }`}
               >
                 <div className="flex items-start gap-3">
@@ -601,8 +601,8 @@ export default function ChecklistForm({ user }) {
                 type="submit"
                 disabled={isLoading}
                 className={`w-full sm:w-auto px-10 py-5 text-white font-bold rounded-2xl shadow-xl text-base sm:text-lg uppercase tracking-wider transition-all duration-300 cursor-pointer ${isLoading
-                    ? 'bg-slate-400 cursor-not-allowed shadow-none'
-                    : 'bg-gradient-to-r from-red-600 to-red-800 shadow-red-500/30 hover:from-red-500 hover:to-red-700 hover:shadow-2xl hover:shadow-red-500/40 active:scale-[0.98]'
+                  ? 'bg-slate-400 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-red-600 to-red-800 shadow-red-500/30 hover:from-red-500 hover:to-red-700 hover:shadow-2xl hover:shadow-red-500/40 active:scale-[0.98]'
                   }`}
               >
                 {isLoading ? (

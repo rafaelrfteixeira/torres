@@ -280,18 +280,6 @@ function generateHTML(data) {
           </div>
         </div>
 
-        <!-- Tipo Loja -->
-        <div class="store-type-row">
-          <span class="store-type-label">TIPO DA LOJA</span>
-          <div>${checkbox(data.tipoLoja === 'Âncora')} ÂNCORA</div>
-          <div>${checkbox(data.tipoLoja === 'Megaloja')} MEGALOJA</div>
-          <div>${checkbox(data.tipoLoja === 'Satélite')} SATÉLITE</div>
-          <div>${checkbox(data.tipoLoja === 'Fast Food')} FAST FOOD</div>
-          <div>${checkbox(data.tipoLoja === 'Restaurante')} RESTAURANTE</div>
-          <div>${checkbox(data.tipoLoja === 'Clínica')} CLÍNICA</div>
-          <div>${checkbox(data.tipoLoja === 'Valores')} VALORES</div>
-        </div>
-
         <!-- Tabela de Sistemas (Width 100%) -->
         <div class="systems-col">
           <table class="systems-table">
