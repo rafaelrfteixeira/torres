@@ -23,6 +23,7 @@ const msal = require('@azure/msal-node');
 const GRAPH_SCOPES = [
   'User.Read',
   'Sites.ReadWrite.All',
+  'Files.Read.All',
   'Mail.Send',
 ];
 

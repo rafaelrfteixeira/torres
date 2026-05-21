@@ -32,3 +32,91 @@ body {
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
+
+/* ============================================ */
+/* AUTOCOMPLETE — Dropdown de Lojas            */
+/* ============================================ */
+.autocomplete-wrapper {
+  position: relative;
+}
+
+.autocomplete-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  margin-top: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  list-style: none;
+  padding: 4px;
+  animation: autocomplete-fade-in 0.15s ease-out;
+}
+
+@keyframes autocomplete-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.autocomplete-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.autocomplete-item:hover {
+  background-color: #eff6ff;
+}
+
+.autocomplete-item:active {
+  background-color: #dbeafe;
+}
+
+.autocomplete-loja {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.autocomplete-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.autocomplete-item:hover .autocomplete-loja {
+  color: #1d4ed8;
+}
+
+.autocomplete-empty {
+  padding: 12px 14px;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  text-align: center;
+  font-style: italic;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

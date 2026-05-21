@@ -41,7 +41,31 @@ export default function FormSelection() {
       borderHover: 'hover:border-brand-300',
       textColor: 'text-brand-600',
     },
+    {
+      id: 'excel',
+      title: 'Planilha Excel',
+      subtitle: 'Controle de Lojas e Códigos LUC',
+      route: 'https://torrescx-my.sharepoint.com/:x:/g/personal/msantos_torrescx_com_br/IQBfN8g4jixWQZEVBdGxBqpOAdzKmnnqf37pdxWv8UftGLM',
+      isExternal: true,
+      icon: (
+        <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125V5.625c0-.621.504-1.125 1.125-1.125h17.25c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125m-17.25 0V9m17.25 0V9m-18 4.5h18m-10.5-9V19.5m6-15V19.5" />
+        </svg>
+      ),
+      color: 'from-emerald-500 to-green-600',
+      bgLight: 'bg-emerald-50',
+      borderHover: 'hover:border-emerald-300',
+      textColor: 'text-emerald-600',
+    },
   ];
+
+  const handleNavigation = (inspection) => {
+    if (inspection.isExternal) {
+      window.open(inspection.route, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(inspection.route);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50 flex flex-col">
@@ -80,7 +104,7 @@ export default function FormSelection() {
           {inspections.map((inspection) => (
             <button
               key={inspection.id}
-              onClick={() => navigate(inspection.route)}
+              onClick={() => handleNavigation(inspection)}
               className={`group relative bg-white rounded-2xl border border-slate-200 shadow-md
                          hover:shadow-xl ${inspection.borderHover} hover:-translate-y-1
                          transition-all duration-300 ease-out

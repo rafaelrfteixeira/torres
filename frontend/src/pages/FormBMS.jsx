@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -50,6 +50,12 @@ export default function FormBMS({ user }) {
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // { type: 'success'|'error', message: '' }
 
+  // --- Autocomplete Lojas ---
+  const [lojasList, setLojasList] = useState([]);
+  const [lojaSearch, setLojaSearch] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const autocompleteRef = useRef(null);
+
   const { register, handleSubmit, watch, reset, setValue } = useForm({
     defaultValues: {
       data: new Date().toISOString().split('T')[0],
@@ -83,6 +89,45 @@ export default function FormBMS({ user }) {
 
   const sistemasWatch = watch('sistemas');
   const tipoLojaSelected = watch('tipoLoja');
+
+  // Buscar lojas do Excel ao montar o componente
+  useEffect(() => {
+    const fetchLojas = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_URL}/lojas`, { credentials: 'include' });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            setLojasList(result.data);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar lista de lojas:', error);
+      }
+    };
+    fetchLojas();
+  }, []);
+
+  // Fechar sugestões ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filtrar lojas pelo texto digitado
+  const filteredLojas = lojasList.filter((item) => {
+    const search = lojaSearch.toLowerCase();
+    return (
+      item.loja.toLowerCase().includes(search) ||
+      item.luc.toLowerCase().includes(search)
+    );
+  });
 
   // Lógica condicional: Limpar estado quando desmarcar Valores
   useEffect(() => {
@@ -290,8 +335,57 @@ export default function FormBMS({ user }) {
             {/* ============================================ */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InputField label="Data" type="date" register={register('data')} />
-              <InputField label="Loja" register={register('loja')} placeholder="Nome da loja" />
-              <InputField label="Código Loja" register={register('codigoLoja')} placeholder="Código da loja" />
+
+              {/* Autocomplete Loja */}
+              <div className="autocomplete-wrapper" ref={autocompleteRef}>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Loja</label>
+                <input
+                  type="text"
+                  value={lojaSearch}
+                  onChange={(e) => {
+                    setLojaSearch(e.target.value);
+                    setShowSuggestions(true);
+                    setValue('loja', e.target.value);
+                    setValue('codigoLoja', '');
+                  }}
+                  onFocus={() => { if (lojaSearch.length > 0) setShowSuggestions(true); }}
+                  placeholder="Digite o nome ou LUC da loja..."
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none placeholder:text-slate-400 transition-colors"
+                  autoComplete="off"
+                />
+                {showSuggestions && lojaSearch.length > 0 && filteredLojas.length > 0 && (
+                  <ul className="autocomplete-suggestions">
+                    {filteredLojas.slice(0, 15).map((item, idx) => (
+                      <li
+                        key={`${item.luc}-${idx}`}
+                        onClick={() => {
+                          setLojaSearch(item.loja);
+                          setValue('loja', item.loja);
+                          setValue('codigoLoja', item.luc);
+                          setShowSuggestions(false);
+                        }}
+                        className="autocomplete-item"
+                      >
+                        <span className="autocomplete-loja">{item.loja}</span>
+                        <span className="autocomplete-meta">LUC: {item.luc} — Piso: {item.piso}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {showSuggestions && lojaSearch.length > 0 && filteredLojas.length === 0 && (
+                  <ul className="autocomplete-suggestions">
+                    <li className="autocomplete-empty">Nenhuma loja encontrada</li>
+                  </ul>
+                )}
+              </div>
+
+              {/* Código LUC — readOnly, preenchido pelo autocomplete */}
+              <InputField
+                label="Código Loja (LUC)"
+                register={register('codigoLoja')}
+                placeholder="Preenchido automaticamente"
+                readOnly={true}
+              />
             </div>
 
             {/* ============================================ */}
