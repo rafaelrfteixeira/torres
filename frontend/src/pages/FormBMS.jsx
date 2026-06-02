@@ -62,9 +62,9 @@ export default function FormBMS({ user }) {
       loja: '',
       codigoLoja: '',
       responsavelShopping: {
-        solicitante: 'Flávia Barbosa',
+        solicitante: 'José Gabriel',
         telefone: '81992643095',
-        email: 'flavia.barbosa@riomarrecife.com.br'
+        email: 'jose.gabriel@riomarrecife.com.br'
       },
       responsavelLoja: { solicitante: '', telefone: '', email: '' },
       tipoManutencao: '', // 'corretiva' ou 'preventiva'
