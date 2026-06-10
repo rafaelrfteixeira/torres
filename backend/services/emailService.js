@@ -7,7 +7,7 @@ const { getGraphClient } = require('./graphClient');
  * através da conta autenticada do usuário ativo.
  */
 
-async function sendChecklistEmail(accessToken, formData, pdfBase64, recipientEmails = []) {
+async function sendChecklistEmail(accessToken, formData, pdfBase64, recipientEmails = [], ccEmails = ['msantos@torrescx.com.br']) {
   if (!accessToken) {
     throw new Error('Access token não fornecido para o envio de e-mail.');
   }
@@ -48,8 +48,15 @@ async function sendChecklistEmail(accessToken, formData, pdfBase64, recipientEma
     ]
   };
 
+  if (ccEmails && ccEmails.length > 0) {
+    message.ccRecipients = ccEmails.map(email => ({
+      emailAddress: { address: email }
+    }));
+  }
+
   try {
-    console.log(`✉️ Enviando e-mail para ${recipientEmails.join(', ')}...`);
+    const ccLog = ccEmails && ccEmails.length > 0 ? ` com cópia para ${ccEmails.join(', ')}` : '';
+    console.log(`✉️ Enviando e-mail para ${recipientEmails.join(', ')}${ccLog}...`);
     // Endpoint do MS Graph para disparar emails
     await client.api('/me/sendMail')
       .post({
@@ -57,7 +64,7 @@ async function sendChecklistEmail(accessToken, formData, pdfBase64, recipientEma
         saveToSentItems: true 
       });
     
-    console.log(`✅ E-mail enviado com sucesso para ${recipientEmails.join(', ')}`);
+    console.log(`✅ E-mail enviado com sucesso para ${recipientEmails.join(', ')}${ccLog}`);
     return true;
   } catch (error) {
     console.error('❌ Erro da Graph API ao enviar e-mail:', error.message);
