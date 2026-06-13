@@ -19,7 +19,7 @@ const XLSX = require('xlsx');
 // Cache em memória para evitar chamadas repetidas
 // Formato: { data: [...], timestamp: Date }
 // -------------------------------------------------
-let _lojasCache = null;
+const _lojasCache = new Map(); // chave = excelLojasUrl
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
 
 /**
@@ -323,18 +323,19 @@ async function tryDirectDownloadUrl(sharingToken, accessToken) {
  * Busca os dados das lojas a partir de uma planilha Excel compartilhada.
  * Tenta múltiplas estratégias de acesso.
  */
-async function getLojas(accessToken) {
-  // Verificar cache
-  if (_lojasCache && (Date.now() - _lojasCache.timestamp) < CACHE_TTL_MS) {
-    console.log(`⚡ Retornando ${_lojasCache.data.length} lojas do cache`);
-    return _lojasCache.data;
+async function getLojas(accessToken, excelLojasUrl) {
+  if (!excelLojasUrl) {
+    throw new Error('URL do Excel de lojas não configurada para este tenant.');
   }
 
-  const sharingUrl = process.env.EXCEL_LOJAS_URL;
-  if (!sharingUrl) {
-    throw new Error('EXCEL_LOJAS_URL não configurada no .env');
+  // Verificar cache por URL do tenant
+  const cached = _lojasCache.get(excelLojasUrl);
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
+    console.log(`⚡ Retornando ${cached.data.length} lojas do cache`);
+    return cached.data;
   }
 
+  const sharingUrl = excelLojasUrl;
   const sharingToken = encodeSharingUrl(sharingUrl);
   console.log('🔗 Sharing token:', sharingToken.substring(0, 50) + '...');
   console.log('🔗 URL original:', sharingUrl);
@@ -367,15 +368,15 @@ async function getLojas(accessToken) {
     const errorMsg =
       'Não foi possível acessar a planilha de lojas por nenhuma das estratégias. ' +
       'Verifique se:\n' +
-      '  1. A EXCEL_LOJAS_URL no .env está correta\n' +
+      '  1. A URL do Excel do tenant está correta\n' +
       '  2. O arquivo foi compartilhado com "Pessoas na Torres CX com o link"\n' +
       '  3. O usuário logado tem permissão para acessar o arquivo\n' +
       '  4. O App Registration tem a permissão Files.Read.All';
     throw new Error(lastError ? `${errorMsg}\n\nÚltimo erro: ${lastError.message}` : errorMsg);
   }
 
-  // Atualizar cache
-  _lojasCache = { data: lojas, timestamp: Date.now() };
+  // Atualizar cache por tenant
+  _lojasCache.set(excelLojasUrl, { data: lojas, timestamp: Date.now() });
 
   return lojas;
 }
@@ -383,9 +384,14 @@ async function getLojas(accessToken) {
 /**
  * Limpa o cache de lojas (útil para forçar recarga).
  */
-function clearLojasCache() {
-  _lojasCache = null;
-  console.log('🗑️  Cache de lojas limpo');
+function clearLojasCache(excelLojasUrl) {
+  if (excelLojasUrl) {
+    _lojasCache.delete(excelLojasUrl);
+    console.log(`🗑️  Cache de lojas limpo para: ${excelLojasUrl}`);
+  } else {
+    _lojasCache.clear();
+    console.log('🗑️  Cache de lojas limpo (todos os tenants)');
+  }
 }
 
 module.exports = { encodeSharingUrl, getLojas, clearLojasCache };

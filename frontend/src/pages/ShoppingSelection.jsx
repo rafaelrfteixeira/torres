@@ -5,18 +5,17 @@ import { useNavigate } from 'react-router-dom';
  *
  * Primeira tela após o login. Permite ao usuário selecionar
  * o cliente/shopping onde realizará a inspeção.
+ *
+ * Os cards são renderizados dinamicamente com base nos shoppings
+ * permitidos para o usuário autenticado (RBAC por e-mail).
  */
-export default function ShoppingSelection() {
+export default function ShoppingSelection({ allowedShoppings = [], shoppingsMetadata = [] }) {
   const navigate = useNavigate();
 
-  const shoppings = [
-    {
-      id: 'riomar',
-      name: 'Shopping RioMar Recife',
-      logo: '/logo_riomar_recife.png',
-      route: '/riomar_recife/selecionar-form',
-    },
-  ];
+  // Filtrar shoppings com base nas permissões do usuário
+  const visibleShoppings = shoppingsMetadata.filter((s) =>
+    allowedShoppings.includes(s.id)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50 flex flex-col">
@@ -42,11 +41,13 @@ export default function ShoppingSelection() {
         </div>
 
         {/* Grid de cards */}
-        <div className="w-full max-w-md mx-auto grid grid-cols-1 gap-6">
-          {shoppings.map((shopping) => (
+        <div className={`w-full max-w-2xl mx-auto grid gap-6 ${
+          visibleShoppings.length === 1 ? 'grid-cols-1 max-w-md' : 'grid-cols-1 sm:grid-cols-2'
+        }`}>
+          {visibleShoppings.map((shopping) => (
             <button
               key={shopping.id}
-              onClick={() => navigate(shopping.route)}
+              onClick={() => navigate(`/${shopping.id}/selecionar-form`)}
               className="group relative bg-white rounded-2xl border border-slate-200 shadow-md
                          hover:shadow-xl hover:border-brand-300 hover:-translate-y-1
                          transition-all duration-300 ease-out
@@ -87,6 +88,16 @@ export default function ShoppingSelection() {
             </button>
           ))}
         </div>
+
+        {/* Mensagem caso não tenha nenhum shopping */}
+        {visibleShoppings.length === 0 && (
+          <div className="mt-12 text-center text-slate-400">
+            <p className="text-lg font-medium">Nenhum shopping disponível</p>
+            <p className="text-sm mt-2">
+              Seu acesso ainda não foi configurado. Entre em contato com o administrador.
+            </p>
+          </div>
+        )}
       </main>
 
       {/* Footer discreto */}

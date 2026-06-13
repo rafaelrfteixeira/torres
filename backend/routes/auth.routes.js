@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getMsalClient, GRAPH_SCOPES, REDIRECT_URI } = require('../config/authConfig');
+const { getAllowedShoppings, shoppings } = require('../config/tenants');
 
 /**
  * Rotas de Autenticação — Microsoft Entra ID (OAuth 2.0)
@@ -107,11 +108,26 @@ router.get('/profile', (req, res) => {
     });
   }
 
+  // Resolver shoppings permitidos via RBAC
+  const email = req.session.user?.username;
+  const allowedShoppings = getAllowedShoppings(email);
+
+  // Retornar metadados dos shoppings para o frontend renderizar os cards
+  const shoppingsMetadata = allowedShoppings.map((key) => ({
+    id: key,
+    name: shoppings[key]?.name || key,
+    logo: shoppings[key]?.logo || '',
+    excelLojasUrl: shoppings[key]?.excelLojasUrl || '',
+    responsavelShopping: shoppings[key]?.responsavelShopping || {},
+  }));
+
   res.json({
     success: true,
     data: {
       user: req.session.user,
       isAuthenticated: true,
+      allowedShoppings,
+      shoppingsMetadata,
     },
   });
 });

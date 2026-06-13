@@ -46,12 +46,16 @@ const ESPECIFICACOES = [
   { key: 'outrosDispositivos', label: 'Outros Dispositivos' },
 ];
 
-export default function ChecklistForm({ user }) {
+export default function ChecklistForm({ user, shoppingsMetadata = [] }) {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id, tenant } = useParams();
   const isReadOnly = !!id;
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // { type: 'success'|'error', message: '' }
+
+  // Resolver metadados do tenant atual
+  const currentShopping = shoppingsMetadata.find((s) => s.id === tenant) || { id: tenant, name: tenant, logo: '' };
+  const responsavelDefault = currentShopping.responsavelShopping?.sdai || { solicitante: '', telefone: '', email: '' };
 
   // --- Autocomplete Lojas ---
   const [lojasList, setLojasList] = useState([]);
@@ -65,9 +69,9 @@ export default function ChecklistForm({ user }) {
       loja: '',
       codigoLoja: '',
       responsavelShopping: {
-        solicitante: 'Flávia Barbosa',
-        telefone: '81992643095',
-        email: 'flavia.barbosa@riomarrecife.com.br'
+        solicitante: responsavelDefault.solicitante,
+        telefone: responsavelDefault.telefone,
+        email: responsavelDefault.email,
       },
       responsavelLoja: { solicitante: '', telefone: '', email: '' },
       tipoManutencao: '', // 'corretiva' ou 'preventiva'
@@ -99,7 +103,7 @@ export default function ChecklistForm({ user }) {
     const fetchLojas = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${API_URL}/lojas`, { credentials: 'include' });
+        const response = await fetch(`${API_URL}/lojas?tenant=${tenant}`, { credentials: 'include' });
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.data) {
@@ -111,7 +115,7 @@ export default function ChecklistForm({ user }) {
       }
     };
     fetchLojas();
-  }, []);
+  }, [tenant]);
 
   // Fechar sugestões ao clicar fora
   useEffect(() => {
@@ -139,7 +143,7 @@ export default function ChecklistForm({ user }) {
         setIsLoading(true);
         try {
           const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-          const response = await fetch(`${API_URL}/checklists/${id}`, {
+          const response = await fetch(`${API_URL}/checklists/${id}?tenant=${tenant}`, {
             credentials: 'include',
           });
           if (response.ok) {
@@ -156,7 +160,7 @@ export default function ChecklistForm({ user }) {
       };
       fetchChecklist();
     }
-  }, [id, reset]);
+  }, [id, tenant, reset]);
 
   const onSubmit = async (formData) => {
     // 1. Validação Prévia Simples
@@ -198,7 +202,7 @@ export default function ChecklistForm({ user }) {
     // Mapear radios para booleans
     const formMapped = {
       ...formData,
-      shopping_slug: 'riomar_recife',
+      tenant,
       checklist_type: 'sdai',
       manutencaoCorretiva: formData.tipoManutencao === 'corretiva',
       manutencaoPreventiva: formData.tipoManutencao === 'preventiva',
@@ -253,13 +257,15 @@ export default function ChecklistForm({ user }) {
         {/* CABEÇALHO DO FORMULÁRIO                      */}
         {/* ============================================ */}
         <div className="bg-gradient-to-r from-red-800 to-red-600 px-4 sm:px-6 py-4 sm:py-5 text-white">
-          {/* Breadcrumb / Contexto */}
+          {/* Breadcrumb / Contexto — Dinâmico */}
           <div className="flex items-center gap-2 mb-4 px-2.5 py-1.5 bg-black/10 w-fit rounded-md border border-white/10 backdrop-blur-sm">
-            <div className="bg-white rounded p-0.5">
-              <img src="/logo_riomar_recife.png" alt="RioMar" className="h-3 sm:h-4 object-contain" />
-            </div>
+            {currentShopping.logo && (
+              <div className="bg-white rounded p-0.5">
+                <img src={currentShopping.logo} alt={currentShopping.name} className="h-3 sm:h-4 object-contain" />
+              </div>
+            )}
             <span className="text-xs sm:text-sm font-medium text-red-50 tracking-wide">
-              Shopping RioMar Recife <span className="text-red-200 mx-1">&gt;</span> Inspeção SDAI
+              {currentShopping.name} <span className="text-red-200 mx-1">&gt;</span> Inspeção SDAI
             </span>
           </div>
 
@@ -267,7 +273,7 @@ export default function ChecklistForm({ user }) {
             <div className="w-full flex items-center justify-center relative">
               <button
                 type="button"
-                onClick={() => navigate('/riomar_recife/selecionar-form')}
+                onClick={() => navigate(`/${tenant}/selecionar-form`)}
                 className="absolute left-0 p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
                 title="Voltar para o Painel"
                 aria-label="Voltar"

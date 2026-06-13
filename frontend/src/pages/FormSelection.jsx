@@ -1,20 +1,32 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 /**
  * FormSelection Page
  *
  * Permite ao técnico escolher o tipo de inspeção a ser realizada
  * no shopping selecionado (SDAI ou BMS).
+ *
+ * O tenant (shopping) é extraído da URL via useParams().
+ * Logo e nome do shopping são resolvidos a partir do shoppingsMetadata.
  */
-export default function FormSelection() {
+export default function FormSelection({ shoppingsMetadata = [] }) {
   const navigate = useNavigate();
+  const { tenant } = useParams();
+
+  // Resolver metadados do tenant atual
+  const currentShopping = shoppingsMetadata.find((s) => s.id === tenant) || {
+    id: tenant,
+    name: tenant,
+    logo: '',
+    excelLojasUrl: '',
+  };
 
   const inspections = [
     {
       id: 'sdai',
       title: 'Inspeção SDAI',
       subtitle: 'Sistema de Detecção e Alarme de Incêndio',
-      route: '/riomar_recife/sdai/novo',
+      route: `/${tenant}/sdai/novo`,
       icon: (
         <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
@@ -30,7 +42,7 @@ export default function FormSelection() {
       id: 'bms',
       title: 'Inspeção BMS',
       subtitle: 'Sistema de Automação',
-      route: '/riomar_recife/bms/novo',
+      route: `/${tenant}/bms/novo`,
       icon: (
         <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
@@ -45,7 +57,7 @@ export default function FormSelection() {
       id: 'excel',
       title: 'Planilha Excel',
       subtitle: 'Controle de Lojas e Códigos LUC',
-      route: 'https://torrescx-my.sharepoint.com/:x:/g/personal/msantos_torrescx_com_br/IQBfN8g4jixWQZEVBdGxBqpOAdzKmnnqf37pdxWv8UftGLM',
+      route: currentShopping.excelLojasUrl || '',
       isExternal: true,
       icon: (
         <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -87,15 +99,17 @@ export default function FormSelection() {
           </h1>
         </div>
 
-        {/* Contexto do shopping selecionado */}
+        {/* Contexto do shopping selecionado — dinâmico */}
         <div className="flex items-center gap-3 mb-10 px-5 py-3 bg-white/70 backdrop-blur-sm rounded-xl border border-slate-100 shadow-sm">
-          <img
-            src="/logo_riomar_recife.png"
-            alt="RioMar Recife"
-            className="h-8 object-contain"
-          />
+          {currentShopping.logo && (
+            <img
+              src={currentShopping.logo}
+              alt={currentShopping.name}
+              className="h-8 object-contain"
+            />
+          )}
           <span className="text-sm font-medium text-slate-500">
-            Shopping RioMar Recife
+            {currentShopping.name}
           </span>
         </div>
 

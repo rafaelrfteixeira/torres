@@ -257,15 +257,15 @@ function mapListFieldsToForm(fields) {
 
 /**
  * Cache dos IDs resolvidos (evita chamar o Graph em toda requisição)
+ * Agora é tenant-aware: cache por combinação site+listName
  */
 let _cachedSiteId = null;
-let _cachedListId = null;
-let _cachedListName = null; // rastreia qual lista está em cache
+const _listIdCache = new Map(); // chave = targetListName → valor = listId
 
 /**
  * Resolve o Site ID e List ID do SharePoint via Graph API
- * usando hostname, site path e list name do .env.
- * Os resultados são cacheados em memória.
+ * usando hostname, site path e list name.
+ * Os resultados são cacheados em memória (por lista).
  */
 async function resolveSharePointIds(graphClient, targetListName) {
   const { SHAREPOINT_HOSTNAME, SHAREPOINT_SITE_PATH } = process.env;
@@ -287,9 +287,8 @@ async function resolveSharePointIds(graphClient, targetListName) {
     console.log(`✅ Site ID resolvido: ${_cachedSiteId}`);
   }
 
-  // Resolver List ID (se não cacheado ou se a lista mudou)
-  if (!_cachedListId || _cachedListName !== targetListName) {
-    _cachedListId = null; // invalida cache se a lista mudou
+  // Resolver List ID (cache por nome da lista para suportar multi-tenant)
+  if (!_listIdCache.has(targetListName)) {
     console.log(`🔍 Resolvendo List ID: "${targetListName}"`);
 
     // Busca TODAS as listas e filtra no lado do Node comparando
@@ -316,12 +315,11 @@ async function resolveSharePointIds(graphClient, targetListName) {
       );
     }
 
-    _cachedListId = found.id;
-    _cachedListName = targetListName;
-    console.log(`✅ List ID resolvido: "${found.displayName}" → ${_cachedListId}`);
+    _listIdCache.set(targetListName, found.id);
+    console.log(`✅ List ID resolvido: "${found.displayName}" → ${found.id}`);
   }
 
-  return { siteId: _cachedSiteId, listId: _cachedListId };
+  return { siteId: _cachedSiteId, listId: _listIdCache.get(targetListName) };
 }
 
 /**
@@ -340,21 +338,16 @@ const create = async (req, res, next) => {
     }
 
     const formData = req.body;
-    const { shopping_slug, checklist_type } = formData;
+    const { checklist_type } = formData;
+    const tenantConfig = req.tenantConfig;
 
-    let targetListName;
-
-    // Roteador Dinâmico
-    if (shopping_slug === 'riomar_recife' && checklist_type === 'sdai') {
-      targetListName = process.env.SHAREPOINT_LIST_SDAI_RIOMAR_RECIFE;
-    } else if (shopping_slug === 'riomar_recife' && checklist_type === 'bms') {
-      targetListName = process.env.SHAREPOINT_LIST_BMS_RIOMAR_RECIFE;
-    } else {
-      return res.status(400).json({ success: false, error: 'Cliente ou tipo de checklist não reconhecido.' });
-    }
+    // Resolver lista do SharePoint a partir do tenant
+    const targetListName = checklist_type === 'bms'
+      ? tenantConfig.listaBMS
+      : tenantConfig.listaSDAI;
 
     if (!targetListName) {
-      return res.status(500).json({ success: false, error: 'Lista do SharePoint (targetListName) não definida nas variáveis de ambiente.' });
+      return res.status(500).json({ success: false, error: `Lista do SharePoint não configurada para o tenant "${req.tenantSlug}" (tipo: ${checklist_type}).` });
     }
 
     const graphClient = getGraphClient(accessToken);
@@ -395,7 +388,7 @@ const create = async (req, res, next) => {
 
         if (recipientEmails.length > 0) {
           fs.appendFileSync(logFile, `[${new Date().toISOString()}] ✉️ Preparando disparo de email para Responsável Shopping: ${shoppingEmail}...\n`);
-          await sendChecklistEmail(accessToken, formData, pdfBase64, recipientEmails);
+          await sendChecklistEmail(accessToken, formData, pdfBase64, recipientEmails, tenantConfig?.ccEmails);
           fs.appendFileSync(logFile, `[${new Date().toISOString()}] ✅ E-mail enviado com sucesso!\n`);
         } else {
           fs.appendFileSync(logFile, `[${new Date().toISOString()}] ⏭️ Sem endereço de e-mail.\n`);
@@ -449,9 +442,17 @@ const listColumns = async (req, res, next) => {
 
     const graphClient = getGraphClient(accessToken);
     
-    // Rota direta solicitada temporariamente para debug do BMS:
+    // Usar tenant config para resolver a lista correta
+    const checklist_type = req.query.checklist_type || 'bms';
+    const tenantConfig = req.tenantConfig;
+    const targetListName = checklist_type === 'bms'
+      ? tenantConfig.listaBMS
+      : tenantConfig.listaSDAI;
+
+    const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
+
     const columnsResponse = await graphClient
-      .api(`/sites/${process.env.SHAREPOINT_HOSTNAME}:${process.env.SHAREPOINT_SITE_PATH}:/lists/${process.env.SHAREPOINT_LIST_BMS_RIOMAR_RECIFE}/columns`)
+      .api(`/sites/${siteId}/lists/${listId}/columns`)
       .get();
 
     const columns = columnsResponse.value.map(col => ({
@@ -490,9 +491,14 @@ const list = async (req, res, next) => {
     const graphClient = getGraphClient(accessToken);
     
     const checklist_type = req.query.checklist_type || 'sdai';
-    const targetListName = checklist_type === 'bms' 
-      ? process.env.SHAREPOINT_LIST_BMS_RIOMAR_RECIFE 
-      : process.env.SHAREPOINT_LIST_SDAI_RIOMAR_RECIFE;
+    const tenantConfig = req.tenantConfig;
+    const targetListName = checklist_type === 'bms'
+      ? tenantConfig.listaBMS
+      : tenantConfig.listaSDAI;
+
+    if (!targetListName) {
+      return res.status(500).json({ success: false, error: `Lista do SharePoint não configurada para o tenant "${req.tenantSlug}" (tipo: ${checklist_type}).` });
+    }
 
     const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
 
@@ -545,9 +551,14 @@ const getById = async (req, res, next) => {
 
     const { id } = req.params;
     const checklist_type = req.query.checklist_type || 'sdai';
-    const targetListName = checklist_type === 'bms' 
-      ? process.env.SHAREPOINT_LIST_BMS_RIOMAR_RECIFE 
-      : process.env.SHAREPOINT_LIST_SDAI_RIOMAR_RECIFE;
+    const tenantConfig = req.tenantConfig;
+    const targetListName = checklist_type === 'bms'
+      ? tenantConfig.listaBMS
+      : tenantConfig.listaSDAI;
+
+    if (!targetListName) {
+      return res.status(500).json({ success: false, error: `Lista do SharePoint não configurada para o tenant "${req.tenantSlug}" (tipo: ${checklist_type}).` });
+    }
 
     const graphClient = getGraphClient(accessToken);
     const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);

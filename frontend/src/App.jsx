@@ -7,6 +7,8 @@ import FormBMS from './pages/FormBMS';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [allowedShoppings, setAllowedShoppings] = useState([]);
+  const [shoppingsMetadata, setShoppingsMetadata] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -22,6 +24,8 @@ function App() {
           const result = await response.json();
           if (result.success && result.data.isAuthenticated) {
             setUser(result.data.user);
+            setAllowedShoppings(result.data.allowedShoppings || []);
+            setShoppingsMetadata(result.data.shoppingsMetadata || []);
           }
         }
       } catch (error) {
@@ -96,12 +100,17 @@ function App() {
         </a>
       </div>
 
-      {/* Rotas */}
+      {/* Rotas — Dinâmicas com :tenant */}
       <Routes>
-        <Route path="/" element={<ShoppingSelection />} />
-        <Route path="/riomar_recife/selecionar-form" element={<FormSelection />} />
-        <Route path="/riomar_recife/sdai/novo" element={<ChecklistForm user={user} />} />
-        <Route path="/riomar_recife/bms/novo" element={<FormBMS user={user} />} />
+        <Route path="/" element={
+          <ShoppingSelection
+            allowedShoppings={allowedShoppings}
+            shoppingsMetadata={shoppingsMetadata}
+          />
+        } />
+        <Route path="/:tenant/selecionar-form" element={<FormSelection shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="/:tenant/sdai/novo" element={<ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="/:tenant/bms/novo" element={<FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
       </Routes>
     </>
   );

@@ -1,22 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const { isAuthenticated } = require('../middlewares/auth.middleware');
+const { tenantAuthorization } = require('../middlewares/tenant.middleware');
 const { getLojas, clearLojasCache } = require('../services/excelService');
 
 /**
  * Rotas de Lojas — Leitura de dados do Excel via MS Graph
  *
- * GET /api/lojas → Retorna a lista de lojas com piso e código LUC
- * POST /api/lojas/refresh → Limpa o cache e recarrega a lista
+ * GET /api/lojas?tenant=riomar-recife → Retorna a lista de lojas com piso e código LUC
+ * POST /api/lojas/refresh?tenant=riomar-recife → Limpa o cache e recarrega a lista
  */
 
 // -----------------------------------------------
-// GET /lojas
-// Retorna a lista de lojas da planilha Excel
+// GET /lojas?tenant=<tenant>
+// Retorna a lista de lojas da planilha Excel do tenant
 // -----------------------------------------------
-router.get('/', isAuthenticated, async (req, res, next) => {
+router.get('/', isAuthenticated, tenantAuthorization, async (req, res, next) => {
   try {
-    const lojas = await getLojas(req.session.accessToken);
+    const lojas = await getLojas(req.session.accessToken, req.tenantConfig.excelLojasUrl);
 
     res.json({
       success: true,
@@ -34,13 +35,13 @@ router.get('/', isAuthenticated, async (req, res, next) => {
 });
 
 // -----------------------------------------------
-// POST /lojas/refresh
+// POST /lojas/refresh?tenant=<tenant>
 // Limpa o cache e recarrega a lista de lojas
 // -----------------------------------------------
-router.post('/refresh', isAuthenticated, async (req, res, next) => {
+router.post('/refresh', isAuthenticated, tenantAuthorization, async (req, res, next) => {
   try {
-    clearLojasCache();
-    const lojas = await getLojas(req.session.accessToken);
+    clearLojasCache(req.tenantConfig.excelLojasUrl);
+    const lojas = await getLojas(req.session.accessToken, req.tenantConfig.excelLojasUrl);
 
     res.json({
       success: true,

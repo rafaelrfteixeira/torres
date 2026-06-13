@@ -43,12 +43,16 @@ const PENDENCIAS = [
   'Troca de Dispositivo',
 ];
 
-export default function FormBMS({ user }) {
+export default function FormBMS({ user, shoppingsMetadata = [] }) {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id, tenant } = useParams();
   const isReadOnly = !!id;
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // { type: 'success'|'error', message: '' }
+
+  // Resolver metadados do tenant atual
+  const currentShopping = shoppingsMetadata.find((s) => s.id === tenant) || { id: tenant, name: tenant, logo: '' };
+  const responsavelDefault = currentShopping.responsavelShopping?.bms || { solicitante: '', telefone: '', email: '' };
 
   // --- Autocomplete Lojas ---
   const [lojasList, setLojasList] = useState([]);
@@ -62,9 +66,9 @@ export default function FormBMS({ user }) {
       loja: '',
       codigoLoja: '',
       responsavelShopping: {
-        solicitante: 'José Gabriel',
-        telefone: '81992643095',
-        email: 'jose.gabriel@riomarrecife.com.br'
+        solicitante: responsavelDefault.solicitante,
+        telefone: responsavelDefault.telefone,
+        email: responsavelDefault.email,
       },
       responsavelLoja: { solicitante: '', telefone: '', email: '' },
       tipoManutencao: '', // 'corretiva' ou 'preventiva'
@@ -95,7 +99,7 @@ export default function FormBMS({ user }) {
     const fetchLojas = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${API_URL}/lojas`, { credentials: 'include' });
+        const response = await fetch(`${API_URL}/lojas?tenant=${tenant}`, { credentials: 'include' });
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.data) {
@@ -107,7 +111,7 @@ export default function FormBMS({ user }) {
       }
     };
     fetchLojas();
-  }, []);
+  }, [tenant]);
 
   // Fechar sugestões ao clicar fora
   useEffect(() => {
@@ -145,7 +149,7 @@ export default function FormBMS({ user }) {
         setIsLoading(true);
         try {
           const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-          const response = await fetch(`${API_URL}/checklists/${id}`, {
+          const response = await fetch(`${API_URL}/checklists/${id}?tenant=${tenant}&checklist_type=bms`, {
             credentials: 'include',
           });
           if (response.ok) {
@@ -162,7 +166,7 @@ export default function FormBMS({ user }) {
       };
       fetchChecklist();
     }
-  }, [id, reset]);
+  }, [id, tenant, reset]);
 
   const onSubmit = async (formData) => {
     // 1. Validação Prévia Simples
@@ -214,7 +218,7 @@ export default function FormBMS({ user }) {
     // Mapear radios para booleans
     const formMapped = {
       ...formData,
-      shopping_slug: 'riomar_recife',
+      tenant,
       checklist_type: 'bms',
       manutencaoCorretiva: formData.tipoManutencao === 'corretiva',
       manutencaoPreventiva: formData.tipoManutencao === 'preventiva',
@@ -269,13 +273,15 @@ export default function FormBMS({ user }) {
         {/* CABEÇALHO DO FORMULÁRIO                      */}
         {/* ============================================ */}
         <div className="bg-gradient-to-r from-brand-800 to-brand-700 px-4 sm:px-6 py-4 sm:py-5 text-white">
-          {/* Breadcrumb / Contexto */}
+          {/* Breadcrumb / Contexto — Dinâmico */}
           <div className="flex items-center gap-2 mb-4 px-2.5 py-1.5 bg-black/10 w-fit rounded-md border border-white/10 backdrop-blur-sm">
-            <div className="bg-white rounded p-0.5">
-              <img src="/logo_riomar_recife.png" alt="RioMar" className="h-3 sm:h-4 object-contain" />
-            </div>
+            {currentShopping.logo && (
+              <div className="bg-white rounded p-0.5">
+                <img src={currentShopping.logo} alt={currentShopping.name} className="h-3 sm:h-4 object-contain" />
+              </div>
+            )}
             <span className="text-xs sm:text-sm font-medium text-blue-50 tracking-wide">
-              Shopping RioMar Recife <span className="text-blue-200 mx-1">&gt;</span> Inspeção BMS
+              {currentShopping.name} <span className="text-blue-200 mx-1">&gt;</span> Inspeção BMS
             </span>
           </div>
 
@@ -283,7 +289,7 @@ export default function FormBMS({ user }) {
             <div className="w-full flex items-center justify-center relative">
               <button
                 type="button"
-                onClick={() => navigate('/riomar_recife/selecionar-form')}
+                onClick={() => navigate(`/${tenant}/selecionar-form`)}
                 className="absolute left-0 p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
                 title="Voltar para o Painel"
                 aria-label="Voltar"
