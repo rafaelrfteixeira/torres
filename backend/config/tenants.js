@@ -66,6 +66,8 @@ const permissions = {
   'msantos@torrescx.com.br': ['*'],
   'antonio.cezar@torrescx.com.br': ['riomar-recife'],
   'carlos.gueiros@torrescx.com.br': ['riomar-kennedy'],
+  'marcos.torres@torrescx.com.br': ['*'],
+
 };
 
 /**
