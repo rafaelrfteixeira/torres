@@ -577,4 +577,268 @@ const getById = async (req, res, next) => {
   }
 };
 
-module.exports = { create, listColumns, list, getById };
+/**
+ * GET /api/checklists/report
+ * Busca TODOS os itens da lista SDAI do Microsoft Lists (com paginação)
+ * e retorna dados mapeados para o Dashboard de acompanhamento.
+ *
+ * Também retorna a contagem total de lojas do prédio (via Excel do tenant)
+ * para cálculo de KPI de cobertura.
+ */
+const listReport = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+
+    if (!accessToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado. Faça login em /api/auth/signin',
+      });
+    }
+
+    const graphClient = getGraphClient(accessToken);
+
+    const checklist_type = req.query.checklist_type || 'sdai';
+    const tenantConfig = req.tenantConfig;
+    const targetListName = checklist_type === 'bms'
+      ? tenantConfig.listaBMS
+      : tenantConfig.listaSDAI;
+
+    if (!targetListName) {
+      return res.status(500).json({
+        success: false,
+        error: `Lista do SharePoint não configurada para o tenant "${req.tenantSlug}" (tipo: ${checklist_type}).`,
+      });
+    }
+
+    const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
+
+    // Buscar TODOS os itens com paginação (Graph API retorna max 200 por página)
+    let allItems = [];
+    let nextLink = null;
+
+    // Primeira página
+    const firstPage = await graphClient
+      .api(`/sites/${siteId}/lists/${listId}/items`)
+      .expand('fields')
+      .top(200)
+      .get();
+
+    allItems = firstPage.value || [];
+    nextLink = firstPage['@odata.nextLink'] || null;
+
+    // Páginas seguintes (se houver)
+    while (nextLink) {
+      console.log(`📄 Buscando próxima página de itens... (${allItems.length} até agora)`);
+      const nextPage = await graphClient.api(nextLink).get();
+      allItems = allItems.concat(nextPage.value || []);
+      nextLink = nextPage['@odata.nextLink'] || null;
+    }
+
+    console.log(`✅ Total de itens encontrados na lista "${targetListName}": ${allItems.length}`);
+
+    // Mapear campos do SharePoint para formato do dashboard
+    const inspecoes = allItems.map((item) => {
+      const f = item.fields || {};
+      return {
+        id: item.id,
+        Codigo_loja: f.field_2 || '',
+        Loja: f.field_1 || '',
+        Data: f.Title || '',
+        tipo_loja: f.field_11 || '',
+        // Status
+        status_funcionando_normalmente: f.field_27 || 'Não',
+        status_funcionando_parcialmente: f.field_28 || 'Não',
+        status_com_defeito: f.field_29 || 'Não',
+        status_nao_possui_deteccao: f.field_30 || 'Não',
+        // Inventário
+        numero_DF: Number(f.field_19) || 0,
+        numero_DT: Number(f.field_20) || 0,
+        numero_AM: Number(f.field_21) || 0,
+        numero_sirenes: Number(f.field_22) || 0,
+        numero_DG: Number(f.field_23) || 0,
+        numero_modulos: Number(f.field_24) || 0,
+        // Detalhes
+        observacoes: f.field_26 || '',
+        engenheiro_tecnico: f.field_39 || '',
+        responsavel_shopping: f.field_6 || '',
+        manutencao_corretiva: f.field_9 || 'Não',
+        manutencao_preventiva: f.field_10 || 'Não',
+      };
+    });
+
+    // Obter total de lojas do prédio via serviço de lojas (Excel)
+    let totalLojasPredio = 0;
+    try {
+      const { getLojas } = require('../services/excelService');
+      const lojas = await getLojas(accessToken, tenantConfig.excelLojasUrl);
+      totalLojasPredio = lojas.length;
+    } catch (excelErr) {
+      console.warn('⚠️ Não foi possível obter total de lojas do Excel:', excelErr.message);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        inspecoes,
+        totalLojasPredio,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Erro ao gerar relatório:', error.message);
+    next(error);
+  }
+};
+
+/**
+ * Converte os dados do formato do formulário React (radio strings)
+ * para o formato esperado pelo template PDF (booleans individuais).
+ *
+ * O mapListFieldsToForm retorna ex: tipoManutencao: 'corretiva'
+ * Mas o PDF espera: manutencaoCorretiva: true, manutencaoPreventiva: false
+ */
+function prepareFormDataForPdf(formData) {
+  // Manutenção: converter radio string → booleans individuais
+  formData.manutencaoCorretiva = formData.tipoManutencao === 'corretiva';
+  formData.manutencaoPreventiva = formData.tipoManutencao === 'preventiva';
+
+  // Status: converter radio string → objeto com booleans
+  const statusOpcao = formData.statusLojaOpcao || '';
+  formData.statusLoja = {
+    'Sistema Funcionando Normalmente':  statusOpcao === 'Sistema Funcionando Normalmente',
+    'Sistema Funcionando Parcialmente': statusOpcao === 'Sistema Funcionando Parcialmente',
+    'Sistema com Defeito':              statusOpcao === 'Sistema com Defeito',
+    'Não Possui Detecção':              statusOpcao === 'Não Possui Detecção',
+  };
+
+  return formData;
+}
+
+/**
+ * GET /api/checklists/:id/pdf
+ * Gera o PDF de uma inspeção específica e retorna como binary para download/visualização.
+ */
+const downloadPdf = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+
+    if (!accessToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado. Faça login em /api/auth/signin',
+      });
+    }
+
+    const { id } = req.params;
+    const checklist_type = req.query.checklist_type || 'sdai';
+    const tenantConfig = req.tenantConfig;
+    const targetListName = checklist_type === 'bms'
+      ? tenantConfig.listaBMS
+      : tenantConfig.listaSDAI;
+
+    if (!targetListName) {
+      return res.status(500).json({ success: false, error: `Lista não configurada para o tenant "${req.tenantSlug}".` });
+    }
+
+    const graphClient = getGraphClient(accessToken);
+    const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
+
+    // Buscar item do SharePoint
+    const result = await graphClient
+      .api(`/sites/${siteId}/lists/${listId}/items/${id}`)
+      .expand('fields')
+      .get();
+
+    const formData = prepareFormDataForPdf(mapListFieldsToForm(result.fields || {}));
+
+    // Gerar PDF
+    const { generatePDFBuffer } = checklist_type === 'bms'
+      ? require('../services/pdfServiceBMS')
+      : require('../services/pdfService');
+
+    const pdfBuffer = await generatePDFBuffer(formData);
+
+    const lojaName = formData.loja || 'Loja';
+    const fileName = `Relatorio_Inspecao_${lojaName.replace(/\s+/g, '_')}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.send(Buffer.from(pdfBuffer));
+  } catch (error) {
+    console.error('❌ Erro ao gerar PDF:', error.message);
+    next(error);
+  }
+};
+
+/**
+ * POST /api/checklists/:id/resend
+ * Regenera o PDF de uma inspeção e reenvia por e-mail ao responsável do shopping.
+ */
+const resendPdf = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+
+    if (!accessToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado. Faça login em /api/auth/signin',
+      });
+    }
+
+    const { id } = req.params;
+    const checklist_type = req.query.checklist_type || 'sdai';
+    const tenantConfig = req.tenantConfig;
+    const targetListName = checklist_type === 'bms'
+      ? tenantConfig.listaBMS
+      : tenantConfig.listaSDAI;
+
+    if (!targetListName) {
+      return res.status(500).json({ success: false, error: `Lista não configurada para o tenant "${req.tenantSlug}".` });
+    }
+
+    const graphClient = getGraphClient(accessToken);
+    const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
+
+    // Buscar item do SharePoint
+    const result = await graphClient
+      .api(`/sites/${siteId}/lists/${listId}/items/${id}`)
+      .expand('fields')
+      .get();
+
+    const formData = prepareFormDataForPdf(mapListFieldsToForm(result.fields || {}));
+
+    // Gerar PDF
+    const { generatePDFBase64: genPdf } = checklist_type === 'bms'
+      ? require('../services/pdfServiceBMS')
+      : require('../services/pdfService');
+
+    const pdfBase64 = await genPdf(formData);
+
+    // Determinar destinatários: usar o e-mail do responsável shopping do registro
+    // ou fallback para o responsável padrão do tenant
+    const shoppingEmail = formData.responsavelShopping?.email;
+    const recipientEmails = shoppingEmail && shoppingEmail.trim() ? [shoppingEmail] : [];
+
+    if (recipientEmails.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nenhum e-mail de destinatário encontrado no registro. Não é possível reenviar.',
+      });
+    }
+
+    await sendChecklistEmail(accessToken, formData, pdfBase64, recipientEmails, tenantConfig?.ccEmails);
+
+    const lojaName = formData.loja || 'Loja';
+    console.log(`✅ PDF reenviado com sucesso para ${recipientEmails.join(', ')} (Loja: ${lojaName})`);
+
+    res.json({
+      success: true,
+      message: `Relatório reenviado com sucesso para ${recipientEmails.join(', ')}.`,
+    });
+  } catch (error) {
+    console.error('❌ Erro ao reenviar PDF:', error.message);
+    next(error);
+  }
+};
+
+module.exports = { create, listColumns, list, getById, listReport, downloadPdf, resendPdf };

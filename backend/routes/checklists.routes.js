@@ -19,6 +19,9 @@ const { tenantAuthorization } = require('../middlewares/tenant.middleware');
 // Protegida por autenticação + autorização de tenant
 router.get('/', isAuthenticated, tenantAuthorization, checklistsController.list);
 router.get('/columns', isAuthenticated, tenantAuthorization, checklistsController.listColumns);
+router.get('/report', isAuthenticated, tenantAuthorization, checklistsController.listReport);
+router.get('/:id/pdf', isAuthenticated, tenantAuthorization, checklistsController.downloadPdf);
+router.post('/:id/resend', isAuthenticated, tenantAuthorization, checklistsController.resendPdf);
 router.get('/:id', isAuthenticated, tenantAuthorization, checklistsController.getById);
 router.post('/', isAuthenticated, tenantAuthorization, checklistsController.create);
 
