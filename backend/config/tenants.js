@@ -103,10 +103,13 @@ const shoppings = {
 // -----------------------------------------------
 const permissions = {
   'rafael.teixeira@torrescx.com.br': ['*'],
+  'pedro.ricardolima@torrescx.com.br': ['shopping-recife'],
   'msantos@torrescx.com.br': ['*'],
   'antonio.cezar@torrescx.com.br': ['riomar-recife'],
   'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes'],
+  'david.teixeira@torrescx.com.br': ['riomar-kennedy'],
   'ruan.lima@torrescx.com.br': ['shopping-recife'],
+  'leandro.araujo@torrescx.com.br': ['riomar-kennedy'],
   'ananias.santana@torrescx.com.br': ['shopping-guararapes'],
   'marcos.torres@torrescx.com.br': ['*'],
   'adm.manut@torrescx.com.br': ['*'],
