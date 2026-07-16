@@ -54,6 +54,46 @@ const shoppings = {
       },
     },
   },
+  'shopping-recife': {
+    name: 'Shopping Recife',
+    logo: '/logo_shopping_recife.png',
+    listaSDAI: '2026-3-180-SDAI-Shopping Recife SDAI',
+    listaBMS: '2026-3-180-BMS-Shopping Recife BMS',
+    excelLojasUrl: 'https://torrescx-my.sharepoint.com/:x:/g/personal/carlos_gueiros_torrescx_com_br/IQBVKrqNfsTtQKpAFOWNyaADAZXQtcDndLSvq25V49p1ZnA',
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    responsavelShopping: {
+      sdai: {
+        solicitante: 'Roberto Santana',
+        telefone: '81989340130',
+        email: 'roberto.santana@shoppingrecife.com.br',
+      },
+      bms: {
+        solicitante: 'Roberto Santana',
+        telefone: '81989340130',
+        email: 'roberto.santana@shoppingrecife.com.br',
+      },
+    },
+  },
+  'shopping-guararapes': {
+    name: 'Shopping Guararapes',
+    logo: '/logo_shopping_guararapes.png',
+    listaSDAI: '2026-1-1765-SDAI-GUARARAPES SHOPPING',
+    listaBMS: '2026-1-1765-BMS-GUARARAPES SHOPPING',
+    excelLojasUrl: 'https://torrescx-my.sharepoint.com/:x:/g/personal/carlos_gueiros_torrescx_com_br/IQDHlZNogw2zSI0Z9tAoBvEfAfPUpE7t66s6dWvJ2StoWFs',
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    responsavelShopping: {
+      sdai: {
+        solicitante: 'Edielison Santos',
+        telefone: '8194538848',
+        email: 'edielison.santos@shopping-guararapes.com.br',
+      },
+      bms: {
+        solicitante: 'Edielison Santos',
+        telefone: '8194538848',
+        email: 'edielison.santos@shopping-guararapes.com.br',
+      },
+    },
+  },
 };
 
 // -----------------------------------------------
@@ -65,10 +105,11 @@ const permissions = {
   'rafael.teixeira@torrescx.com.br': ['*'],
   'msantos@torrescx.com.br': ['*'],
   'antonio.cezar@torrescx.com.br': ['riomar-recife'],
-  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy'],
+  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes'],
+  'ruan.lima@torrescx.com.br': ['shopping-recife'],
+  'ananias.santana@torrescx.com.br': ['shopping-guararapes'],
   'marcos.torres@torrescx.com.br': ['*'],
   'adm.manut@torrescx.com.br': ['*'],
-
 };
 
 /**

@@ -102,15 +102,34 @@ function parseExcelBuffer(buffer) {
 
   console.log(`📊 ${rows.length} linhas lidas (incluindo cabeçalho) da aba "${sheetName}"`);
 
-  // Log do cabeçalho para debug
-  if (rows.length > 0) {
-    console.log(`📋 Cabeçalho:`, JSON.stringify(rows[0]));
-  }
-
   if (rows.length <= 1) return [];
 
+  // Encontrar a linha de cabeçalho real (pode haver linhas de título antes)
+  // Uma linha é considerada cabeçalho quando tem pelo menos 2 colunas com
+  // nomes individuais que combinam com piso/luc/loja/nome/código
+  let headerRowIdx = 0;
+  for (let i = 0; i < Math.min(rows.length, 5); i++) {
+    const row = rows[i];
+    if (!row || row.length <= 1) continue; // Pular linhas com 1 célula (título mesclado)
+
+    const cells = row.map((h) => String(h || '').trim().toLowerCase());
+    const hasPiso = cells.some((h) => h === 'piso' || h === 'pavimento');
+    const hasLuc = cells.some((h) => h === 'luc' || h === 'código' || h === 'codigo' || h === 'luc\'s');
+    const hasLoja = cells.some((h) => h === 'loja' || h === 'nome' || h === 'nome fantasia' || h === 'lojas');
+
+    // Pelo menos 2 dos 3 campos esperados devem estar presentes
+    const matches = [hasPiso, hasLuc, hasLoja].filter(Boolean).length;
+    if (matches >= 2) {
+      headerRowIdx = i;
+      break;
+    }
+  }
+
+  // Log do cabeçalho para debug
+  console.log(`📋 Cabeçalho (linha ${headerRowIdx}):`, JSON.stringify(rows[headerRowIdx]));
+
   // Detectar colunas automaticamente pelo cabeçalho
-  const header = rows[0].map((h) => String(h || '').trim().toLowerCase());
+  const header = rows[headerRowIdx].map((h) => String(h || '').trim().toLowerCase());
   let pisoIdx = header.findIndex((h) => h.includes('piso'));
   let lucIdx = header.findIndex((h) => h.includes('luc') || h.includes('código') || h.includes('codigo'));
   let lojaIdx = header.findIndex((h) => h.includes('loja') || h.includes('nome'));
@@ -122,7 +141,7 @@ function parseExcelBuffer(buffer) {
 
   console.log(`🔍 Índices detectados: piso=${pisoIdx}, luc=${lucIdx}, loja=${lojaIdx}`);
 
-  const lojas = rows.slice(1)
+  const lojas = rows.slice(headerRowIdx + 1)
     .filter((row) => row && row.length > 0) // Ignorar linhas vazias
     .map((row) => ({
       piso: row[pisoIdx] != null ? String(row[pisoIdx]).trim() : '',
