@@ -119,6 +119,8 @@ router.get('/profile', (req, res) => {
     logo: shoppings[key]?.logo || '',
     excelLojasUrl: shoppings[key]?.excelLojasUrl || '',
     responsavelShopping: shoppings[key]?.responsavelShopping || {},
+    listaSDAI: shoppings[key]?.listaSDAI || null,
+    listaBMS: shoppings[key]?.listaBMS || null,
   }));
 
   res.json({

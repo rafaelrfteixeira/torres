@@ -256,6 +256,88 @@ function mapListFieldsToForm(fields) {
 }
 
 /**
+ * Faz o caminho inverso para o BMS: Mapeia as colunas do Microsoft Lists
+ * para o JSON que o formulário React BMS (react-hook-form) entende.
+ */
+function mapBMSListFieldsToForm(fields) {
+  return {
+    data: fields.Title ? fields.Title.split('/').reverse().join('-') : '',
+    loja:       fields.field_1 || '',
+    codigoLoja: fields.field_2 || '',
+
+    responsavelShopping: {
+      solicitante: fields.field_3 || '',
+      telefone:    String(fields.field_4 || ''),
+      email:       fields.field_5 || '',
+    },
+    responsavelLoja: {
+      solicitante: fields.field_6 || '',
+      telefone:    String(fields.field_7 || ''),
+      email:       fields.field_8 || '',
+    },
+
+    tipoManutencao: fields.field_9 === 'Sim' ? 'corretiva' : fields.field_10 === 'Sim' ? 'preventiva' : '',
+    tipoLoja: fields.field_11 || '',
+
+    sistemas: {
+      sensor_de_temperatura_ambiente: {
+        existenteSim:   fields.field_12 === 'Sim', existenteNao:    fields.field_12 === 'Não',
+        funcionandoSim: fields.field_13 === 'Sim', funcionandoNao:  fields.field_13 === 'Não',
+      },
+      sensor_de_duto: {
+        existenteSim:   fields.field_14 === 'Sim', existenteNao:    fields.field_14 === 'Não',
+        funcionandoSim: fields.field_15 === 'Sim', funcionandoNao:  fields.field_15 === 'Não',
+      },
+      'botão_de_pânico': {
+        existenteSim:   fields.field_16 === 'Sim', existenteNao:    fields.field_16 === 'Não',
+        funcionandoSim: fields.field_17 === 'Sim', funcionandoNao:  fields.field_17 === 'Não',
+      },
+      sensor_de_movimento: {
+        existenteSim:   fields.field_18 === 'Sim', existenteNao:    fields.field_18 === 'Não',
+        funcionandoSim: fields.field_19 === 'Sim', funcionandoNao:  fields.field_19 === 'Não',
+      },
+      sensor_de_porta: {
+        existenteSim:   fields.field_20 === 'Sim', existenteNao:    fields.field_20 === 'Não',
+        funcionandoSim: fields.field_21 === 'Sim', funcionandoNao:  fields.field_21 === 'Não',
+      },
+      sensor_de_barreira: {
+        existenteSim:   fields.field_22 === 'Sim', existenteNao:    fields.field_22 === 'Não',
+        funcionandoSim: fields.field_23 === 'Sim', funcionandoNao:  fields.field_23 === 'Não',
+      },
+      falta_de_fase: {
+        existenteSim:   fields.field_24 === 'Sim', existenteNao:    fields.field_24 === 'Não',
+        funcionandoSim: fields.field_25 === 'Sim', funcionandoNao:  fields.field_25 === 'Não',
+      },
+    },
+
+    observacoes: fields.field_26 || '',
+
+    statusLojaOpcao:
+      fields.field_27 === 'Sim' ? 'Sistema Funcionando Normalmente'  :
+      fields.field_28 === 'Sim' ? 'Sistema Funcionando Parcialmente' :
+      fields.field_29 === 'Sim' ? 'Sistema com Defeito'              :
+      fields.field_30 === 'Sim' ? 'Não Possui BMS'                  : '',
+    statusOutros: fields.field_31 || '',
+
+    pendencias: {
+      'Necessário Abertura do Forro':                    fields.field_32 === 'Sim',
+      'Verificar Integridade do Cabo de Alimentação':    fields.field_33 === 'Sim',
+      'Verificar Integridade do Cabo de Sinal':          fields.field_34 === 'Sim',
+      'Interligar o Sistema da Loja com do Shopping':    fields.field_35 === 'Sim',
+      'Necessário Verificar o Sistema da Loja':          fields.field_36 === 'Sim',
+      'Troca de Dispositivo':                            fields.field_37 === 'Sim',
+    },
+    pendenciasOutros: fields.field_38 || '',
+
+    engTecnico:     fields.field_39 || '',
+    horarioInicio:  fields.field_40 || '',
+    horarioTermino: fields.field_41 || '',
+    totalHoras:     fields.field_42 || '',
+    aceitoPor:      fields.field_43 || '',
+  };
+}
+
+/**
  * Cache dos IDs resolvidos (evita chamar o Graph em toda requisição)
  * Agora é tenant-aware: cache por combinação site+listName
  */
@@ -568,7 +650,9 @@ const getById = async (req, res, next) => {
       .expand('fields')
       .get();
 
-    const formData = mapListFieldsToForm(result.fields || {});
+    const formData = checklist_type === 'bms'
+      ? mapBMSListFieldsToForm(result.fields || {})
+      : mapListFieldsToForm(result.fields || {});
 
     res.json({ success: true, data: formData });
   } catch (error) {
@@ -579,7 +663,7 @@ const getById = async (req, res, next) => {
 
 /**
  * GET /api/checklists/report
- * Busca TODOS os itens da lista SDAI do Microsoft Lists (com paginação)
+ * Busca TODOS os itens da lista do Microsoft Lists (com paginação)
  * e retorna dados mapeados para o Dashboard de acompanhamento.
  *
  * Também retorna a contagem total de lojas do prédio (via Excel do tenant)
@@ -640,31 +724,67 @@ const listReport = async (req, res, next) => {
     // Mapear campos do SharePoint para formato do dashboard
     const inspecoes = allItems.map((item) => {
       const f = item.fields || {};
-      return {
-        id: item.id,
-        Codigo_loja: f.field_2 || '',
-        Loja: f.field_1 || '',
-        Data: f.Title || '',
-        tipo_loja: f.field_11 || '',
-        // Status
-        status_funcionando_normalmente: f.field_27 || 'Não',
-        status_funcionando_parcialmente: f.field_28 || 'Não',
-        status_com_defeito: f.field_29 || 'Não',
-        status_nao_possui_deteccao: f.field_30 || 'Não',
-        // Inventário
-        numero_DF: Number(f.field_19) || 0,
-        numero_DT: Number(f.field_20) || 0,
-        numero_AM: Number(f.field_21) || 0,
-        numero_sirenes: Number(f.field_22) || 0,
-        numero_DG: Number(f.field_23) || 0,
-        numero_modulos: Number(f.field_24) || 0,
-        // Detalhes
-        observacoes: f.field_26 || '',
-        engenheiro_tecnico: f.field_39 || '',
-        responsavel_shopping: f.field_6 || '',
-        manutencao_corretiva: f.field_9 || 'Não',
-        manutencao_preventiva: f.field_10 || 'Não',
-      };
+      if (checklist_type === 'bms') {
+        return {
+          id: item.id,
+          Codigo_loja: f.field_2 || '',
+          Loja: f.field_1 || '',
+          Data: f.Title || '',
+          tipo_loja: f.field_11 || '',
+          // Status
+          status_funcionando_normalmente: f.field_27 || 'Não',
+          status_funcionando_parcialmente: f.field_28 || 'Não',
+          status_com_defeito: f.field_29 || 'Não',
+          status_nao_possui_deteccao: f.field_30 || 'Não', // "Não Possui BMS"
+          // Sensores (Inventário BMS)
+          temp_amb_exist: f.field_12 || 'Não',
+          temp_amb_func: f.field_13 || 'Não',
+          temp_duto_exist: f.field_14 || 'Não',
+          temp_duto_func: f.field_15 || 'Não',
+          panico_exist: f.field_16 || 'Não',
+          panico_func: f.field_17 || 'Não',
+          movimento_exist: f.field_18 || 'Não',
+          movimento_func: f.field_19 || 'Não',
+          porta_exist: f.field_20 || 'Não',
+          porta_func: f.field_21 || 'Não',
+          barreira_exist: f.field_22 || 'Não',
+          barreira_func: f.field_23 || 'Não',
+          falta_fase_exist: f.field_24 || 'Não',
+          falta_fase_func: f.field_25 || 'Não',
+          // Detalhes
+          observacoes: f.field_26 || '',
+          engenheiro_tecnico: f.field_39 || '',
+          responsavel_shopping: f.field_3 || '', // Para BMS, f.field_3 é responsavelShopping solicitante
+          manutencao_corretiva: f.field_9 || 'Não',
+          manutencao_preventiva: f.field_10 || 'Não',
+        };
+      } else {
+        return {
+          id: item.id,
+          Codigo_loja: f.field_2 || '',
+          Loja: f.field_1 || '',
+          Data: f.Title || '',
+          tipo_loja: f.field_11 || '',
+          // Status
+          status_funcionando_normalmente: f.field_27 || 'Não',
+          status_funcionando_parcialmente: f.field_28 || 'Não',
+          status_com_defeito: f.field_29 || 'Não',
+          status_nao_possui_deteccao: f.field_30 || 'Não',
+          // Inventário
+          numero_DF: Number(f.field_19) || 0,
+          numero_DT: Number(f.field_20) || 0,
+          numero_AM: Number(f.field_21) || 0,
+          numero_sirenes: Number(f.field_22) || 0,
+          numero_DG: Number(f.field_23) || 0,
+          numero_modulos: Number(f.field_24) || 0,
+          // Detalhes
+          observacoes: f.field_26 || '',
+          engenheiro_tecnico: f.field_39 || '',
+          responsavel_shopping: f.field_6 || '',
+          manutencao_corretiva: f.field_9 || 'Não',
+          manutencao_preventiva: f.field_10 || 'Não',
+        };
+      }
     });
 
     // Obter total de lojas do prédio via serviço de lojas (Excel)
@@ -709,6 +829,7 @@ function prepareFormDataForPdf(formData) {
     'Sistema Funcionando Parcialmente': statusOpcao === 'Sistema Funcionando Parcialmente',
     'Sistema com Defeito':              statusOpcao === 'Sistema com Defeito',
     'Não Possui Detecção':              statusOpcao === 'Não Possui Detecção',
+    'Não Possui BMS':                   statusOpcao === 'Não Possui BMS',
   };
 
   return formData;
@@ -749,7 +870,11 @@ const downloadPdf = async (req, res, next) => {
       .expand('fields')
       .get();
 
-    const formData = prepareFormDataForPdf(mapListFieldsToForm(result.fields || {}));
+    const mapped = checklist_type === 'bms'
+      ? mapBMSListFieldsToForm(result.fields || {})
+      : mapListFieldsToForm(result.fields || {});
+
+    const formData = prepareFormDataForPdf(mapped);
 
     // Gerar PDF
     const { generatePDFBuffer } = checklist_type === 'bms'
@@ -805,7 +930,11 @@ const resendPdf = async (req, res, next) => {
       .expand('fields')
       .get();
 
-    const formData = prepareFormDataForPdf(mapListFieldsToForm(result.fields || {}));
+    const mapped = checklist_type === 'bms'
+      ? mapBMSListFieldsToForm(result.fields || {})
+      : mapListFieldsToForm(result.fields || {});
+
+    const formData = prepareFormDataForPdf(mapped);
 
     // Gerar PDF
     const { generatePDFBase64: genPdf } = checklist_type === 'bms'

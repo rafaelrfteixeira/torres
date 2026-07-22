@@ -5,6 +5,7 @@ import ShoppingSelection from './pages/ShoppingSelection';
 import FormSelection from './pages/FormSelection';
 import FormBMS from './pages/FormBMS';
 import DashboardSDAI from './pages/DashboardSDAI';
+import DashboardBMS from './pages/DashboardBMS';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -113,6 +114,7 @@ function App() {
         <Route path="/:tenant/sdai/novo" element={<ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="/:tenant/sdai/dashboard" element={<DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="/:tenant/bms/novo" element={<FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="/:tenant/bms/dashboard" element={<DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
       </Routes>
     </>
   );
