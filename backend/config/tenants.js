@@ -128,6 +128,7 @@ const permissions = {
   'leandro.araujo@torrescx.com.br': ['riomar-kennedy'],
   'ananias.santana@torrescx.com.br': ['shopping-guararapes'],
   'arnaldo.justino@torrescx.com.br': ['riomar-aracaju'],
+  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju'],
   'marcos.torres@torrescx.com.br': ['*'],
   'adm.manut@torrescx.com.br': ['*'],
 };
