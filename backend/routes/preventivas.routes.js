@@ -15,6 +15,8 @@ const { tenantAuthorization } = require('../middlewares/tenant.middleware');
  */
 
 router.get('/dispositivos', isAuthenticated, tenantAuthorization, preventivasController.getDispositivos);
+router.get('/dashboard-status', isAuthenticated, tenantAuthorization, preventivasController.getDashboardStatus);
+router.get('/inspect-excel', isAuthenticated, tenantAuthorization, preventivasController.inspectExcel);
 router.get('/debug-columns', isAuthenticated, tenantAuthorization, preventivasController.debugColumns);
 router.post('/salvar', isAuthenticated, tenantAuthorization, preventivasController.salvar);
 

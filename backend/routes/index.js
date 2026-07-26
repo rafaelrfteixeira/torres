@@ -6,6 +6,7 @@ const checklistsRoutes = require('./checklists.routes');
 const lojasRoutes = require('./lojas.routes');
 const preventivasRoutes = require('./preventivas.routes');
 const corretivasRoutes = require('./corretivas.routes');
+const reportRoutes = require('./report.routes');
 
 // -----------------------------------------------
 // Registro de Rotas
@@ -29,7 +30,7 @@ router.use('/preventivas', preventivasRoutes);
 // Corretivas / Ocorrências (Microsoft Lists)
 router.use('/corretivas', corretivasRoutes);
 
-// TODO: Futuras rotas
-// router.use('/reports', reportRoutes);    → Geração e envio de relatórios PDF via Outlook
+// Relatórios (Preventivas, etc.)
+router.use('/reports', reportRoutes);
 
 module.exports = router;

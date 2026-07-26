@@ -15,6 +15,7 @@
  * @returns {Array} Lista de submenus
  */
 function getSDAISubmenus(tenant) {
+  const isShoppingRecife = tenant === 'shopping-recife';
   return [
     {
       id: 'dashboard-inspecao',
@@ -27,7 +28,7 @@ function getSDAISubmenus(tenant) {
       label: 'Dashboard Preventivas',
       route: `/${tenant}/sdai/preventivas/dashboard`,
       icon: 'activity',
-      comingSoon: true,
+      comingSoon: !isShoppingRecife,
     },
     {
       id: 'inspecao-lojas',
@@ -40,12 +41,21 @@ function getSDAISubmenus(tenant) {
       label: 'Preventivas Área Comum',
       route: `/${tenant}/sdai/preventivas/area-comum`,
       icon: 'wrench',
+      comingSoon: !isShoppingRecife,
     },
     {
       id: 'corretivas',
       label: 'Corretivas/Ocorrências',
       route: `/${tenant}/sdai/corretivas`,
       icon: 'alert-triangle',
+      comingSoon: !isShoppingRecife,
+    },
+    {
+      id: 'relatorios',
+      label: 'Relatórios',
+      route: `/${tenant}/sdai/relatorios`,
+      icon: 'file-text',
+      comingSoon: !isShoppingRecife,
     },
     {
       id: 'cadastros',
@@ -98,6 +108,12 @@ function getBMSSubmenus(tenant) {
       comingSoon: true,
     },
     {
+      id: 'relatorios',
+      label: 'Relatórios',
+      route: `/${tenant}/bms/relatorios`,
+      icon: 'file-text',
+    },
+    {
       id: 'cadastros',
       label: 'Cadastros',
       route: `/${tenant}/bms/cadastros`,
@@ -134,6 +150,12 @@ function getSCASubmenus(tenant) {
       route: `/${tenant}/sca/corretivas`,
       icon: 'alert-triangle',
       comingSoon: true,
+    },
+    {
+      id: 'relatorios',
+      label: 'Relatórios',
+      route: `/${tenant}/sca/relatorios`,
+      icon: 'file-text',
     },
     {
       id: 'cadastros',

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Preventivas — Torres Cx</title>
+    <!-- Tailwind CSS CDN para renderização imediata -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-100 min-h-screen font-sans">
+
+    <div class="flex-1">
+        <!-- 1. TOPO INSTITUCIONAL DE NAVEGAÇÃO -->
+        <div
+            class="bg-[#1e293b] text-white p-6 shadow-md flex justify-between items-center border-l-8 border-[#cc0000]">
+            <div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold bg-[#cc0000] px-2 py-0.5 rounded tracking-wider">MÓDULO
+                        OPERACIONAL</span>
+                    <span class="text-slate-400">|</span>
+                    <p class="text-sm tracking-widest font-semibold uppercase text-slate-300">TorresCx — Sistemas de
+                        Automação</p>
+                </div>
+                <h1 class="text-2xl font-bold mt-1">Gestão de Preventivas e Cronograma de Ativos</h1>
+            </div>
+            <div class="bg-white text-[#1e293b] font-bold px-4 py-2 rounded shadow-sm text-sm border border-slate-200">
+                Shopping Recife
+            </div>
+        </div>
+
+        <div class="p-6 max-w-[1600px] mx-auto space-y-6">
+
+            <!-- 2. GRID DE KPIs TÉCNICOS DE ENGENHARIA -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                <!-- Card 1: Meta -->
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Meta do Mês Corrente</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1">1.250</h3>
+                        <p class="text-xs text-slate-500 mt-2">Dispositivos mapeados no plano 2026</p>
+                    </div>
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 2: Executado -->
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Inspecionado</p>
+                        <h3 class="text-3xl font-bold text-emerald-600 mt-1">845 <span
+                                class="text-sm font-medium text-slate-400">/ 1.250</span></h3>
+                        <div class="w-32 bg-slate-100 rounded-full h-2 mt-2">
+                            <div class="bg-emerald-500 h-2 rounded-full" style="width: 67%"></div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 3: Aderência -->
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Aderência ao Cronograma</p>
+                        <h3 class="text-3xl font-bold text-amber-600 mt-1">92.4%</h3>
+                        <p class="text-xs text-slate-500 mt-2">Janela de atraso aceitável (D+2)</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 4: Rotinas em Atraso Crítico -->
+                <div
+                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pendências Fora do Prazo
+                        </p>
+                        <h3 class="text-3xl font-bold text-rose-600 mt-1">14 <span
+                                class="text-xs font-bold bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded ml-2">Crítico</span>
+                        </h3>
+                        <p class="text-xs text-rose-500 font-medium mt-2">Exige atuação imediata em campo</p>
+                    </div>
+                    <div class="p-3 bg-rose-50 text-rose-600 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 3. BLOCO DE FILTROS OPERACIONAIS DE ENGENHARIA -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                        </path>
+                    </svg>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Filtros Avançados de
+                        Cronograma</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Status da
+                            Preventiva</label>
+                        <select
+                            class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>Todos os Status</option>
+                            <option>Concluído no Prazo</option>
+                            <option>Pendente / Programado</option>
+                            <option>Fora do Prazo (Atrasado)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Linha de Laço / Loop
+                            Físico</label>
+                        <select
+                            class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>Todos os Laços</option>
+                            <option>LAÇO 01 - Pavimento L1</option>
+                            <option>LAÇO 02 - Pavimento L2</option>
+                            <option>LAÇO 07 - Área Técnica</option>
+                            <option>LAÇO 08 - Torres de Resfriamento</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Tipo de
+                            Periférico</label>
+                        <select
+                            class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>Todos os Dispositivos</option>
+                            <option>Detector Ótico de Fumaça (DF)</option>
+                            <option>Detector Térmico (DT)</option>
+                            <option>Módulo de Controle / Acionador (Mod)</option>
+                            <option>Chave de Fluxo Hidráulica</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Filtrar por
+                            Endereçamento/TAG</label>
+                        <input type="text" placeholder="Ex: L2PAV, M453, Loja 2013..."
+                            class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. TABELA PRINCIPAL: RASTREAMENTO CRONOLÓGICO DE ATIVOS -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Detalhamento Técnico das
+                            Rotinas do Mês</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Visão consolidada a partir da base do SharePoint e logs
+                            operacionais</p>
+                    </div>
+                    <span
+                        class="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-200">
+                        Total Mapeado: 1.250 Ativos
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500 tracking-wider">
+                                <th class="p-4 w-12 text-center">Ações</th>
+                                <th class="p-4">TAG do Ativo</th>
+                                <th class="p-4">Descrição / Localização</th>
+                                <th class="p-4">Laço / Painel</th>
+                                <th class="p-4 text-center">Semana Limite</th>
+                                <th class="p-4">Último Teste</th>
+                                <th class="p-4 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+
+                            <!-- Exemplo de Linha 1: Concluída com Sucesso -->
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="p-4 text-center">
+                                    <button class="text-blue-600 hover:text-blue-800 font-bold text-xs">Ver</button>
+                                </td>
+                                <td class="p-4 font-mono font-bold text-slate-900">L2PAV L8M453</td>
+                                <td class="p-4">
+                                    <div class="font-semibold">DETECÇÃO LOJA 2013</div>
+                                    <div class="text-xs text-slate-400">Detector Ótico de Fumaça</div>
+                                </td>
+                                <td class="p-4">
+                                    <span
+                                        class="text-xs bg-slate-100 px-2 py-1 rounded border border-slate-200 font-medium">LAÇO
+                                        08</span>
+                                </td>
+                                <td class="p-4 text-center font-medium text-slate-500">Semana 02</td>
+                                <td class="p-4 text-xs text-slate-500">24/07/2026 às 22:02</td>
+                                <td class="p-4 text-center">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 uppercase">
+                                        ● Realizado
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- Exemplo de Linha 2: Atrasada/Crítica -->
+                            <tr class="hover:bg-slate-50/80 transition-colors bg-rose-50/20">
+                                <td class="p-4 text-center">
+                                    <button class="text-blue-600 hover:text-blue-800 font-bold text-xs">Ver</button>
+                                </td>
+                                <td class="p-4 font-mono font-bold text-slate-900">L1PAV L3M012</td>
+                                <td class="p-4">
+                                    <div class="font-semibold">FRENTE DE LOJA MUGUI</div>
+                                    <div class="text-xs text-slate-400">Acionador Manual de Alarme</div>
+                                </td>
+                                <td class="p-4">
+                                    <span
+                                        class="text-xs bg-slate-100 px-2 py-1 rounded border border-slate-200 font-medium">LAÇO
+                                        03</span>
+                                </td>
+                                <td class="p-4 text-center font-bold text-rose-600">Semana 01</td>
+                                <td class="p-4 text-xs text-rose-500 font-semibold">Expirado há 5 dias</td>
+                                <td class="p-4 text-center">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-rose-50 text-rose-700 rounded-full border border-rose-200 uppercase animate-pulse">
+                                        ▲ Fora do Prazo
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- Exemplo de Linha 3: Agendada/Pendente regular -->
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="p-4 text-center">
+                                    <button class="text-slate-400 cursor-not-allowed font-bold text-xs"
+                                        disabled>Ver</button>
+                                </td>
+                                <td class="p-4 font-mono font-bold text-slate-900">L3PAV L1M089</td>
+                                <td class="p-4">
+                                    <div class="font-semibold">ÁREA TÉCNICA CHILLER 02</div>
+                                    <div class="text-xs text-slate-400">Detector Térmico de Alta Temp.</div>
+                                </td>
+                                <td class="p-4">
+                                    <span
+                                        class="text-xs bg-slate-100 px-2 py-1 rounded border border-slate-200 font-medium">LAÇO
+                                        01</span>
+                                </td>
+                                <td class="p-4 text-center font-medium text-slate-500">Semana 04</td>
+                                <td class="p-4 text-xs text-slate-400">Aguardando cronograma</td>
+                                <td class="p-4 text-center">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-blue-50 text-blue-700 rounded-full border border-blue-200 uppercase">
+                                        ○ Programado
+                                    </span>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

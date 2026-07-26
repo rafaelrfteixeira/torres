@@ -39,6 +39,138 @@
             border-radius: 4px;
         }
 
+        /* CAPA DE RELATÓRIO HOMOLOGADA */
+        .cover-page-wrapper {
+            position: relative;
+            border-left: 5px solid #1d4ed8;
+            padding-left: 35px;
+            padding-top: 10px;
+            padding-bottom: 20px;
+            min-height: 980px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-after: always;
+            margin-bottom: 40px;
+        }
+
+        .cover-top-header {
+            text-align: center;
+            padding-top: 15px;
+            padding-bottom: 20px;
+        }
+
+        .cover-torres-logo {
+            height: 75px;
+            max-width: 280px;
+            object-fit: contain;
+            display: inline-block;
+        }
+
+        .cover-header-divider {
+            width: 100%;
+            height: 1px;
+            background-color: #e2e8f0;
+            margin-top: 20px;
+            margin-bottom: 45px;
+        }
+
+        .cover-title-section {
+            margin-top: 70px;
+            margin-bottom: 45px;
+        }
+
+        .cover-main-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.35;
+            margin-bottom: 25px;
+            letter-spacing: -0.3px;
+        }
+
+        .cover-competence {
+            font-size: 16px;
+            color: #000000;
+            margin-top: 20px;
+        }
+
+        .cover-competence strong {
+            color: #000000;
+            font-weight: 800;
+        }
+
+        .cover-client-logo-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 35px 0 50px 0;
+            min-height: 140px;
+        }
+
+        .cover-client-logo {
+            max-height: 120px;
+            max-width: 320px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .cover-client-text-fallback {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e293b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* CARD DE METADADOS DA CAPA */
+        .cover-meta-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 24px 28px;
+            background: #ffffff;
+            margin-top: auto;
+        }
+
+        .cover-meta-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-card-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #000000;
+        }
+
+        .meta-card-val-main {
+            font-size: 16px;
+            font-weight: 800;
+            color: #000000;
+        }
+
+        .meta-card-val {
+            font-size: 14px;
+            font-weight: 800;
+            color: #000000;
+        }
+
+        .cover-meta-divider {
+            height: 1px;
+            border-bottom: 1px dashed #cbd5e1;
+            margin: 16px 0;
+        }
+
+        .cover-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 16px;
+        }
+
         /* Topo do Relatório Geral */
         .report-header {
             display: flex;
@@ -266,7 +398,8 @@
         .exact-photo-wrapper img {
             width: 100%;
             height: 145px;
-            object-fit: cover;
+            object-fit: contain;
+            background-color: #f1f5f9;
             display: block;
         }
 
@@ -414,7 +547,8 @@
         .track-os-photo img {
             width: 85px;
             height: 85px;
-            object-fit: cover;
+            object-fit: contain;
+            background-color: #f1f5f9;
             border-radius: 4px;
             border: 1px solid #cbd5e1;
             display: block;
@@ -445,6 +579,13 @@
         }
 
         @media print {
+            .cover-page-wrapper {
+                page-break-after: always;
+                min-height: 100vh;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
             body {
                 background: none;
                 padding: 0;
@@ -466,6 +607,58 @@
 <body>
 
     <div class="report-container">
+
+        <!-- CAPA PRINCIPAL HOMOLOGADA -->
+        <div class="cover-page-wrapper">
+            <div>
+                <!-- Topo: Logo Torres Cx -->
+                <div class="cover-top-header">
+                    <img src="docs/logo_torres.png" alt="Torres Cx Sistemas de Automação" class="cover-torres-logo">
+                </div>
+                <div class="cover-header-divider"></div>
+
+                <!-- Título Principal e Competência -->
+                <div class="cover-title-section">
+                    <h1 class="cover-main-title">
+                        Relatório de Manutenção Preventiva do Sistema de Detecção e Alarme de Incêndio - SDAI
+                    </h1>
+                    <p class="cover-competence">
+                        Competência Operacional: <strong>Julho/2026</strong>
+                    </p>
+                </div>
+
+                <!-- Logo do Cliente (Centralizado) -->
+                <div class="cover-client-logo-section">
+                    <img src="logo_shopping_recife.png" alt="Shopping Recife" class="cover-client-logo">
+                </div>
+            </div>
+
+            <!-- Card de Metadados Rodapé da Capa -->
+            <div class="cover-meta-card">
+                <div class="cover-meta-group">
+                    <div class="meta-card-label">UNIDADE / PLANTA CLIENTE</div>
+                    <div class="meta-card-val-main">Shopping Recife</div>
+                </div>
+
+                <div class="cover-meta-divider"></div>
+
+                <div class="cover-meta-grid">
+                    <div class="cover-meta-group">
+                        <div class="meta-card-label">SISTEMA / ESPECIALIDADE</div>
+                        <div class="meta-card-val">Sistema de Detecção e Alarme de Incêndio (SDAI)</div>
+                    </div>
+                    <div class="cover-meta-group">
+                        <div class="meta-card-label">DATA DE EMISSÃO</div>
+                        <div class="meta-card-val">26/07/2026</div>
+                    </div>
+                </div>
+
+                <div class="cover-meta-group">
+                    <div class="meta-card-label">RESPONSABILIDADE TÉCNICA</div>
+                    <div class="meta-card-val">Torres Cx Engenharia LTDA</div>
+                </div>
+            </div>
+        </div>
 
         <!-- Cabeçalho Principal -->
         <header class="report-header">

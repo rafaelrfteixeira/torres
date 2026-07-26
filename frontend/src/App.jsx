@@ -11,6 +11,8 @@ import Cadastros from './pages/Cadastros';
 import InspecaoLojas from './pages/InspecaoLojas';
 import PreventivasAreaComum from './pages/PreventivasAreaComum';
 import CorretivasOcorrencias from './pages/CorretivasOcorrencias';
+import Relatorios from './pages/Relatorios';
+import DashboardPreventivas from './pages/DashboardPreventivas';
 import { getMenuConfig } from './config/clientMenuConfig';
 
 /**
@@ -26,6 +28,15 @@ function TenantRedirect() {
   // Use relative route for nested redirect
   const relativePath = firstRoute.replace(`/${tenant}/`, '');
   return <Navigate to={relativePath} replace />;
+}
+
+/**
+ * Componente que garante que a funcionalidade só está ativa para o Shopping Recife.
+ * Caso contrário, renderiza a tela "Em Breve".
+ */
+function ShoppingRecifeOnlyRoute({ children }) {
+  const { tenant } = useParams();
+  return tenant === 'shopping-recife' ? children : <ComingSoon />;
 }
 
 function App() {
@@ -137,27 +148,46 @@ function App() {
         <Route index element={<TenantRedirect />} />
 
         {/* ===== SDAI ===== */}
-        <Route path="sdai/inspecao-lojas" element={<InspecaoLojas shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sdai/inspecao-lojas" element={<ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="sdai/novo" element={<ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="sdai/dashboard" element={<DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="sdai/preventivas/dashboard" element={<ComingSoon />} />
-        <Route path="sdai/preventivas/area-comum" element={<PreventivasAreaComum user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="sdai/corretivas" element={<CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sdai/preventivas/dashboard" element={
+          <ShoppingRecifeOnlyRoute>
+            <DashboardPreventivas user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ShoppingRecifeOnlyRoute>
+        } />
+        <Route path="sdai/preventivas/area-comum" element={
+          <ShoppingRecifeOnlyRoute>
+            <PreventivasAreaComum user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ShoppingRecifeOnlyRoute>
+        } />
+        <Route path="sdai/corretivas" element={
+          <ShoppingRecifeOnlyRoute>
+            <CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ShoppingRecifeOnlyRoute>
+        } />
+        <Route path="sdai/relatorios" element={
+          <ShoppingRecifeOnlyRoute>
+            <Relatorios shoppingsMetadata={shoppingsMetadata} />
+          </ShoppingRecifeOnlyRoute>
+        } />
         <Route path="sdai/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
 
         {/* ===== BMS ===== */}
-        <Route path="bms/inspecao-lojas" element={<InspecaoLojas shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="bms/inspecao-lojas" element={<FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="bms/novo" element={<FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="bms/dashboard" element={<DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="bms/preventivas/dashboard" element={<ComingSoon />} />
         <Route path="bms/preventivas/area-comum" element={<ComingSoon />} />
         <Route path="bms/corretivas" element={<ComingSoon />} />
+        <Route path="bms/relatorios" element={<Relatorios shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="bms/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
 
         {/* ===== SCA ===== */}
         <Route path="sca/preventivas/dashboard" element={<ComingSoon />} />
         <Route path="sca/preventivas" element={<ComingSoon />} />
         <Route path="sca/corretivas" element={<ComingSoon />} />
+        <Route path="sca/relatorios" element={<Relatorios shoppingsMetadata={shoppingsMetadata} />} />
         <Route path="sca/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
       </Route>
     </Routes>

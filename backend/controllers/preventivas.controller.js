@@ -13,189 +13,18 @@
 
 const { getGraphClient } = require('../services/graphClient');
 const XLSX = require('xlsx');
+const {
+  MESES_MAP,
+  encodeSharingUrl,
+  downloadExcelViaGraph,
+  parseMatrizMestra,
+} = require('../services/matrizMestraService');
 
 // -------------------------------------------------
 // Cache em memória para Matriz Mestra
 // -------------------------------------------------
 const _preventivasCache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
-
-// -------------------------------------------------
-// Mapa de meses em português → número
-// -------------------------------------------------
-const MESES_MAP = {
-  'janeiro': 1, 'fevereiro': 2, 'março': 3, 'marco': 3,
-  'abril': 4, 'maio': 5, 'junho': 6,
-  'julho': 7, 'agosto': 8, 'setembro': 9,
-  'outubro': 10, 'novembro': 11, 'dezembro': 12,
-  'jan': 1, 'fev': 2, 'mar': 3, 'abr': 4, 'mai': 5, 'jun': 6,
-  'jul': 7, 'ago': 8, 'set': 9, 'out': 10, 'nov': 11, 'dez': 12,
-};
-
-/**
- * Converte URL de compartilhamento em Sharing Token (Base64 URL-safe + prefixo u!)
- */
-function encodeSharingUrl(url) {
-  const cleanUrl = url.split('?')[0];
-  const base64 = Buffer.from(cleanUrl, 'utf-8').toString('base64');
-  const base64UrlSafe = base64
-    .replace(/=+$/, '')
-    .replace(/\//g, '_')
-    .replace(/\+/g, '-');
-  return `u!${base64UrlSafe}`;
-}
-
-/**
- * Faz download de um arquivo via Graph API e retorna o buffer.
- */
-async function downloadExcelViaGraph(accessToken, sharingUrl) {
-  const sharingToken = encodeSharingUrl(sharingUrl);
-  const baseUrl = 'https://graph.microsoft.com/v1.0';
-
-  // Resolver driveItem
-  console.log('📡 [Preventivas] Resolvendo driveItem via shares...');
-  const driveItemRes = await fetch(`${baseUrl}/shares/${sharingToken}/driveItem`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'redeemSharingLink',
-    },
-  });
-
-  if (!driveItemRes.ok) {
-    const err = await driveItemRes.text();
-    throw new Error(`Falha ao resolver driveItem: [${driveItemRes.status}] ${err}`);
-  }
-
-  const driveItem = await driveItemRes.json();
-  const driveId = driveItem.parentReference?.driveId;
-  const itemId = driveItem.id;
-
-  if (!driveId || !itemId) {
-    throw new Error('driveId ou itemId não encontrados na Matriz Mestra');
-  }
-
-  console.log(`📁 [Preventivas] Arquivo: ${driveItem.name} (driveId=${driveId}, itemId=${itemId})`);
-
-  // Download do conteúdo
-  const downloadRes = await fetch(`${baseUrl}/drives/${driveId}/items/${itemId}/content`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!downloadRes.ok) {
-    const err = await downloadRes.text();
-    throw new Error(`Falha no download da Matriz Mestra: [${downloadRes.status}] ${err}`);
-  }
-
-  const arrayBuffer = await downloadRes.arrayBuffer();
-  return {
-    buffer: Buffer.from(arrayBuffer),
-    driveId,
-    itemId,
-    fileName: driveItem.name,
-  };
-}
-
-/**
- * Parseia o buffer Excel da Matriz Mestra.
- * Colunas esperadas: Pavimento, Laço, Tipo, Descrição, Mês Manutenção, Realizado 2026
- */
-function parseMatrizMestra(buffer) {
-  const workbook = XLSX.read(buffer, { type: 'buffer' });
-  const sheetName = workbook.SheetNames[0];
-  if (!sheetName) throw new Error('Nenhuma aba encontrada na Matriz Mestra');
-
-  const sheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-  console.log(`📊 [Preventivas] ${rows.length} linhas lidas da aba "${sheetName}"`);
-  if (rows.length <= 1) return { dispositivos: [], headerRowIdx: 0, colMap: {} };
-
-  // Encontrar linha de cabeçalho
-  let headerRowIdx = 0;
-  for (let i = 0; i < Math.min(rows.length, 10); i++) {
-    const row = rows[i];
-    if (!row || row.length <= 1) continue;
-    const cells = row.map((h) => String(h || '').trim().toLowerCase());
-    const hasPavimento = cells.some((h) => h.includes('pavimento') || h.includes('piso'));
-    const hasDescricao = cells.some((h) => h.includes('descrição') || h.includes('descricao'));
-    const hasMes = cells.some((h) => h.includes('mês') || h.includes('mes') || h.includes('manutenção'));
-    if ([hasPavimento, hasDescricao, hasMes].filter(Boolean).length >= 2) {
-      headerRowIdx = i;
-      break;
-    }
-  }
-
-  const header = rows[headerRowIdx].map((h) => String(h || '').trim().toLowerCase());
-  console.log(`📋 [Preventivas] Cabeçalho (linha ${headerRowIdx}):`, JSON.stringify(rows[headerRowIdx]));
-
-  // Detectar índices de colunas
-  const colMap = {
-    pavimento: header.findIndex((h) => h.includes('pavimento') || h.includes('piso')),
-    laco: header.findIndex((h) => h.includes('laço') || h.includes('laco')),
-    tipo: header.findIndex((h) => h.includes('tipo') && !h.includes('dispositivo')),
-    descricao: header.findIndex((h) => h.includes('descrição') || h.includes('descricao')),
-    mesMantencao: header.findIndex((h) => h.includes('mês') || h.includes('mes') || h.includes('manutenção')),
-    realizado: header.findIndex((h) => h.includes('realizado')),
-  };
-
-  // Fallback posicional
-  if (colMap.pavimento === -1) colMap.pavimento = 0;
-  if (colMap.laco === -1) colMap.laco = 1;
-  if (colMap.tipo === -1) colMap.tipo = 2;
-  if (colMap.descricao === -1) colMap.descricao = 3;
-  if (colMap.mesMantencao === -1) colMap.mesMantencao = 4;
-  if (colMap.realizado === -1) colMap.realizado = 5;
-
-  console.log('🔍 [Preventivas] Índices de colunas:', colMap);
-
-  const mesAtual = new Date().getMonth() + 1; // 1-12
-
-  const dispositivos = rows.slice(headerRowIdx + 1)
-    .filter((row) => row && row.length > 0)
-    .map((row, index) => {
-      const pavimento = row[colMap.pavimento] != null ? String(row[colMap.pavimento]).trim() : '';
-      const laco = row[colMap.laco] != null ? String(row[colMap.laco]).trim() : '';
-      const tipo = row[colMap.tipo] != null ? String(row[colMap.tipo]).trim() : '';
-      const descricao = row[colMap.descricao] != null ? String(row[colMap.descricao]).trim() : '';
-      const mesTexto = row[colMap.mesMantencao] != null ? String(row[colMap.mesMantencao]).trim().toLowerCase() : '';
-      const realizadoRaw = row[colMap.realizado] != null ? String(row[colMap.realizado]).trim().toLowerCase() : '';
-
-      const mesNumero = MESES_MAP[mesTexto] || parseInt(mesTexto) || 0;
-      const realizado = realizadoRaw === 'sim' || realizadoRaw === 's' || realizadoRaw === 'yes';
-
-      // Calcular status
-      let status = 'realizado';
-      if (!realizado) {
-        if (mesNumero > 0 && mesNumero < mesAtual) {
-          status = 'atrasado';
-        } else if (mesNumero === mesAtual) {
-          status = 'pendente';
-        } else if (mesNumero > mesAtual) {
-          status = 'futuro'; // Ainda não é mês de manutenção
-        } else {
-          status = 'pendente'; // Fallback
-        }
-      }
-
-      return {
-        rowIndex: headerRowIdx + 1 + index, // Linha real no Excel (0-indexed)
-        realizadoColIndex: colMap.realizado,
-        pavimento,
-        laco,
-        tipo,
-        descricao,
-        mesMantencao: mesTexto,
-        mesNumero,
-        realizado,
-        status,
-      };
-    })
-    .filter((d) => d.descricao !== ''); // Ignorar linhas sem descrição
-
-  console.log(`✅ [Preventivas] ${dispositivos.length} dispositivos parseados`);
-  return { dispositivos, headerRowIdx, colMap };
-}
 
 // =====================================================
 // Cache de Site ID e List IDs (compartilhado entre handlers)
@@ -792,6 +621,344 @@ async function updateImageColumnsWithDrive(graphClient, siteId, listId, itemId, 
   }
 }
 
+// =====================================================
+// HANDLER: GET /api/preventivas/dashboard-status
+// =====================================================
+const getDashboardStatus = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+    if (!accessToken) {
+      return res.status(401).json({ success: false, message: 'Usuário não autenticado.' });
+    }
+
+    const tenantConfig = req.tenantConfig;
+    const excelUrl = tenantConfig.excelPreventivasUrl;
+
+    if (!excelUrl) {
+      return res.status(400).json({
+        success: false,
+        message: `Planilha de preventivas não configurada para o tenant "${req.tenantSlug}".`,
+      });
+    }
+
+    const mesParam = parseInt(req.query.mes, 10);
+    const mesAtual = (mesParam >= 1 && mesParam <= 12) ? mesParam : (new Date().getMonth() + 1);
+    const anoParam = parseInt(req.query.ano, 10) || new Date().getFullYear();
+
+    // 1. Download e parse Matriz Mestra (Invalida o cache para garantir dados frescos)
+    _preventivasCache.delete(excelUrl);
+    const { buffer } = await downloadExcelViaGraph(accessToken, excelUrl);
+    const { dispositivos: todosDispositivos } = parseMatrizMestra(buffer);
+
+    // 2. Tentar buscar histórico de inspeções do SharePoint se a lista estiver configurada
+    // Mapear por TAG exata -> array de logs com datas
+    let logsPorTag = new Map();
+    if (tenantConfig.listaHistoricoPreventivas) {
+      try {
+        const graphClient = getGraphClient(accessToken);
+        const { siteId, listId } = await resolveSharePointIds(graphClient, tenantConfig.listaHistoricoPreventivas);
+        const resList = await graphClient
+          .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=999`)
+          .get();
+
+        (resList.value || []).forEach((item) => {
+          const f = item.fields || {};
+          const tagKey = (f.Title || f.TAG || '').trim().toUpperCase();
+          if (!tagKey) return;
+
+          let dataExec = '-';
+          let mesLog = 0;
+          let anoLog = 0;
+
+          if (f.Data_Execucao || f.Created) {
+            const d = new Date(f.Data_Execucao || f.Created);
+            mesLog = d.getMonth() + 1;
+            anoLog = d.getFullYear();
+            const hora = f.Horario_Termino || f.Hora_Fim || d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            dataExec = `${d.toLocaleDateString('pt-BR')} às ${hora}`;
+          }
+
+          let logChecklist = [];
+          const rawChecklist = f.Log_Checklist || f.Checklist || f.Itens_Checklist || f.Respostas_Checklist || f.LogChecklist || f.Respostas || f.Checklist_JSON || null;
+
+          if (rawChecklist) {
+            try {
+              let parsed = typeof rawChecklist === 'string' ? JSON.parse(rawChecklist) : rawChecklist;
+              if (typeof parsed === 'string') {
+                try { parsed = JSON.parse(parsed); } catch (e2) {}
+              }
+              if (Array.isArray(parsed)) {
+                logChecklist = parsed;
+              } else if (parsed && typeof parsed === 'object') {
+                logChecklist = parsed.items || parsed.checklist || parsed.respostas || [parsed];
+              }
+            } catch (e) {
+              console.warn(`⚠️ [PreventivasController] Erro ao parsear Log_Checklist para ${tagKey}:`, e.message);
+            }
+          }
+
+          const obj = {
+            id: item.id,
+            tag: f.Title || f.TAG || '',
+            statusPonto: f.Status_Ponto || f.Status_Inspecao || 'Funcionando',
+            dataUltimoTeste: dataExec,
+            mesLog,
+            anoLog,
+            executor: f.Tecnico_Responsavel || f.Executor || 'Técnico TorresCx',
+            logChecklist,
+            foto1Url: f.Imagem_1 || f.Foto_1_URL || null,
+            foto2Url: f.Imagem_2 || f.Foto_2_URL || null,
+            osVinculadaId: f.OS_Vinculada || f.OS_Vinculada_ID || '',
+            observacoes: f.Observacoes_Gerais || f.Observacoes || '',
+          };
+
+          if (!logsPorTag.has(tagKey)) {
+            logsPorTag.set(tagKey, []);
+          }
+          logsPorTag.get(tagKey).push(obj);
+        });
+      } catch (hErr) {
+        console.warn('⚠️ [PreventivasDashboard] Não foi possível carregar histórico do SharePoint:', hErr.message);
+      }
+    }
+
+    // 3. Processar dispositivos e calcular status global e mensal
+    const mesAtualReal = new Date().getMonth() + 1;
+
+    const dispositivosProcessados = todosDispositivos.map((d, index) => {
+      const tag = (d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`);
+      const tagKey = tag.trim().toUpperCase();
+
+      const logsDoAtivo = logsPorTag.get(tagKey) || [];
+
+      // Log específico no mês/ano selecionado na tela
+      const logNoMesSelecionado = logsDoAtivo.find(
+        (l) => l.mesLog === mesAtual && (anoParam ? l.anoLog === anoParam : true)
+      );
+
+      // Qualquer log no histórico
+      const logRecente = logsDoAtivo.length > 0 ? logsDoAtivo[0] : null;
+
+      // Execução no mês da competência selecionada:
+      // O status de realização do dispositivo no ano de 2026 vem estritamente da coluna "Realizado 2026" do Excel (marcação 'sim')
+      const realizadoNoMes = Boolean(d.realizado);
+
+      // Realização global
+      const realizadoGeral = d.realizado || logsDoAtivo.length > 0;
+
+      let statusCalculado = 'pendente';
+      if (realizadoNoMes) {
+        statusCalculado = 'realizado';
+      } else if (d.mesNumero > 0 && d.mesNumero < mesAtualReal) {
+        statusCalculado = 'atrasado';
+      } else if (d.mesNumero === mesAtualReal) {
+        statusCalculado = 'pendente';
+      } else if (d.mesNumero > mesAtualReal) {
+        statusCalculado = 'futuro';
+      }
+
+      return {
+        id: index + 1,
+        rowIndex: d.rowIndex,
+        tag,
+        descricao: d.descricao,
+        tipo: d.tipo || 'Dispositivo de Incêndio',
+        laco: d.laco || 'LAÇO 01',
+        pavimento: d.pavimento || 'Área Comum',
+        mesMantencao: d.mesMantencao || '-',
+        mesNumero: d.mesNumero,
+        realizado: realizadoNoMes,
+        realizadoGeral,
+        status: statusCalculado,
+        ultimoTeste: realizadoNoMes
+          ? (logNoMesSelecionado ? logNoMesSelecionado.dataUltimoTeste : logRecente ? logRecente.dataUltimoTeste : 'Executado (Matriz Mestra)')
+          : 'Aguardando realização',
+        executor: realizadoNoMes
+          ? (logNoMesSelecionado ? logNoMesSelecionado.executor : logRecente ? logRecente.executor : 'Técnico Responsável')
+          : '-',
+        logChecklist: realizadoNoMes
+          ? (logNoMesSelecionado ? logNoMesSelecionado.logChecklist : logRecente ? logRecente.logChecklist : [])
+          : [],
+        osVinculadaId: realizadoNoMes ? (logNoMesSelecionado ? logNoMesSelecionado.osVinculadaId : logRecente ? logRecente.osVinculadaId : '') : '',
+        observacoes: realizadoNoMes ? (logNoMesSelecionado ? logNoMesSelecionado.observacoes : logRecente ? logRecente.observacoes : '') : '',
+      };
+    });
+
+    // 4. KPIs Globais da Base Completa (Todos os meses 1..12)
+    const totalBaseGeral = dispositivosProcessados.length;
+    const totalInspecionadoGeral = dispositivosProcessados.filter((d) => d.realizadoGeral).length;
+    const percentualInspecionadoGeral = totalBaseGeral > 0
+      ? Number(((totalInspecionadoGeral / totalBaseGeral) * 100).toFixed(1))
+      : 0;
+
+    const pendenciasForaPrazoGeral = dispositivosProcessados.filter(
+      (d) => !d.realizadoGeral && d.mesNumero > 0 && d.mesNumero < mesAtualReal
+    ).length;
+
+    const totalNoPrazoGeral = totalBaseGeral - pendenciasForaPrazoGeral;
+    const aderenciaGeral = totalBaseGeral > 0
+      ? Number(((totalNoPrazoGeral / totalBaseGeral) * 100).toFixed(1))
+      : 100;
+
+    // 5. KPIs da Competência Selecionada (Ex: Mês 7 - Julho)
+    const dispositivosDoMes = dispositivosProcessados.filter((d) => d.mesNumero === mesAtual);
+    const metaMes = dispositivosDoMes.length;
+    const totalInspecionadoMes = dispositivosDoMes.filter((d) => d.realizado).length;
+    const pendenciasMes = metaMes - totalInspecionadoMes;
+    const percentualInspecionadoMes = metaMes > 0
+      ? Number(((totalInspecionadoMes / metaMes) * 100).toFixed(1))
+      : 0;
+
+    const aderenciaMes = metaMes > 0
+      ? Number(((totalInspecionadoMes / metaMes) * 100).toFixed(1))
+      : 100;
+
+    console.log(`\n======================================================`);
+    console.log(`📊 [DashboardDebug] COMPETÊNCIA SELECIONADA: Mês ${mesAtual}/${anoParam}`);
+    console.log(`   Total de Dispositivos no Mês: ${metaMes}`);
+    console.log(`   Inspecionados (Sim no Excel ou Log no Mês): ${totalInspecionadoMes}`);
+    console.log(`   Pendências no Mês (Não/Vazio no Excel): ${pendenciasMes}`);
+    console.log(`--- Amostra dos primeiros 15 dispositivos de Mês ${mesAtual} ---`);
+    dispositivosDoMes.slice(0, 15).forEach((d, idx) => {
+      console.log(`   #${idx + 1} TAG="${d.tag}" | Desc="${d.descricao}" | RealizadoInMonth=${d.realizado} (ExcelRealizadoRaw="${d.realizadoRaw}") | Status=${d.status}`);
+    });
+    console.log(`======================================================\n`);
+
+    const tiposUnicos = [...new Set(dispositivosProcessados.map((d) => d.tipo).filter(Boolean))].sort();
+
+    res.json({
+      success: true,
+      data: {
+        kpis: {
+          // KPIs Globais (Base de Dados)
+          totalBaseGeral,
+          totalInspecionadoGeral,
+          percentualInspecionadoGeral,
+          aderenciaGeral,
+          pendenciasForaPrazoGeral,
+
+          // KPIs do Mês Selecionado
+          metaMes,
+          totalInspecionadoMes,
+          percentualInspecionadoMes,
+          aderenciaMes,
+          pendenciasMes,
+
+          // Retrocompatibilidade
+          metaMesFallback: metaMes || totalBaseGeral,
+          totalInspecionado: totalInspecionadoMes,
+          percentualInspecionado: percentualInspecionadoMes,
+          aderencia: aderenciaMes,
+          pendenciasForaPrazo: pendenciasForaPrazoGeral,
+        },
+        dispositivos: dispositivosProcessados,
+        tiposUnicos,
+      },
+    });
+  } catch (error) {
+    console.error('❌ [PreventivasDashboard] Erro ao carregar status do dashboard:', error.message);
+    next(error);
+  }
+};
+
+const inspectExcel = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+    if (!accessToken) {
+      return res.status(401).json({ success: false, message: 'Usuário não autenticado.' });
+    }
+
+    const tenantConfig = req.tenantConfig;
+    const excelUrl = tenantConfig.excelPreventivasUrl;
+
+    const { buffer } = await downloadExcelViaGraph(accessToken, excelUrl);
+    const workbook = XLSX.read(buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    const sampleHeaders = [];
+    for (let i = 0; i < Math.min(rows.length, 10); i++) {
+      if (rows[i] && rows[i].length > 0) {
+        sampleHeaders.push({ lineIndex: i, cells: rows[i] });
+      }
+    }
+
+    let headerRowIdx = 0;
+    for (let i = 0; i < Math.min(rows.length, 10); i++) {
+      const row = rows[i];
+      if (!row || row.length <= 1) continue;
+      const cells = row.map((h) => String(h || '').trim().toLowerCase());
+      if (cells.some((h) => h.includes('pavimento') || h.includes('piso')) && cells.some((h) => h.includes('descrição') || h.includes('descricao') || h.includes('localizacao'))) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+
+    const header = (rows[headerRowIdx] || []).map((h) => String(h || '').trim());
+    const headerLower = header.map((h) => h.toLowerCase());
+
+    const colMes = headerLower.findIndex((h) => (h.includes('mês') || h.includes('mes')) && !h.includes('realizado'));
+    const colRealizado = headerLower.findIndex((h) => h.includes('realizado 2026') || (h.includes('realizado') && h.includes('2026')));
+
+    let totalJulho = 0;
+    let julhoSim = 0;
+    let julhoNao = 0;
+    let julhoVazio = 0;
+    const analiseLinhas = [];
+
+    for (let i = headerRowIdx + 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || r.length === 0) continue;
+      const valMes = String(r[colMes] != null ? r[colMes] : '').trim();
+      const valRealizado = String(r[colRealizado] != null ? r[colRealizado] : '').trim();
+
+      const mesClean = valMes.toLowerCase();
+      if (mesClean === 'julho' || mesClean === 'jul' || mesClean === '7') {
+        totalJulho++;
+        const realClean = valRealizado.toLowerCase();
+        if (realClean === 'sim' || realClean === 's') julhoSim++;
+        else if (realClean === 'não' || realClean === 'nao' || realClean === 'n') julhoNao++;
+        else if (realClean === '') julhoVazio++;
+
+        if (analiseLinhas.length < 20) {
+          analiseLinhas.push({
+            excelRowIndex: i + 1,
+            mesValor: valMes,
+            realizadoValor: valRealizado,
+            linhaCompleta: r,
+          });
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        sheetName,
+        totalLinhasPlanilha: rows.length,
+        headerRowIdx,
+        header,
+        colunasIdentificadas: {
+          colMes: { index: colMes, nome: header[colMes] },
+          colRealizado: { index: colRealizado, nome: header[colRealizado] },
+        },
+        resumoJulho: {
+          totalJulho,
+          julhoSim,
+          julhoNao,
+          julhoVazio,
+          outros: totalJulho - (julhoSim + julhoNao + julhoVazio),
+        },
+        amostraJulho: analiseLinhas,
+        sampleHeaders,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 /**
  * Converte índice de coluna (0-indexed) em letra de coluna do Excel.
  * 0 = A, 1 = B, ..., 25 = Z, 26 = AA, etc.
@@ -806,4 +973,4 @@ function getColumnLetter(index) {
   return letter;
 }
 
-module.exports = { getDispositivos, salvar, debugColumns };
+module.exports = { getDispositivos, salvar, debugColumns, getDashboardStatus, inspectExcel };
