@@ -36,7 +36,7 @@ export default function ShoppingSelection({ allowedShoppings = [], shoppingsMeta
             Selecione o Cliente
           </h1>
           <p className="text-slate-500 mt-2 text-sm sm:text-base">
-            Escolha o cliente onde será realizada a inspeção
+            Escolha o cliente para acessar o sistema
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export default function ShoppingSelection({ allowedShoppings = [], shoppingsMeta
           {visibleShoppings.map((shopping) => (
             <button
               key={shopping.id}
-              onClick={() => navigate(`/${shopping.id}/selecionar-form`)}
+              onClick={() => navigate(`/${shopping.id}`)}
               className="group relative bg-white rounded-2xl border border-slate-200 shadow-md
                          hover:shadow-xl hover:border-brand-300 hover:-translate-y-1
                          transition-all duration-300 ease-out
@@ -74,7 +74,7 @@ export default function ShoppingSelection({ allowedShoppings = [], shoppingsMeta
 
               {/* Indicador de ação */}
               <div className="relative z-10 flex items-center gap-1.5 text-sm text-slate-400 group-hover:text-brand-500 transition-colors duration-300">
-                <span>Iniciar inspeção</span>
+                <span>Acessar sistema</span>
                 <svg
                   className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
                   fill="none"

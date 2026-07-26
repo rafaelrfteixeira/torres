@@ -20,6 +20,10 @@ const shoppings = {
     listaBMS: '2024-6-1361-BMS-Shopping Riomar Recife',
     excelLojasUrl: 'https://torrescx-my.sharepoint.com/:x:/g/personal/msantos_torrescx_com_br/IQBfN8g4jixWQZEVBdGxBqpOAdzKmnnqf37pdxWv8UftGLM',
     ccEmails: ['msantos@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: null, // TODO: Configurar URL da Matriz Mestra para RioMar Recife
+    listaHistoricoPreventivas: null,
+    listaCorretivas: null,
     // Responsável Shopping padrão (usado como default nos formulários)
     responsavelShopping: {
       sdai: {
@@ -41,6 +45,10 @@ const shoppings = {
     listaBMS: '2021-5-491-BMS-Shopping Riomar Kennedy',
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCd4pgWXkNERZTurFywc0WfAWsywZVNZDcVOdXxszKxUQA',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: null, // TODO: Configurar
+    listaHistoricoPreventivas: null,
+    listaCorretivas: null,
     responsavelShopping: {
       sdai: {
         solicitante: 'Maria Eugenia',
@@ -61,6 +69,10 @@ const shoppings = {
     listaBMS: '2026-3-180-BMS-Shopping Recife BMS',
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQA1oFdc24rWTKKUi_82HSrIAYCtEH7wdEc21YIgpj02lMc',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCvuYCgnjCqQpbKdU7tBghuATINDi027SO_KsOy97i-qg4',
+    listaHistoricoPreventivas: 'TESTE_PREVENTIVAS_APP',
+    listaCorretivas: 'CC-2026-3-1810-MAN-SHOP_RECIFE-SDAI',
     responsavelShopping: {
       sdai: {
         solicitante: 'Roberto Santana',
@@ -81,6 +93,10 @@ const shoppings = {
     listaBMS: '2026-1-1765-BMS-GUARARAPES SHOPPING',
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBHpqCvw4i8RJHroFbfTUOGAdLR3yvlO-9xv0cb_Sk8_sw',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: null, // TODO: Configurar
+    listaHistoricoPreventivas: null,
+    listaCorretivas: null,
     responsavelShopping: {
       sdai: {
         solicitante: 'Edielison Santos',
@@ -101,6 +117,10 @@ const shoppings = {
     listaBMS: '2018-6-26-BMS-Shopping Aracaju BMS',
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQDq52YdifuhT4uSJjYlkAVhAe9BOkesEAGjPzZjsaqFxBI',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: null, // TODO: Configurar
+    listaHistoricoPreventivas: null,
+    listaCorretivas: null,
     responsavelShopping: {
       sdai: null,
       bms: {

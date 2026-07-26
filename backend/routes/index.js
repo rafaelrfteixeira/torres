@@ -4,6 +4,8 @@ const inspectionRoutes = require('./inspections.routes');
 const authRoutes = require('./auth.routes');
 const checklistsRoutes = require('./checklists.routes');
 const lojasRoutes = require('./lojas.routes');
+const preventivasRoutes = require('./preventivas.routes');
+const corretivasRoutes = require('./corretivas.routes');
 
 // -----------------------------------------------
 // Registro de Rotas
@@ -20,6 +22,12 @@ router.use('/checklists', checklistsRoutes);
 
 // Lojas (Excel via MS Graph — Autocomplete)
 router.use('/lojas', lojasRoutes);
+
+// Preventivas — Manutenção Preventiva Área Comum (Excel + Microsoft Lists)
+router.use('/preventivas', preventivasRoutes);
+
+// Corretivas / Ocorrências (Microsoft Lists)
+router.use('/corretivas', corretivasRoutes);
 
 // TODO: Futuras rotas
 // router.use('/reports', reportRoutes);    → Geração e envio de relatórios PDF via Outlook

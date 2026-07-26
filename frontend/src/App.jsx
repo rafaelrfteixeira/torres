@@ -1,11 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import ChecklistForm from './components/ChecklistForm';
+import TenantLayout from './components/TenantLayout';
 import ShoppingSelection from './pages/ShoppingSelection';
-import FormSelection from './pages/FormSelection';
-import FormBMS from './pages/FormBMS';
 import DashboardSDAI from './pages/DashboardSDAI';
 import DashboardBMS from './pages/DashboardBMS';
+import FormBMS from './pages/FormBMS';
+import ComingSoon from './pages/ComingSoon';
+import Cadastros from './pages/Cadastros';
+import InspecaoLojas from './pages/InspecaoLojas';
+import PreventivasAreaComum from './pages/PreventivasAreaComum';
+import CorretivasOcorrencias from './pages/CorretivasOcorrencias';
+import { getMenuConfig } from './config/clientMenuConfig';
+
+/**
+ * TenantRedirect — Redireciona para a primeira rota disponível do tenant.
+ * Necessário pois cada tenant pode ter sistemas diferentes (ex: Aracaju só tem BMS).
+ */
+function TenantRedirect() {
+  const { tenant } = useParams();
+  const menus = getMenuConfig(tenant);
+  const firstRoute = menus.length > 0 && menus[0].submenus.length > 0
+    ? menus[0].submenus[0].route
+    : `/${tenant}`;
+  // Use relative route for nested redirect
+  const relativePath = firstRoute.replace(`/${tenant}/`, '');
+  return <Navigate to={relativePath} replace />;
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -41,7 +62,6 @@ function App() {
   }, []);
 
   const loginUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/signin`;
-  const logoutUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/signout`;
 
   if (isLoading) {
     return (
@@ -80,43 +100,67 @@ function App() {
 
   // --- NAVEGAÇÃO E ROTAS ---
   return (
-    <>
-      {/* Topbar do Usuário */}
-      <div className="bg-slate-900 border-b border-brand-800 px-6 py-3 text-white flex justify-between items-center sticky top-0 z-40 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-brand-700 flex items-center justify-center font-bold text-sm">
-            {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+    <Routes>
+      {/* Seleção de cliente — sem sidebar */}
+      <Route path="/" element={
+        <>
+          {/* Topbar simplificada para a seleção de clientes */}
+          <div className="bg-slate-900 border-b border-brand-800 px-6 py-3 text-white flex justify-between items-center sticky top-0 z-40 shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-brand-700 flex items-center justify-center font-bold text-sm">
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <span className="text-sm font-medium hidden sm:inline-block">
+                Olá, <span className="text-brand-300">{user.name}</span>
+              </span>
+            </div>
+            <a
+              href={`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/signout`}
+              className="text-sm text-slate-300 hover:text-white flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800"
+            >
+              Sair
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </a>
           </div>
-          <span className="text-sm font-medium hidden sm:inline-block">
-            Olá, <span className="text-brand-300">{user.name}</span>
-          </span>
-        </div>
-        <a
-          href={logoutUrl}
-          className="text-sm text-slate-300 hover:text-white flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800"
-        >
-          Sair
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-        </a>
-      </div>
-
-      {/* Rotas — Dinâmicas com :tenant */}
-      <Routes>
-        <Route path="/" element={
           <ShoppingSelection
             allowedShoppings={allowedShoppings}
             shoppingsMetadata={shoppingsMetadata}
           />
-        } />
-        <Route path="/:tenant/selecionar-form" element={<FormSelection shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="/:tenant/sdai/novo" element={<ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="/:tenant/sdai/dashboard" element={<DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="/:tenant/bms/novo" element={<FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="/:tenant/bms/dashboard" element={<DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
-      </Routes>
-    </>
+        </>
+      } />
+
+      {/* Rotas com sidebar — Layout do tenant */}
+      <Route path="/:tenant" element={<TenantLayout user={user} shoppingsMetadata={shoppingsMetadata} />}>
+        {/* Redirect da raiz do tenant para o primeiro submenu */}
+        <Route index element={<TenantRedirect />} />
+
+        {/* ===== SDAI ===== */}
+        <Route path="sdai/inspecao-lojas" element={<InspecaoLojas shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sdai/novo" element={<ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sdai/dashboard" element={<DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sdai/preventivas/dashboard" element={<ComingSoon />} />
+        <Route path="sdai/preventivas/area-comum" element={<PreventivasAreaComum user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sdai/corretivas" element={<CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sdai/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
+
+        {/* ===== BMS ===== */}
+        <Route path="bms/inspecao-lojas" element={<InspecaoLojas shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="bms/novo" element={<FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="bms/dashboard" element={<DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="bms/preventivas/dashboard" element={<ComingSoon />} />
+        <Route path="bms/preventivas/area-comum" element={<ComingSoon />} />
+        <Route path="bms/corretivas" element={<ComingSoon />} />
+        <Route path="bms/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
+
+        {/* ===== SCA ===== */}
+        <Route path="sca/preventivas/dashboard" element={<ComingSoon />} />
+        <Route path="sca/preventivas" element={<ComingSoon />} />
+        <Route path="sca/corretivas" element={<ComingSoon />} />
+        <Route path="sca/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
+      </Route>
+    </Routes>
   );
 }
 

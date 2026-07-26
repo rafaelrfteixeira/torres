@@ -118,6 +118,7 @@ router.get('/profile', (req, res) => {
     name: shoppings[key]?.name || key,
     logo: shoppings[key]?.logo || '',
     excelLojasUrl: shoppings[key]?.excelLojasUrl || '',
+    excelPreventivasUrl: shoppings[key]?.excelPreventivasUrl || '',
     responsavelShopping: shoppings[key]?.responsavelShopping || {},
     listaSDAI: shoppings[key]?.listaSDAI || null,
     listaBMS: shoppings[key]?.listaBMS || null,

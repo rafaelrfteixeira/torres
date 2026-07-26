@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+
 
 
 
@@ -271,15 +271,6 @@ export default function ChecklistForm({ user, shoppingsMetadata = [] }) {
 
           <div className="flex flex-col items-center justify-center gap-3 sm:gap-4 relative mt-2 sm:mt-0">
             <div className="w-full flex items-center justify-center relative">
-              <button
-                type="button"
-                onClick={() => navigate(`/${tenant}/selecionar-form`)}
-                className="absolute left-0 p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
-                title="Voltar para o Painel"
-                aria-label="Voltar"
-              >
-                <ArrowLeft className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
-              </button>
               <div className="flex items-center bg-white rounded-lg px-3 py-1 shadow-sm">
                 <img src="/logo.png" alt="Torres Cx" className="h-10 sm:h-12 object-contain" />
               </div>

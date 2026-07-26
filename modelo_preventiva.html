@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torres Cx - Relatório Técnico de Manutenção</title>
+    <style>
+        :root {
+            --primary-red: #cc0000;
+            --dark-blue: #1e293b;
+            --accent-blue: #60a5fa;
+            --text-main: #334155;
+            --border-light: #e2e8f0;
+            --success-green: #16a34a;
+            --danger-red: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+            padding: 30px 15px;
+        }
+
+        .report-container {
+            width: 100%;
+            max-width: 1000px;
+            background: #ffffff;
+            margin: 0 auto;
+            padding: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        /* Topo do Relatório Geral */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--primary-red);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo-title {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--dark-blue);
+            letter-spacing: 1px;
+        }
+
+        .logo-title span {
+            color: var(--primary-red);
+        }
+
+        .logo-subtitle {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 2px;
+        }
+
+        .meta-info {
+            text-align: right;
+        }
+
+        .meta-info h1 {
+            font-size: 18px;
+            color: var(--dark-blue);
+            text-transform: uppercase;
+        }
+
+        .meta-info p {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--dark-blue);
+            margin: 35px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: var(--border-light);
+        }
+
+        /* Indicadores Iniciais */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 22px 10px;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--dark-blue);
+        }
+
+        .kpi-value.color-green {
+            color: #15803d;
+        }
+
+        .kpi-value.color-amber {
+            color: #b45309;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-top: 10px;
+        }
+
+
+        /* ESTRUTURA COPIADA DO ANEXO */
+        .device-card-exact {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        .exact-header {
+            background-color: var(--dark-blue);
+            color: #ffffff;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exact-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .exact-header h2 span {
+            color: var(--accent-blue);
+            font-weight: 400;
+            margin-left: 12px;
+        }
+
+        .exact-badge {
+            background-color: #fef3c7;
+            color: #78350f;
+            padding: 5px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .exact-badge.success {
+            background-color: #dcfce7;
+            color: #14532d;
+        }
+
+        .exact-meta-row {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            gap: 30px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .exact-meta-row span strong {
+            color: #000000;
+            font-weight: 600;
+        }
+
+        .exact-body-grid {
+            display: grid;
+            grid-template-columns: 1.25fr 1fr;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        .exact-section-subtitle {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark-blue);
+            text-transform: uppercase;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-light);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .exact-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .exact-table td {
+            padding: 9px 0;
+            color: #334155;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .exact-table td.status-col {
+            text-align: right;
+            font-weight: 700;
+            white-space: nowrap;
+            width: 80px;
+        }
+
+        .exact-table td.status-col.sim {
+            color: var(--success-green);
+        }
+
+        .exact-table td.status-col.nao {
+            color: var(--danger-red);
+        }
+
+        /* Galeria de Fotos Idêntica */
+        .exact-photo-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .exact-photo-wrapper {
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #f8fafc;
+            height: 175px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .exact-photo-wrapper img {
+            width: 100%;
+            height: 145px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .exact-photo-placeholder {
+            height: 145px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+            color: #64748b;
+            background-color: #f1f5f9;
+        }
+
+        .exact-photo-footer-bar {
+            background-color: var(--dark-blue);
+            color: #ffffff;
+            font-size: 11px;
+            padding: 6px 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Base do Card */
+        .exact-card-footer {
+            border-top: 1px solid var(--border-light);
+            padding: 15px 20px;
+            font-size: 13px;
+        }
+
+        .exact-obs-line {
+            margin-bottom: 12px;
+            color: #0f172a;
+            line-height: 1.4;
+        }
+
+        .exact-dashed-alert-box {
+            border: 1px dashed #f87171;
+            background-color: #fff5f5;
+            border-radius: 4px;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exact-dashed-alert-box .left-info {
+            color: #991b1b;
+        }
+
+        .exact-dashed-alert-box .left-info strong {
+            font-weight: 700;
+        }
+
+        .exact-dashed-alert-box .right-status {
+            color: #dc2626;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+
+        /* SEÇÃO FINAL: RASTREABILIDADE AVANÇADA */
+        .tracking-section-box {
+            border: 1px solid #cbd5e1;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #ffffff;
+            page-break-inside: avoid;
+        }
+
+        .tracking-section-box.defeito {
+            border-left: 4px solid #ea580c;
+        }
+
+        .tracking-section-box.sem-acesso {
+            border-left: 4px solid var(--danger-red);
+        }
+
+        .tracking-header-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .track-dev-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark-blue);
+        }
+
+        .track-dev-date {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .tracking-split-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1.3fr;
+            gap: 20px;
+        }
+
+        .track-report-text p {
+            font-size: 13px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .track-linked-os-card {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 14px;
+            font-size: 12px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            align-items: start;
+        }
+
+        .track-os-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .track-os-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--dark-blue);
+        }
+
+        .track-os-feedback {
+            color: #475569;
+            font-style: italic;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 6px;
+            margin-top: 6px;
+        }
+
+        .track-os-photo img {
+            width: 85px;
+            height: 85px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            display: block;
+        }
+
+        .track-os-photo-placeholder {
+            width: 85px;
+            height: 85px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 9px;
+            color: #94a3b8;
+            background: #ffffff;
+            padding: 5px;
+        }
+
+        .norm-footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #cbd5e1;
+            font-size: 11px;
+            color: #64748b;
+            text-align: justify;
+        }
+
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+
+            .report-container {
+                box-shadow: none;
+                padding: 0;
+            }
+
+            .device-card-exact,
+            .tracking-section-box {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="report-container">
+
+        <!-- Cabeçalho Principal -->
+        <header class="report-header">
+            <div class="logo-area">
+                <div class="logo-title">TORRES <span>| Cx</span></div>
+                <div class="logo-subtitle">Engenharia e Sistemas Supervisionários</div>
+            </div>
+            <div class="meta-info">
+                <h1>Relatório Técnico de Preventivas</h1>
+                <p>Planta: <strong>Shopping RioMar Recife</strong> | Competência: Julho / 2026</p>
+            </div>
+        </header>
+
+        <!-- Indicadores -->
+        <section class="section-title">Indicadores de Performance Semanal / Mensal</section>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value">100</div>
+                <div class="kpi-label">Dispositivos Planejados</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">100</div>
+                <div class="kpi-label">Dispositivos Inspecionados</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value color-green">100%</div>
+                <div class="kpi-label">Taxa de Aderência</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value color-amber">50%</div>
+                <div class="kpi-label">Índice de Conformidade</div>
+            </div>
+        </div>
+
+        <!-- Dossiê Principal -->
+        <section class="section-title">Inspeções Detalhadas e Evidências por Ponto</section>
+
+        <!-- CARD CLONADO EXATAMENTE DA SUA IMAGEM -->
+        <div class="device-card-exact">
+            <div class="exact-header">
+                <h2>TAG: L2PAV L8M453 <span>- DETECCAO LOJA 2013</span></h2>
+                <div class="exact-badge">Com Defeito</div>
+            </div>
+
+            <div class="exact-meta-row">
+                <span>Data Execução: <strong>24/07/2026</strong></span>
+                <span>Período: <strong>22:02 às 22:12</strong></span>
+                <span>Tempo total: <strong>00h10m</strong></span>
+                <span>Executor: <strong>Rafael | TorresCx</strong></span>
+            </div>
+
+            <div class="exact-body-grid">
+                <!-- Checklist -->
+                <div>
+                    <div class="exact-section-subtitle">Itens de Verificação Normativa</div>
+                    <table class="exact-table">
+                        <tr>
+                            <td>Inspeção visual da integridade do módulo/periférico</td>
+                            <td class="exact-table td status-col sim">✓ SIM</td>
+                        </tr>
+                        <tr>
+                            <td>Verificação dos LEDs de funcionamento em modo de vigília</td>
+                            <td class="exact-table td status-col sim">✓ SIM</td>
+                        </tr>
+                        <tr>
+                            <td>Validação do resistor de fim de linha (RFL) no laço</td>
+                            <td class="exact-table td status-col sim">✓ SIM</td>
+                        </tr>
+                        <tr>
+                            <td>Limpeza do equipamento e desobstrução de poeira</td>
+                            <td class="exact-table td status-col sim">✓ SIM</td>
+                        </tr>
+                        <tr>
+                            <td>Verificação física de cabos e aperto nas conexões internas</td>
+                            <td class="exact-table td status-col sim">✓ SIM</td>
+                        </tr>
+                        <tr>
+                            <td>Reaperto de parafusos da carcaça e fixação na base</td>
+                            <td class="exact-table td status-col sim">✓ SIM</td>
+                        </tr>
+                        <tr>
+                            <td>Conferência do endereçamento/label físico com o painel central</td>
+                            <td class="exact-table td status-col nao">✖ NÃO</td>
+                        </tr>
+                        <tr>
+                            <td>Teste mecânico de acionamento do dispositivo periférico</td>
+                            <td class="exact-table td status-col sim">✓ SIM</td>
+                        </tr>
+                        <tr>
+                            <td>Marcação/Etiquetagem física de manutenção preventiva executada</td>
+                            <td class="exact-table td status-col sim">✓ SIM</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Fotos -->
+                <div class="exact-photo-column">
+                    <div class="exact-photo-wrapper">
+                        <img src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=400"
+                            alt="Evidência 1">
+                        <div class="exact-photo-footer-bar">Foto 1: Divergência na identificação física</div>
+                    </div>
+                    <div class="exact-photo-wrapper">
+                        <div class="exact-photo-placeholder">
+                            Nenhuma segunda imagem coletada para este ponto.
+                        </div>
+                        <div class="exact-photo-footer-bar">Foto 2: Não Cadastrada</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer do Card -->
+            <div class="exact-card-footer">
+                <div class="exact-obs-line">
+                    <strong>Observações de Campo:</strong> Label não confere. Atualizar parametrização lógica na central
+                    conforme TAG física.
+                </div>
+                <div class="exact-dashed-alert-box">
+                    <div class="left-info">
+                        ⚠️ <strong>Ação Corretiva Automática:</strong> OS Nº 12 aberta no sistema para esta ocorrência.
+                    </div>
+                    <div class="right-status">Status OS: PENDENTE</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- SEÇÃO FINAL: RASTREABILIDADE AVANÇADA -->
+        <section class="section-title">Rastreabilidade Avançada e Diagnósticos de Falha</section>
+
+        <!-- Exemplo com Foto na Corretiva -->
+        <div class="tracking-section-box sem-acesso">
+            <div class="tracking-header-area">
+                <div class="issue-title-area">
+                    <div class="track-dev-name">L2PAV L7M144 - CHAVE DE FLUXO LOJA 2057</div>
+                    <div class="track-dev-date">Inspeção realizada em 24/07/2026 às 22:08</div>
+                </div>
+                <span class="exact-badge" style="background-color:#fee2e2; color:#7f1d1d;">Sem Acesso</span>
+            </div>
+            <div class="tracking-split-grid">
+                <div class="track-report-text">
+                    <p><strong>Relato Técnico em Campo:</strong> Ponto constou como Sem Acesso durante a varredura
+                        noturna/diária.</p>
+                    <p><strong>Status do Checklist:</strong> Atividades abortadas preventivamente devido à restrição
+                        física.</p>
+                </div>
+
+                <div class="track-linked-os-card">
+                    <div class="track-os-details">
+                        <div class="track-os-title">⚙️ Ordem de Serviço Vinculada</div>
+                        <p style="margin-top: 2px;"><strong>OS Nº:</strong> 11 (Prioridade Baixa)</p>
+                        <p><strong>Status Atual:</strong> <span class="exact-badge success"
+                                style="padding:2px 6px; font-size:9px;">CONCLUÍDA</span></p>
+                        <div class="track-os-feedback">
+                            "Arrumado! Acesso liberado pelo lojista e verificação efetuada com sucesso."
+                        </div>
+                    </div>
+                    <div class="track-os-photo">
+                        <img src="https://images.unsplash.com/photo-1581094288338-2314dddb7ece?q=80&w=150"
+                            alt="Resolução OS">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rodapé -->
+        <footer class="norm-footer">
+            * Este documento emite o parecer de conformidade situacional técnica com base nos ensaios executados por
+            amostragem programada em conformidade com as exigências da norma regulamentadora **NBR 17240**. As
+            pendências críticas listadas acima demandam acompanhamento cronológico através das Ordens de Serviço
+            supracitadas.
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

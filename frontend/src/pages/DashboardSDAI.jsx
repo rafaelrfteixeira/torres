@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-
 /**
  * DashboardSDAI — Dashboard de Acompanhamento das Inspeções de SDAI
  *
@@ -297,14 +295,6 @@ export default function DashboardSDAI({ user, shoppingsMetadata = [] }) {
       <header className="bg-brand-800 text-white shadow-md p-4 sm:p-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(`/${tenant}/selecionar-form`)}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-              title="Voltar"
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </button>
             <div className="bg-white rounded-lg px-2 py-1 shadow-sm">
               <img src="/logo.png" alt="Torres Cx" className="h-8 sm:h-10 object-contain" />
             </div>
