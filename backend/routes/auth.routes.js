@@ -69,7 +69,12 @@ router.get('/redirect', async (req, res, next) => {
     console.log(`✅ Usuário autenticado: ${req.session.user.name} (${req.session.user.username})`);
 
     // Redirecionar para o frontend após login
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const host = req.headers.host || '';
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const frontendUrl = isLocal
+      ? 'http://localhost:5173'
+      : (process.env.FRONTEND_URL || 'http://localhost:5173');
+
     res.redirect(frontendUrl);
   } catch (error) {
     console.error('❌ Erro ao trocar código por token:', error);
@@ -90,8 +95,14 @@ router.get('/signout', (req, res) => {
     }
     console.log(`👋 Sessão encerrada: ${userName}`);
 
+    const host = req.headers.host || '';
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const frontendUrl = isLocal
+      ? 'http://localhost:5173'
+      : (process.env.FRONTEND_URL || 'http://localhost:5173');
+
     // URL de logout da Microsoft (opcional — encerra sessão no Entra ID)
-    const logoutUri = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/logout?post_logout_redirect_uri=${encodeURIComponent(process.env.FRONTEND_URL || 'http://localhost:5173')}`;
+    const logoutUri = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/logout?post_logout_redirect_uri=${encodeURIComponent(frontendUrl)}`;
     res.redirect(logoutUri);
   });
 });

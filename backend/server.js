@@ -15,12 +15,25 @@ const PORT = process.env.PORT || 3001;
 // ---------------------
 app.use(helmet());
 
-// Garantir que a URL do frontend não tenha barra no final para o CORS não falhar
-const rawFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-const corsOrigin = rawFrontendUrl.replace(/\/$/, '');
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://dinastia-app_torres_frontend.zj3i1b.easypanel.host',
+  'https://dinastia-frontend.zj3i1b.easypanel.host'
+];
 
 app.use(cors({
-  origin: corsOrigin,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const envOrigin = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+    if (
+      allowedOrigins.indexOf(origin) !== -1 ||
+      origin.startsWith('http://localhost:') ||
+      (envOrigin && origin === envOrigin)
+    ) {
+      return callback(null, true);
+    }
+    callback(null, false); // Evita lançar erro mas bloqueia origin não autorizada
+  },
   credentials: true,
 }));
 
