@@ -31,12 +31,22 @@ function TenantRedirect() {
 }
 
 /**
- * Componente que garante que a funcionalidade só está ativa para o Shopping Recife.
+ * Componente que garante que a funcionalidade só está ativa para tenants habilitados.
  * Caso contrário, renderiza a tela "Em Breve".
  */
-function ShoppingRecifeOnlyRoute({ children }) {
+const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos'];
+function ActivePreventivasRoute({ children }) {
   const { tenant } = useParams();
-  return tenant === 'shopping-recife' ? children : <ComingSoon />;
+  return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
+}
+
+/**
+ * Guard genérico: renderiza ComingSoon para tenants na lista `blocked`.
+ * Demais tenants renderizam o conteúdo normalmente.
+ */
+function ComingSoonForTenants({ blocked = [], children }) {
+  const { tenant } = useParams();
+  return blocked.includes(tenant) ? <ComingSoon /> : children;
 }
 
 function App() {
@@ -148,47 +158,86 @@ function App() {
         <Route index element={<TenantRedirect />} />
 
         {/* ===== SDAI ===== */}
-        <Route path="sdai/inspecao-lojas" element={<ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="sdai/novo" element={<ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="sdai/dashboard" element={<DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sdai/inspecao-lojas" element={
+          <ComingSoonForTenants blocked={['salvador-norte']}>
+            <ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ComingSoonForTenants>
+        } />
+        <Route path="sdai/novo" element={
+          <ComingSoonForTenants blocked={['salvador-norte']}>
+            <ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ComingSoonForTenants>
+        } />
+        <Route path="sdai/dashboard" element={
+          <ComingSoonForTenants blocked={['salvador-norte']}>
+            <DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ComingSoonForTenants>
+        } />
         <Route path="sdai/preventivas/dashboard" element={
-          <ShoppingRecifeOnlyRoute>
+          <ActivePreventivasRoute>
             <DashboardPreventivas user={user} shoppingsMetadata={shoppingsMetadata} />
-          </ShoppingRecifeOnlyRoute>
+          </ActivePreventivasRoute>
         } />
         <Route path="sdai/preventivas/area-comum" element={
-          <ShoppingRecifeOnlyRoute>
+          <ActivePreventivasRoute>
             <PreventivasAreaComum user={user} shoppingsMetadata={shoppingsMetadata} />
-          </ShoppingRecifeOnlyRoute>
+          </ActivePreventivasRoute>
         } />
         <Route path="sdai/corretivas" element={
-          <ShoppingRecifeOnlyRoute>
+          <ActivePreventivasRoute>
             <CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />
-          </ShoppingRecifeOnlyRoute>
+          </ActivePreventivasRoute>
         } />
         <Route path="sdai/relatorios" element={
-          <ShoppingRecifeOnlyRoute>
+          <ActivePreventivasRoute>
             <Relatorios shoppingsMetadata={shoppingsMetadata} />
-          </ShoppingRecifeOnlyRoute>
+          </ActivePreventivasRoute>
         } />
         <Route path="sdai/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
 
         {/* ===== BMS ===== */}
-        <Route path="bms/inspecao-lojas" element={<FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="bms/novo" element={<FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="bms/dashboard" element={<DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="bms/inspecao-lojas" element={
+          <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ComingSoonForTenants>
+        } />
+        <Route path="bms/novo" element={
+          <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ComingSoonForTenants>
+        } />
+        <Route path="bms/dashboard" element={
+          <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />
+          </ComingSoonForTenants>
+        } />
         <Route path="bms/preventivas/dashboard" element={<ComingSoon />} />
         <Route path="bms/preventivas/area-comum" element={<ComingSoon />} />
         <Route path="bms/corretivas" element={<ComingSoon />} />
-        <Route path="bms/relatorios" element={<Relatorios shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="bms/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="bms/relatorios" element={<ComingSoon />} />
+        <Route path="bms/cadastros" element={
+          <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <Cadastros shoppingsMetadata={shoppingsMetadata} />
+          </ComingSoonForTenants>
+        } />
 
         {/* ===== SCA ===== */}
         <Route path="sca/preventivas/dashboard" element={<ComingSoon />} />
         <Route path="sca/preventivas" element={<ComingSoon />} />
         <Route path="sca/corretivas" element={<ComingSoon />} />
-        <Route path="sca/relatorios" element={<Relatorios shoppingsMetadata={shoppingsMetadata} />} />
-        <Route path="sca/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
+        <Route path="sca/relatorios" element={<ComingSoon />} />
+        <Route path="sca/cadastros" element={
+          <ComingSoonForTenants blocked={['empresarial-cicero-dias']}>
+            <Cadastros shoppingsMetadata={shoppingsMetadata} />
+          </ComingSoonForTenants>
+        } />
+
+        {/* ===== CFTV ===== */}
+        <Route path="cftv/preventivas/dashboard" element={<ComingSoon />} />
+        <Route path="cftv/preventivas" element={<ComingSoon />} />
+        <Route path="cftv/corretivas" element={<ComingSoon />} />
+        <Route path="cftv/relatorios" element={<ComingSoon />} />
+        <Route path="cftv/cadastros" element={<ComingSoon />} />
       </Route>
     </Routes>
   );

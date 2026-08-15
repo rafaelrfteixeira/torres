@@ -133,6 +133,8 @@ router.get('/profile', (req, res) => {
     responsavelShopping: shoppings[key]?.responsavelShopping || {},
     listaSDAI: shoppings[key]?.listaSDAI || null,
     listaBMS: shoppings[key]?.listaBMS || null,
+    listaHistoricoPreventivas: shoppings[key]?.listaHistoricoPreventivas || null,
+    listaCorretivas: shoppings[key]?.listaCorretivas || null,
   }));
 
   res.json({

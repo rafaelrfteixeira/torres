@@ -383,72 +383,49 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {corretivasFiltradas.map((c) => {
-              const img1Url = getImageUrl(c.imagem1);
-              const img2Url = getImageUrl(c.imagem2);
-              const img3Url = getImageUrl(c.imagem3);
-
-              return (
-                <div
-                  key={c.id}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between group"
-                >
+            {corretivasFiltradas.map((c) => (
+              <div
+                key={c.id}
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between group"
+              >
+                
+                {/* Lado Esquerdo: Identificação & Detalhes */}
+                <div className="flex-1 space-y-3">
                   
-                  {/* Lado Esquerdo: Identificação & Detalhes */}
-                  <div className="flex-1 space-y-3">
-                    
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-3 py-1 bg-slate-900 text-white font-extrabold text-xs rounded-lg shadow-sm">
-                        OS #{c.osNumber}
-                      </span>
-                      {getStatusBadge(c.status)}
-                      {getPrioridadeBadge(c.prioridade)}
-                      <span className="text-xs text-slate-400 ml-auto md:ml-0">
-                        Relatada em: {formatDate(c.dataRelatada) || '—'}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900 group-hover:text-red-600 transition-colors">
-                        {c.titulo}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                        {c.descricaoDefeito || 'Falha registrada via preventiva.'}
-                      </p>
-                    </div>
-
-                    {/* Resolução do Problema se cadastrado */}
-                    {c.resolucaoProblema && (
-                      <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-xs text-emerald-900">
-                        <strong className="block text-emerald-950 font-bold mb-0.5">Resolução do Problema:</strong>
-                        <p className="line-clamp-2 text-emerald-800">{c.resolucaoProblema}</p>
-                        {c.dataAtendimento && (
-                          <span className="text-[10px] text-emerald-600 block mt-1">
-                            Atendido em: {formatDate(c.dataAtendimento)}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Mídia Thumbnails */}
-                    {(img1Url || img2Url || img3Url) && (
-                      <div className="flex items-center gap-2 pt-1">
-                        <span className="text-[11px] font-semibold text-slate-400 mr-1 flex items-center gap-1">
-                          <ImageIcon size={12} /> Imagens:
-                        </span>
-                        {img1Url && (
-                          <img src={img1Url} alt="Foto 1" className="w-9 h-9 rounded-lg object-cover border border-slate-200" title="Foto 1 (Preventiva)" />
-                        )}
-                        {img2Url && (
-                          <img src={img2Url} alt="Foto 2" className="w-9 h-9 rounded-lg object-cover border border-slate-200" title="Foto 2 (Preventiva)" />
-                        )}
-                        {img3Url && (
-                          <img src={img3Url} alt="Foto 3 (Solução)" className="w-9 h-9 rounded-lg object-cover border-2 border-emerald-500" title="Foto 3 (Evidência Solução)" />
-                        )}
-                      </div>
-                    )}
-
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-3 py-1 bg-slate-900 text-white font-extrabold text-xs rounded-lg shadow-sm">
+                      OS #{c.osNumber}
+                    </span>
+                    {getStatusBadge(c.status)}
+                    {getPrioridadeBadge(c.prioridade)}
+                    <span className="text-xs text-slate-400 ml-auto md:ml-0">
+                      Relatada em: {formatDate(c.dataRelatada) || '—'}
+                    </span>
                   </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-red-600 transition-colors">
+                      {c.titulo}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                      {c.descricaoDefeito || 'Falha registrada via preventiva.'}
+                    </p>
+                  </div>
+
+                  {/* Resolução do Problema se cadastrado */}
+                  {c.resolucaoProblema && (
+                    <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-xs text-emerald-900">
+                      <strong className="block text-emerald-950 font-bold mb-0.5">Resolução do Problema:</strong>
+                      <p className="line-clamp-2 text-emerald-800">{c.resolucaoProblema}</p>
+                      {c.dataAtendimento && (
+                        <span className="text-[10px] text-emerald-600 block mt-1">
+                          Atendido em: {formatDate(c.dataAtendimento)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                </div>
 
                   {/* Lado Direito: Ação */}
                   <div className="w-full md:w-auto flex md:flex-col items-center justify-end gap-2 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 shrink-0">
@@ -470,8 +447,7 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
                   </div>
 
                 </div>
-              );
-            })}
+              ))}
           </div>
         )}
 

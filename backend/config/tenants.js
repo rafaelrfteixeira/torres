@@ -70,9 +70,9 @@ const shoppings = {
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQA1oFdc24rWTKKUi_82HSrIAYCtEH7wdEc21YIgpj02lMc',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
     // Preventivas Área Comum
-    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCvuYCgnjCqQpbKdU7tBghuATINDi027SO_KsOy97i-qg4',
-    listaHistoricoPreventivas: 'TESTE_PREVENTIVAS_APP',
-    listaCorretivas: 'CC-2026-3-1810-MAN-SHOP_RECIFE-SDAI',
+    excelPreventivasUrl: null,
+    listaHistoricoPreventivas: null,
+    listaCorretivas: null,
     responsavelShopping: {
       sdai: {
         solicitante: 'Roberto Santana',
@@ -94,9 +94,9 @@ const shoppings = {
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBHpqCvw4i8RJHroFbfTUOGAdLR3yvlO-9xv0cb_Sk8_sw',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
     // Preventivas Área Comum
-    excelPreventivasUrl: null, // TODO: Configurar
-    listaHistoricoPreventivas: null,
-    listaCorretivas: null,
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQA5YLv6hEgeSpDMuoDO2Fb9ARwv4Jg64Mu9jCbrwBTPRoM',
+    listaHistoricoPreventivas: 'SHOPPING_GUARARAPES_PREVENTIVAS_2026',
+    listaCorretivas: 'CC-2026-1-1765-MAN-SH-GUARARAPES',
     responsavelShopping: {
       sdai: {
         solicitante: 'Edielison Santos',
@@ -130,6 +130,86 @@ const shoppings = {
       },
     },
   },
+  'salvador-norte': {
+    name: 'Salvador Norte Shopping',
+    logo: '/logo_salvador_norte_shooping.png',
+    listaSDAI: null,
+    listaBMS: null,
+    excelLojasUrl: null,
+    ccEmails: [],
+    // Preventivas Área Comum
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCvuYCgnjCqQpbKdU7tBghuATINDi027SO_KsOy97i-qg4',
+    listaHistoricoPreventivas: 'SALVADOR_NORTE_SHOPPING_PREVENTIVAS_2026',
+    listaCorretivas: 'CC-2024-4-1323-MAN-S_NORTE_SALVAD-MANUTENCAO',
+    responsavelShopping: {
+      sdai: null, // TODO: Configurar responsável SDAI
+      bms: null,  // TODO: Configurar responsável BMS
+    },
+  },
+  'empresarial-rui-barbosa': {
+    name: 'Empresarial Rui Barbosa',
+    logo: '/logo_empresarial_rui_barbosa.png',
+    listaSDAI: '2024-3-1308-MAN-EMPESARIAL RUI BARBOSA_SDAI',
+    listaBMS: null,
+    excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQAgZxlwUfGqS46TJZ4Ku1fbAa55hBxDMhATaIskhS3m0KY',
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBpZfxChC-GQb5b1NAJ5oTXAQO8f3MiqDm4K4DPlVnFgNQ',
+    listaHistoricoPreventivas: 'EMPRESARIAL_RUI_BARBOSA_PREVENTIVAS_2026',
+    listaCorretivas: 'CC-2024-3-1308-MAN-EMPESARIAL RUI BARBOSA',
+    responsavelShopping: {
+      sdai: {
+        solicitante: 'Karen Nascimento',
+        telefone: null, // TODO: Configurar telefone
+        email: 'ruibarbosa.supervisor@innova.net.br',
+      },
+      bms: null,
+    },
+  },
+  'empresarial-cicero-dias': {
+    name: 'Empresarial Cicero Dias',
+    logo: '/logo_empresarial_cicero_dias.png',
+    listaSDAI: '2021-11-656-SDAI-MAN-CD-SISTEMAS',
+    listaBMS: null,
+    excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCLpesnBCgqRr9YPpgSksNxAR6NLfo6l-p6fNq0TFL2ccE',
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBE0wOaCrU0Q7YqeNP7WDbcAfTA7qILZ6QWmHFKC_nZ5hM',
+    listaHistoricoPreventivas: 'EMPRESARIAL_CICERO_DIAS_PREVENTIVAS_2026',
+    listaCorretivas: 'CC-2021-11-656-MAN-CD-SISTEMAS',
+    responsavelShopping: {
+      sdai: {
+        solicitante: 'Maria Raquel',
+        telefone: null,
+        email: 'acaciogil.gerente@innova.net.br',
+      },
+      bms: {
+        solicitante: 'Maria Raquel',
+        telefone: null,
+        email: 'acaciogil.gerente@innova.net.br',
+      },
+    },
+  },
+  'empresarial-kronos': {
+    name: 'Empresarial Kronos',
+    logo: '/logo_empresarial_kronos.png',
+    listaSDAI: '2024-11-1485-SDAI-MAN-EMPRESARIA KRONOS',
+    listaBMS: null,
+    excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCspYLiTUs8QYChJjpHh-nJAfK8sMnMLa5INs5MUntGGkg',
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQDQuNIpkmd3ToZpxeiF65MLAUDt-y65eyAXffLDCY26l4U',
+    listaHistoricoPreventivas: 'EMPRESARIA_KRONOS_PREVENTIVAS_2026',
+    listaCorretivas: 'CC-2024-11-1485-MAN-EMPRESARIA KRONOS',
+    responsavelShopping: {
+      sdai: {
+        solicitante: 'Eunice',
+        telefone: null,
+        email: 'kronosemp@gmail.com',
+      },
+      bms: null,
+    },
+  },
 };
 
 // -----------------------------------------------
@@ -142,15 +222,17 @@ const permissions = {
   'pedro.ricardolima@torrescx.com.br': ['shopping-recife'],
   'msantos@torrescx.com.br': ['*'],
   'antonio.cezar@torrescx.com.br': ['riomar-recife'],
-  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju'],
+  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos'],
   'david.teixeira@torrescx.com.br': ['riomar-kennedy'],
   'ruan.lima@torrescx.com.br': ['shopping-recife'],
   'leandro.araujo@torrescx.com.br': ['riomar-kennedy'],
   'ananias.santana@torrescx.com.br': ['shopping-guararapes'],
-  'arnaldo.justino@torrescx.com.br': ['riomar-aracaju'],
-  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju'],
+  'arnaldo.justino@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos'],
+  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos'],
   'marcos.torres@torrescx.com.br': ['*'],
   'adm.manut@torrescx.com.br': ['*'],
+  'rafael.costal@torrescx.com.br': ['salvador-norte'],
+  'joao.henrique@torrescx.com.br': ['salvador-norte'],
 };
 
 /**

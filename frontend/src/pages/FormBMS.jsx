@@ -410,10 +410,6 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
                 </div>
                 <div className="p-4 space-y-3">
                   <InputField label="Solicitante" register={register('responsavelLoja.solicitante', { required: true })} required={true} placeholder="Nome do responsável" />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <InputField label="Telefone" type="tel" register={register('responsavelLoja.telefone')} placeholder="(00) 00000-0000" />
-                    <InputField label="E-mail" type="email" register={register('responsavelLoja.email')} placeholder="email@exemplo.com" />
-                  </div>
                 </div>
               </div>
             </div>

@@ -16,46 +16,57 @@
  */
 function getSDAISubmenus(tenant) {
   const isShoppingRecife = tenant === 'shopping-recife';
+  const isSalvadorNorte = tenant === 'salvador-norte';
+  const isEmpresarialRuiBarbosa = tenant === 'empresarial-rui-barbosa';
+  const isShoppingGuararapes = tenant === 'shopping-guararapes';
+  const isEmpresarialCiceroDias = tenant === 'empresarial-cicero-dias';
+  const isEmpresarialKronos = tenant === 'empresarial-kronos';
+  // Tenants com funcionalidades de preventivas/corretivas ativas
+  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos;
+  // Tenants com inspeção de lojas desabilitada (Em Breve)
+  const hasInspecaoComingSoon = isSalvadorNorte;
   return [
     {
       id: 'dashboard-inspecao',
       label: 'Dashboard Inspeção Lojas',
       route: `/${tenant}/sdai/dashboard`,
       icon: 'bar-chart',
+      comingSoon: hasInspecaoComingSoon ? true : undefined,
     },
     {
       id: 'dashboard-preventivas',
       label: 'Dashboard Preventivas',
       route: `/${tenant}/sdai/preventivas/dashboard`,
       icon: 'activity',
-      comingSoon: !isShoppingRecife,
+      comingSoon: !hasPreventivasActive,
     },
     {
       id: 'inspecao-lojas',
       label: 'Inspeção Lojas',
       route: `/${tenant}/sdai/inspecao-lojas`,
       icon: 'clipboard-check',
+      comingSoon: hasInspecaoComingSoon ? true : undefined,
     },
     {
       id: 'preventivas-area-comum',
       label: 'Preventivas Área Comum',
       route: `/${tenant}/sdai/preventivas/area-comum`,
       icon: 'wrench',
-      comingSoon: !isShoppingRecife,
+      comingSoon: !hasPreventivasActive,
     },
     {
       id: 'corretivas',
       label: 'Corretivas/Ocorrências',
       route: `/${tenant}/sdai/corretivas`,
       icon: 'alert-triangle',
-      comingSoon: !isShoppingRecife,
+      comingSoon: !hasPreventivasActive,
     },
     {
       id: 'relatorios',
       label: 'Relatórios',
       route: `/${tenant}/sdai/relatorios`,
       icon: 'file-text',
-      comingSoon: !isShoppingRecife,
+      comingSoon: !hasPreventivasActive,
     },
     {
       id: 'cadastros',
@@ -73,12 +84,14 @@ function getSDAISubmenus(tenant) {
  * @returns {Array} Lista de submenus
  */
 function getBMSSubmenus(tenant) {
+  const allComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias';
   return [
     {
       id: 'dashboard-inspecao',
       label: 'Dashboard Inspeção Lojas',
       route: `/${tenant}/bms/dashboard`,
       icon: 'bar-chart',
+      comingSoon: allComingSoon,
     },
     {
       id: 'dashboard-preventivas',
@@ -92,6 +105,7 @@ function getBMSSubmenus(tenant) {
       label: 'Inspeção Lojas',
       route: `/${tenant}/bms/inspecao-lojas`,
       icon: 'clipboard-check',
+      comingSoon: allComingSoon,
     },
     {
       id: 'preventivas-area-comum',
@@ -112,6 +126,7 @@ function getBMSSubmenus(tenant) {
       label: 'Relatórios',
       route: `/${tenant}/bms/relatorios`,
       icon: 'file-text',
+      comingSoon: true,
     },
     {
       id: 'cadastros',
@@ -119,6 +134,7 @@ function getBMSSubmenus(tenant) {
       route: `/${tenant}/bms/cadastros`,
       icon: 'database',
       isCadastros: true,
+      comingSoon: allComingSoon,
     },
   ];
 }
@@ -129,6 +145,7 @@ function getBMSSubmenus(tenant) {
  * @returns {Array} Lista de submenus
  */
 function getSCASubmenus(tenant) {
+  const allComingSoon = tenant === 'empresarial-cicero-dias';
   return [
     {
       id: 'dashboard-preventivas',
@@ -156,6 +173,7 @@ function getSCASubmenus(tenant) {
       label: 'Relatórios',
       route: `/${tenant}/sca/relatorios`,
       icon: 'file-text',
+      comingSoon: true,
     },
     {
       id: 'cadastros',
@@ -163,6 +181,53 @@ function getSCASubmenus(tenant) {
       route: `/${tenant}/sca/cadastros`,
       icon: 'database',
       isCadastros: true,
+      comingSoon: allComingSoon,
+    },
+  ];
+}
+
+/**
+ * Gera os submenus padrão para CFTV
+ * @param {string} tenant - ID do tenant
+ * @returns {Array} Lista de submenus
+ */
+function getCFTVSubmenus(tenant) {
+  return [
+    {
+      id: 'dashboard-preventivas',
+      label: 'Dashboard Preventivas',
+      route: `/${tenant}/cftv/preventivas/dashboard`,
+      icon: 'activity',
+      comingSoon: true,
+    },
+    {
+      id: 'preventivas',
+      label: 'Preventivas',
+      route: `/${tenant}/cftv/preventivas`,
+      icon: 'wrench',
+      comingSoon: true,
+    },
+    {
+      id: 'corretivas',
+      label: 'Corretivas/Ocorrências',
+      route: `/${tenant}/cftv/corretivas`,
+      icon: 'alert-triangle',
+      comingSoon: true,
+    },
+    {
+      id: 'relatorios',
+      label: 'Relatórios',
+      route: `/${tenant}/cftv/relatorios`,
+      icon: 'file-text',
+      comingSoon: true,
+    },
+    {
+      id: 'cadastros',
+      label: 'Cadastros',
+      route: `/${tenant}/cftv/cadastros`,
+      icon: 'database',
+      isCadastros: true,
+      comingSoon: true,
     },
   ];
 }
@@ -192,6 +257,22 @@ export function getMenuConfig(tenant) {
     ],
     'riomar-aracaju': [
       { id: 'bms', label: 'BMS', icon: 'cpu', submenus: getBMSSubmenus(tenant) },
+    ],
+    'salvador-norte': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+      { id: 'bms', label: 'BMS', icon: 'cpu', submenus: getBMSSubmenus(tenant) },
+    ],
+    'empresarial-rui-barbosa': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+    ],
+    'empresarial-cicero-dias': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+      { id: 'bms', label: 'BMS', icon: 'cpu', submenus: getBMSSubmenus(tenant) },
+      { id: 'sca', label: 'SCA', icon: 'shield', submenus: getSCASubmenus(tenant) },
+      { id: 'cftv', label: 'CFTV', icon: 'video', submenus: getCFTVSubmenus(tenant) },
+    ],
+    'empresarial-kronos': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
     ],
   };
 

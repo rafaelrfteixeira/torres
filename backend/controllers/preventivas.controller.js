@@ -262,9 +262,26 @@ const salvar = async (req, res, next) => {
     const { siteId, listId: historicoListId } = await resolveSharePointIds(graphClient, listaHistorico);
 
     const toIsoDate = (dateStr) => {
-      if (!dateStr) return new Date().toISOString();
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      const timePart = `T${hours}:${mins}:${secs}-03:00`;
+
+      if (!dateStr) return now.toISOString();
       if (dateStr.includes('T')) return dateStr;
-      return `${dateStr}T00:00:00Z`;
+
+      let isoFormattedDate = dateStr;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr.trim())) {
+        const [dd, mm, yyyy] = dateStr.trim().split('/');
+        isoFormattedDate = `${yyyy}-${mm}-${dd}`;
+      }
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(isoFormattedDate.trim())) {
+        return `${isoFormattedDate.trim()}${timePart}`;
+      }
+
+      return dateStr;
     };
 
     // Mapear campos do formulário para colunas do List
@@ -650,9 +667,33 @@ const getDashboardStatus = async (req, res, next) => {
     const { buffer } = await downloadExcelViaGraph(accessToken, excelUrl);
     const { dispositivos: todosDispositivos } = parseMatrizMestra(buffer);
 
+    // DEPURAÇÃO DE URLS DO SHAREPOINT LIST
+    if (tenantConfig.listaHistoricoPreventivas) {
+      try {
+        const graphClient = getGraphClient(accessToken);
+        const { siteId, listId } = await resolveSharePointIds(graphClient, tenantConfig.listaHistoricoPreventivas);
+        const listMeta = await graphClient.api(`/sites/${siteId}/lists/${listId}`).select('webUrl').get();
+        console.log(`📎 [SharePointDebug] webUrl de Preventivas: "${listMeta.webUrl}"`);
+      } catch (err) {
+        console.error(`📎 [SharePointDebug] Erro ao obter webUrl de Preventivas:`, err.message);
+      }
+    }
+    if (tenantConfig.listaCorretivas) {
+      try {
+        const graphClient = getGraphClient(accessToken);
+        const { siteId, listId } = await resolveSharePointIds(graphClient, tenantConfig.listaCorretivas);
+        const listMeta = await graphClient.api(`/sites/${siteId}/lists/${listId}`).select('webUrl').get();
+        console.log(`📎 [SharePointDebug] webUrl de Corretivas: "${listMeta.webUrl}"`);
+      } catch (err) {
+        console.error(`📎 [SharePointDebug] Erro ao obter webUrl de Corretivas:`, err.message);
+      }
+    }
+
     // 2. Tentar buscar histórico de inspeções do SharePoint se a lista estiver configurada
-    // Mapear por TAG exata -> array de logs com datas
+    // Mapear por Descrição Exata (primário) e TAG (secundário) -> arrays de logs ordenados por data mais recente
+    let logsPorDesc = new Map();
     let logsPorTag = new Map();
+
     if (tenantConfig.listaHistoricoPreventivas) {
       try {
         const graphClient = getGraphClient(accessToken);
@@ -663,19 +704,55 @@ const getDashboardStatus = async (req, res, next) => {
 
         (resList.value || []).forEach((item) => {
           const f = item.fields || {};
-          const tagKey = (f.Title || f.TAG || '').trim().toUpperCase();
-          if (!tagKey) return;
+          const titleTag = (f.Title || f.TAG || '').trim();
+          const descField = (f.Localizacao || f.Ponto || f.Descricao || f.Title || f.TAG || '').trim();
+
+          const tagKey = titleTag.toUpperCase();
+          const descKey = descField.toUpperCase();
+          if (!tagKey && !descKey) return;
 
           let dataExec = '-';
           let mesLog = 0;
           let anoLog = 0;
+          let timestamp = 0;
 
           if (f.Data_Execucao || f.Created) {
-            const d = new Date(f.Data_Execucao || f.Created);
-            mesLog = d.getMonth() + 1;
-            anoLog = d.getFullYear();
-            const hora = f.Horario_Termino || f.Hora_Fim || d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            dataExec = `${d.toLocaleDateString('pt-BR')} às ${hora}`;
+            const rawDateStr = f.Data_Execucao || f.Created;
+            let dataFormatada = '-';
+            let horaFormatada = '-';
+
+            if (typeof rawDateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rawDateStr.trim())) {
+              const [yyyy, mm, dd] = rawDateStr.trim().split('-');
+              dataFormatada = `${dd}/${mm}/${yyyy}`;
+              mesLog = parseInt(mm, 10);
+              anoLog = parseInt(yyyy, 10);
+              horaFormatada = f.Horario_Termino || f.Hora_Fim || '12:00';
+              timestamp = new Date(`${rawDateStr.trim()}T12:00:00-03:00`).getTime();
+            } else {
+              const d = new Date(rawDateStr);
+              if (!isNaN(d.getTime())) {
+                timestamp = d.getTime();
+                dataFormatada = d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+                horaFormatada = f.Horario_Termino || f.Hora_Fim || d.toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZone: 'America/Sao_Paulo',
+                });
+
+                const parts = new Intl.DateTimeFormat('pt-BR', {
+                  year: 'numeric',
+                  month: 'numeric',
+                  timeZone: 'America/Sao_Paulo',
+                }).formatToParts(d);
+
+                const mPart = parts.find((p) => p.type === 'month');
+                const yPart = parts.find((p) => p.type === 'year');
+                if (mPart) mesLog = parseInt(mPart.value, 10);
+                if (yPart) anoLog = parseInt(yPart.value, 10);
+              }
+            }
+
+            dataExec = `${dataFormatada} às ${horaFormatada}`;
           }
 
           let logChecklist = [];
@@ -693,15 +770,17 @@ const getDashboardStatus = async (req, res, next) => {
                 logChecklist = parsed.items || parsed.checklist || parsed.respostas || [parsed];
               }
             } catch (e) {
-              console.warn(`⚠️ [PreventivasController] Erro ao parsear Log_Checklist para ${tagKey}:`, e.message);
+              console.warn(`⚠️ [PreventivasController] Erro ao parsear Log_Checklist para ${descKey || tagKey}:`, e.message);
             }
           }
 
           const obj = {
             id: item.id,
-            tag: f.Title || f.TAG || '',
+            tag: titleTag,
+            descricao: descField,
             statusPonto: f.Status_Ponto || f.Status_Inspecao || 'Funcionando',
             dataUltimoTeste: dataExec,
+            timestamp,
             mesLog,
             anoLog,
             executor: f.Tecnico_Responsavel || f.Executor || 'Técnico TorresCx',
@@ -712,11 +791,20 @@ const getDashboardStatus = async (req, res, next) => {
             observacoes: f.Observacoes_Gerais || f.Observacoes || '',
           };
 
-          if (!logsPorTag.has(tagKey)) {
-            logsPorTag.set(tagKey, []);
+          if (descKey) {
+            if (!logsPorDesc.has(descKey)) logsPorDesc.set(descKey, []);
+            logsPorDesc.get(descKey).push(obj);
           }
-          logsPorTag.get(tagKey).push(obj);
+          if (tagKey) {
+            if (!logsPorTag.has(tagKey)) logsPorTag.set(tagKey, []);
+            logsPorTag.get(tagKey).push(obj);
+          }
         });
+
+        // Ordenar os logs por timestamp decrescente (do mais recente para o mais antigo)
+        logsPorDesc.forEach((arr) => arr.sort((a, b) => b.timestamp - a.timestamp));
+        logsPorTag.forEach((arr) => arr.sort((a, b) => b.timestamp - a.timestamp));
+
       } catch (hErr) {
         console.warn('⚠️ [PreventivasDashboard] Não foi possível carregar histórico do SharePoint:', hErr.message);
       }
@@ -728,32 +816,43 @@ const getDashboardStatus = async (req, res, next) => {
     const dispositivosProcessados = todosDispositivos.map((d, index) => {
       const tag = (d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`);
       const tagKey = tag.trim().toUpperCase();
+      const descKey = (d.descricao || '').trim().toUpperCase();
 
-      const logsDoAtivo = logsPorTag.get(tagKey) || [];
+      // Busca prioritária por Descrição Exata > Descrição Parcial > Tag
+      let logsDoAtivo = logsPorDesc.get(descKey) || [];
+      if (logsDoAtivo.length === 0 && descKey) {
+        // Tenta achar chave em logsPorDesc que contenha a descrição ou código do módulo
+        for (const [k, arr] of logsPorDesc.entries()) {
+          if (k.includes(descKey) || descKey.includes(k)) {
+            logsDoAtivo = arr;
+            break;
+          }
+        }
+      }
+      if (logsDoAtivo.length === 0) {
+        logsDoAtivo = logsPorTag.get(tagKey) || [];
+      }
 
-      // Log específico no mês/ano selecionado na tela
+      // Log correspondente ao mês programado do dispositivo (linha da Matriz Mestra)
       const logNoMesSelecionado = logsDoAtivo.find(
-        (l) => l.mesLog === mesAtual && (anoParam ? l.anoLog === anoParam : true)
-      );
-
-      // Qualquer log no histórico
-      const logRecente = logsDoAtivo.length > 0 ? logsDoAtivo[0] : null;
+        (l) => l.mesLog === d.mesNumero && (anoParam ? l.anoLog === anoParam : true)
+      ) || (logsDoAtivo.length > 0 ? logsDoAtivo[0] : null);
 
       // Execução no mês da competência selecionada:
       // O status de realização do dispositivo no ano de 2026 vem estritamente da coluna "Realizado 2026" do Excel (marcação 'sim')
       const realizadoNoMes = Boolean(d.realizado);
 
-      // Realização global
-      const realizadoGeral = d.realizado || logsDoAtivo.length > 0;
+      // Realização global (em qualquer momento da base de 2026)
+      const realizadoGeral = d.realizado;
 
       let statusCalculado = 'pendente';
       if (realizadoNoMes) {
         statusCalculado = 'realizado';
-      } else if (d.mesNumero > 0 && d.mesNumero < mesAtualReal) {
+      } else if (d.mesNumero > 0 && d.mesNumero < mesAtual) {
         statusCalculado = 'atrasado';
-      } else if (d.mesNumero === mesAtualReal) {
+      } else if (d.mesNumero === mesAtual) {
         statusCalculado = 'pendente';
-      } else if (d.mesNumero > mesAtualReal) {
+      } else if (d.mesNumero > mesAtual) {
         statusCalculado = 'futuro';
       }
 
@@ -771,16 +870,16 @@ const getDashboardStatus = async (req, res, next) => {
         realizadoGeral,
         status: statusCalculado,
         ultimoTeste: realizadoNoMes
-          ? (logNoMesSelecionado ? logNoMesSelecionado.dataUltimoTeste : logRecente ? logRecente.dataUltimoTeste : 'Executado (Matriz Mestra)')
+          ? (logNoMesSelecionado ? logNoMesSelecionado.dataUltimoTeste : 'Executado (Matriz Mestra)')
           : 'Aguardando realização',
         executor: realizadoNoMes
-          ? (logNoMesSelecionado ? logNoMesSelecionado.executor : logRecente ? logRecente.executor : 'Técnico Responsável')
+          ? (logNoMesSelecionado ? logNoMesSelecionado.executor : 'Técnico Responsável')
           : '-',
         logChecklist: realizadoNoMes
-          ? (logNoMesSelecionado ? logNoMesSelecionado.logChecklist : logRecente ? logRecente.logChecklist : [])
+          ? (logNoMesSelecionado ? logNoMesSelecionado.logChecklist : [])
           : [],
-        osVinculadaId: realizadoNoMes ? (logNoMesSelecionado ? logNoMesSelecionado.osVinculadaId : logRecente ? logRecente.osVinculadaId : '') : '',
-        observacoes: realizadoNoMes ? (logNoMesSelecionado ? logNoMesSelecionado.observacoes : logRecente ? logRecente.observacoes : '') : '',
+        osVinculadaId: realizadoNoMes ? (logNoMesSelecionado ? logNoMesSelecionado.osVinculadaId : '') : '',
+        observacoes: realizadoNoMes ? (logNoMesSelecionado ? logNoMesSelecionado.observacoes : '') : '',
       };
     });
 
@@ -792,7 +891,7 @@ const getDashboardStatus = async (req, res, next) => {
       : 0;
 
     const pendenciasForaPrazoGeral = dispositivosProcessados.filter(
-      (d) => !d.realizadoGeral && d.mesNumero > 0 && d.mesNumero < mesAtualReal
+      (d) => !d.realizadoGeral && d.mesNumero > 0 && d.mesNumero < mesAtual
     ).length;
 
     const totalNoPrazoGeral = totalBaseGeral - pendenciasForaPrazoGeral;
@@ -959,6 +1058,49 @@ const inspectExcel = async (req, res, next) => {
   }
 };
 
+const debugLists = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+    if (!accessToken) {
+      return res.status(401).json({ success: false, message: 'Usuário não autenticado.' });
+    }
+    const graphClient = getGraphClient(accessToken);
+    const { siteId } = await resolveSharePointIds(graphClient, 'TESTE_PREVENTIVAS_APP');
+    const resList = await graphClient.api(`/sites/${siteId}/lists`).get();
+    res.json(resList.value.map(l => ({ displayName: l.displayName, webUrl: l.webUrl, name: l.name })));
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+const goToList = async (req, res, next) => {
+  try {
+    const accessToken = req.session?.accessToken;
+    if (!accessToken) {
+      return res.status(401).send('Usuário não autenticado no TorresCx. Por favor, realize o login novamente.');
+    }
+    const tenantConfig = req.tenantConfig;
+    const listKey = req.query.list; // e.g. 'listaCorretivas' ou 'listaHistoricoPreventivas'
+    const listName = tenantConfig[listKey];
+
+    if (!listName) {
+      return res.status(400).send(`Lista "${listKey}" não configurada para este cliente.`);
+    }
+
+    const graphClient = getGraphClient(accessToken);
+    const { siteId, listId } = await resolveSharePointIds(graphClient, listName);
+    const listMeta = await graphClient.api(`/sites/${siteId}/lists/${listId}`).select('webUrl').get();
+    
+    if (listMeta && listMeta.webUrl) {
+      return res.redirect(listMeta.webUrl);
+    } else {
+      return res.status(500).send('Não foi possível obter a URL da lista do SharePoint.');
+    }
+  } catch (err) {
+    return res.status(500).send(`Erro ao obter link da lista: ${err.message}`);
+  }
+};
+
 /**
  * Converte índice de coluna (0-indexed) em letra de coluna do Excel.
  * 0 = A, 1 = B, ..., 25 = Z, 26 = AA, etc.
@@ -973,4 +1115,4 @@ function getColumnLetter(index) {
   return letter;
 }
 
-module.exports = { getDispositivos, salvar, debugColumns, getDashboardStatus, inspectExcel };
+module.exports = { getDispositivos, salvar, debugColumns, getDashboardStatus, inspectExcel, debugLists, goToList };
