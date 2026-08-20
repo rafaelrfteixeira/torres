@@ -48,7 +48,7 @@ const shoppings = {
     // Preventivas Área Comum
     excelPreventivasUrl: null, // TODO: Configurar
     listaHistoricoPreventivas: null,
-    listaCorretivas: null,
+    listaCorretivas: 'CC-2021-5-491-Riomar Kennedy',
     responsavelShopping: {
       sdai: {
         solicitante: 'Maria Eugenia',
@@ -210,6 +210,26 @@ const shoppings = {
       bms: null,
     },
   },
+  'plaza-shopping-recife': {
+    name: 'Plaza Shopping Recife',
+    logo: '/logo_plaza_shopping.png',
+    listaSDAI: '2026-7-1915-SDAI-MAN-PLAZA-SHOPPING',
+    listaBMS: null,
+    excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQB7_W8JJcfzSL1Neim_8u2DAakqtl4ObavzsxzZr9Oi1vc',
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: null,
+    listaHistoricoPreventivas: null,
+    listaCorretivas: 'CC-2026-7-1915-MAN-PLAZA-SHOPPING',
+    responsavelShopping: {
+      sdai: {
+        solicitante: 'Teste',
+        telefone: null,
+        email: 'teste@teste.com.br',
+      },
+      bms: null,
+    },
+  },
 };
 
 // -----------------------------------------------
@@ -222,13 +242,13 @@ const permissions = {
   'pedro.ricardolima@torrescx.com.br': ['shopping-recife'],
   'msantos@torrescx.com.br': ['*'],
   'antonio.cezar@torrescx.com.br': ['riomar-recife'],
-  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos'],
+  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife'],
   'david.teixeira@torrescx.com.br': ['riomar-kennedy'],
   'ruan.lima@torrescx.com.br': ['shopping-recife'],
   'leandro.araujo@torrescx.com.br': ['riomar-kennedy'],
   'ananias.santana@torrescx.com.br': ['shopping-guararapes'],
-  'arnaldo.justino@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos'],
-  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos'],
+  'arnaldo.justino@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife'],
+  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife'],
   'marcos.torres@torrescx.com.br': ['*'],
   'adm.manut@torrescx.com.br': ['*'],
   'rafael.costal@torrescx.com.br': ['salvador-norte'],

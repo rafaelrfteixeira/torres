@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 
 const NOME_MESES = [
   { value: 1, label: 'Janeiro' },
@@ -716,20 +717,42 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
                 )}
               </div>
 
-              {/* Log do Checklist (exibido para todos os dispositivos realizados) */}
+              {/* Log do Checklist ou Alerta de Sem Acesso */}
               {ativoSelecionado.realizado && (() => {
-                const checklistFinal = (ativoSelecionado.logChecklist && ativoSelecionado.logChecklist.length > 0)
-                  ? ativoSelecionado.logChecklist
-                  : [
-                      { atividade: 'Inspeção visual', resposta: 'SIM' },
-                      { atividade: 'Verificação de LEDs de funcionamento do módulo', resposta: 'SIM' },
-                      { atividade: 'Validação de resistor de fim de linha', resposta: 'SIM' },
-                      { atividade: 'Limpeza do equipamento', resposta: 'SIM' },
-                      { atividade: 'Verificação de cabos e conexões', resposta: 'SIM' },
-                      { atividade: 'Reaperto de parafusos', resposta: 'SIM' },
-                      { atividade: 'Teste de acionamento do dispositivo', resposta: ativoSelecionado.osVinculadaId ? 'NÃO' : 'SIM' },
-                      { atividade: 'Conferência de label do painel de Incêndio', resposta: 'SIM' },
-                    ];
+                const isSemAcesso = String(ativoSelecionado.statusPonto || '').toLowerCase().includes('sem acesso') || String(ativoSelecionado.status || '').toLowerCase() === 'sem-acesso';
+                const hasRealChecklist = Array.isArray(ativoSelecionado.logChecklist) && ativoSelecionado.logChecklist.length > 0;
+
+                if (isSemAcesso) {
+                  return (
+                    <div className="border border-red-200 bg-red-50/70 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-red-700 font-bold text-xs uppercase tracking-wide">
+                        <AlertTriangle size={16} className="text-red-600 shrink-0" />
+                        <span>Ponto Sem Acesso Físico</span>
+                      </div>
+                      <p className="text-xs text-red-800 leading-relaxed">
+                        A inspeção normativa não pôde ser executada neste ciclo pois o técnico não obteve acesso físico ao ponto/loja.
+                      </p>
+                      {ativoSelecionado.osVinculadaId && (
+                        <div className="text-xs text-amber-900 bg-amber-100/80 p-2.5 rounded-lg border border-amber-300 font-medium">
+                          ⚠️ <strong>Ação de Desbloqueio:</strong> Ordem de Serviço <strong>#{ativoSelecionado.osVinculadaId}</strong> aberta para liberação de acesso e reagendamento do ensaio.
+                        </div>
+                      )}
+                      {ativoSelecionado.observacoes && (
+                        <div className="text-xs text-slate-700 bg-white/80 p-2.5 rounded-lg border border-red-100">
+                          <strong>Observações:</strong> {ativoSelecionado.observacoes}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (!hasRealChecklist) {
+                  return (
+                    <div className="border border-slate-200 bg-slate-50 rounded-xl p-4 text-center text-xs text-slate-500">
+                      Dispositivo registrado como realizado na Matriz Mestra sem checklist individual detalhado.
+                    </div>
+                  );
+                }
 
                 return (
                   <div className="border border-slate-200 rounded-xl p-4 space-y-3">
@@ -737,7 +760,7 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
                       Itens Testados no Checklist
                     </h4>
                     <ul className="space-y-2 text-xs">
-                      {checklistFinal.map((item, idx) => {
+                      {ativoSelecionado.logChecklist.map((item, idx) => {
                         const itemDesc = item.atividade || item.item || item.descricao || item.pergunta || item.nome || `Item ${idx + 1}`;
                         const rawStatus = String(item.resposta || item.status || item.resultado || 'SIM').trim();
                         const stLower = rawStatus.toLowerCase();
@@ -757,7 +780,7 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
                               className={`font-bold px-2.5 py-0.5 rounded text-[11px] uppercase tracking-wide whitespace-nowrap ${
                                 isOk
                                   ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                  : 'bg-rose-600 text-white border border-rose-700 animate-pulse'
+                                  : 'bg-rose-600 text-white border border-rose-700'
                               }`}
                             >
                               {isOk ? rawStatus : `✖ ${rawStatus}`}

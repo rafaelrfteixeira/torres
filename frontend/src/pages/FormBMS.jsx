@@ -43,6 +43,20 @@ const PENDENCIAS = [
   'Troca de Dispositivo',
 ];
 
+function getTodayDateString() {
+  const parts = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const y = parts.find((p) => p.type === 'year')?.value;
+  const m = parts.find((p) => p.type === 'month')?.value;
+  const d = parts.find((p) => p.type === 'day')?.value;
+  return `${y}-${m}-${d}`;
+}
+
 export default function FormBMS({ user, shoppingsMetadata = [] }) {
   const navigate = useNavigate();
   const { id, tenant } = useParams();
@@ -62,7 +76,7 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
 
   const { register, handleSubmit, watch, reset, setValue } = useForm({
     defaultValues: {
-      data: new Date().toISOString().split('T')[0],
+      data: getTodayDateString(),
       loja: '',
       codigoLoja: '',
       responsavelShopping: {

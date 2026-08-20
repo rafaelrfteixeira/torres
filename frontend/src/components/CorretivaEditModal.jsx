@@ -177,21 +177,44 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
         
         {/* Cabeçalho */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-amber-500 flex items-center justify-center font-bold text-white shadow-lg">
-              OS #{corretiva.osNumber}
+        <div className="px-6 py-4 bg-slate-900 text-white flex items-start justify-between border-b border-slate-800 gap-4">
+          <div className="flex items-start gap-3.5 min-w-0">
+            {/* Ícone */}
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-red-600 flex items-center justify-center text-white shadow-lg shrink-0 mt-0.5">
+              <AlertTriangle size={20} />
             </div>
-            <div>
-              <h2 className="text-lg font-bold leading-tight">{corretiva.titulo}</h2>
-              <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
-                <span>{corretiva.categoria}</span> • <span>Solicitante: {corretiva.solicitante}</span>
-              </p>
+
+            {/* Informações da OS e Título */}
+            <div className="min-w-0 space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-mono font-bold tracking-wide">
+                  OS #{corretiva.osNumber}
+                </span>
+                {corretiva.categoria && (
+                  <span className="text-xs text-slate-400 font-medium truncate">
+                    {corretiva.categoria}
+                  </span>
+                )}
+              </div>
+
+              <h2 className="text-lg sm:text-xl font-bold text-white leading-tight break-words">
+                {corretiva.titulo}
+              </h2>
+
+              {corretiva.solicitante && (
+                <p className="text-xs text-slate-400 flex items-center gap-1.5 pt-0.5">
+                  <User size={12} className="text-slate-500 shrink-0" />
+                  <span>Solicitante: <span className="text-slate-300 font-medium">{corretiva.solicitante}</span></span>
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Botão Fechar */}
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 -mr-1"
+            title="Fechar"
           >
             <X size={20} />
           </button>

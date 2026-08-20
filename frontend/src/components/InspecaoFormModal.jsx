@@ -130,13 +130,27 @@ function resolveChecklist(tipo) {
   return { label: tipo || 'Dispositivo', items: CHECKLIST_GENERICO };
 }
 
+function getTodayDateString() {
+  const parts = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const y = parts.find((p) => p.type === 'year')?.value;
+  const m = parts.find((p) => p.type === 'month')?.value;
+  const d = parts.find((p) => p.type === 'day')?.value;
+  return `${y}-${m}-${d}`;
+}
+
 export default function InspecaoFormModal({ dispositivo, user, currentShopping, tenant, onClose, onSaved }) {
   const modalRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
   // Form state
-  const [dataExecucao, setDataExecucao] = useState(new Date().toISOString().split('T')[0]);
+  const [dataExecucao, setDataExecucao] = useState(getTodayDateString());
   const [acessivel, setAcessivel] = useState(null); // null, 'sim', 'nao'
   const [gravidadeFalha, setGravidadeFalha] = useState('Média');
   const [descricaoDefeito, setDescricaoDefeito] = useState('');
@@ -160,6 +174,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
     setChecklistRespostas(
       checklistItems.map((atividade) => ({ atividade, status: '' }))
     );
+    setDataExecucao(getTodayDateString());
     setAcessivel(null);
     setDescricaoDefeito('');
     setObservacoesGerais('');
@@ -272,7 +287,9 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
       tipoDispositivo: tipoLabel,
       dataExecucao,
       statusInspecao: resolvedStatusInspecao,
-      checklist: acessivel === 'sim' ? checklistRespostas : [],
+      checklist: acessivel === 'sim'
+        ? checklistRespostas
+        : [{ atividade: 'Acesso físico ao local e dispositivo', status: 'nao' }],
       gravidadeFalha: deveAbrirOS ? gravidadeFalha : '',
       descricaoDefeito: deveAbrirOS ? descricaoDefeito : '',
       observacoesGerais,

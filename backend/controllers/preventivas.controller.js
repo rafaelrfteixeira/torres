@@ -263,18 +263,32 @@ const salvar = async (req, res, next) => {
 
     const toIsoDate = (dateStr) => {
       const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const mins = String(now.getMinutes()).padStart(2, '0');
-      const secs = String(now.getSeconds()).padStart(2, '0');
-      const timePart = `T${hours}:${mins}:${secs}-03:00`;
+      const parts = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).formatToParts(now);
 
-      if (!dateStr) return now.toISOString();
+      const y = parts.find((p) => p.type === 'year')?.value;
+      const m = parts.find((p) => p.type === 'month')?.value;
+      const d = parts.find((p) => p.type === 'day')?.value;
+      const hh = parts.find((p) => p.type === 'hour')?.value || '12';
+      const mm = parts.find((p) => p.type === 'minute')?.value || '00';
+      const ss = parts.find((p) => p.type === 'second')?.value || '00';
+      const timePart = `T${hh}:${mm}:${ss}-03:00`;
+
+      if (!dateStr) return `${y}-${m}-${d}${timePart}`;
       if (dateStr.includes('T')) return dateStr;
 
       let isoFormattedDate = dateStr;
       if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr.trim())) {
-        const [dd, mm, yyyy] = dateStr.trim().split('/');
-        isoFormattedDate = `${yyyy}-${mm}-${dd}`;
+        const [dd, mmVal, yyyy] = dateStr.trim().split('/');
+        isoFormattedDate = `${yyyy}-${mmVal}-${dd}`;
       }
 
       if (/^\d{4}-\d{2}-\d{2}$/.test(isoFormattedDate.trim())) {
@@ -869,6 +883,9 @@ const getDashboardStatus = async (req, res, next) => {
         realizado: realizadoNoMes,
         realizadoGeral,
         status: statusCalculado,
+        statusPonto: realizadoNoMes
+          ? (logNoMesSelecionado ? logNoMesSelecionado.statusPonto : 'Funcionando')
+          : 'Pendente',
         ultimoTeste: realizadoNoMes
           ? (logNoMesSelecionado ? logNoMesSelecionado.dataUltimoTeste : 'Executado (Matriz Mestra)')
           : 'Aguardando realização',

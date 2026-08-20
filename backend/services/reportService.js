@@ -159,7 +159,7 @@ async function fetchPreventiveHistory(graphClient, tenantConfig, mes, ano) {
     let dataExecucao = '-';
     if (f.Data_Execucao) {
       const d = new Date(f.Data_Execucao);
-      dataExecucao = d.toLocaleDateString('pt-BR');
+      dataExecucao = isNaN(d.getTime()) ? f.Data_Execucao : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
     }
 
     const horaInicio = f.Horario_Inicio || f.Hora_Inicio || '-';
@@ -389,22 +389,20 @@ async function fetchCorretivas(graphClient, tenantConfig) {
 }
 
 /**
- * Busca total de dispositivos planejados para o mês a partir da Matriz Mestra (Excel)
+ * Busca Matriz Mestra completa do tenant para conciliação de rotinas e passivos
  */
-async function fetchDispositivosPlanejados(accessToken, tenantConfig, mes) {
+async function fetchMatrizMestra(accessToken, tenantConfig) {
   if (!tenantConfig.excelPreventivasUrl) {
-    return 0;
+    return [];
   }
 
   try {
     const { buffer } = await downloadExcelViaGraph(accessToken, tenantConfig.excelPreventivasUrl);
     const { dispositivos } = parseMatrizMestra(buffer);
-    const mesNum = Number(mes);
-    const planejados = dispositivos.filter((d) => d.mesNumero === mesNum);
-    return planejados.length;
+    return dispositivos || [];
   } catch (err) {
-    console.warn('⚠️ [ReportService] Não foi possível obter dispositivos planejados da Matriz Mestra:', err.message);
-    return 0;
+    console.warn('⚠️ [ReportService] Não foi possível carregar a Matriz Mestra:', err.message);
+    return [];
   }
 }
 
@@ -451,51 +449,69 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
     const badgeText = isNormal ? 'Funcionando' : dev.statusPonto;
 
     // Checklist Rows — Usa a propriedade "atividade" vinda do JSON de Log_Checklist
-    const checklistRowsHTML = dev.logChecklist.length > 0 ? dev.logChecklist.map((chk) => {
-      const itemDesc = chk.atividade || chk.item || chk.descricao || chk.pergunta || chk.nome || 'Item de Verificação';
-      const st = String(chk.status || chk.resposta || '').toLowerCase();
-      const isSim = st === 'sim' || st === 's' || st === 'true' || st === 'ok';
+    let checklistRowsHTML = '';
+    if (dev.logChecklist.length > 0) {
+      checklistRowsHTML = dev.logChecklist.map((chk) => {
+        const itemDesc = chk.atividade || chk.item || chk.descricao || chk.pergunta || chk.nome || 'Item de Verificação';
+        const st = String(chk.status || chk.resposta || '').toLowerCase();
+        const isSim = st === 'sim' || st === 's' || st === 'true' || st === 'ok';
 
-      return `
+        return `
+          <tr>
+            <td>${itemDesc}</td>
+            <td class="exact-table td status-col ${isSim ? 'sim' : 'nao'}">${isSim ? '✓ SIM' : '✖ NÃO'}</td>
+          </tr>
+        `;
+      }).join('');
+    } else if (dev.statusPonto.toLowerCase().includes('sem acesso')) {
+      checklistRowsHTML = `
         <tr>
-          <td>${itemDesc}</td>
-          <td class="exact-table td status-col ${isSim ? 'sim' : 'nao'}">${isSim ? '✓ SIM' : '✖ NÃO'}</td>
+          <td>Acesso físico ao local e dispositivo</td>
+          <td class="exact-table td status-col nao">✖ NÃO</td>
         </tr>
       `;
-    }).join('') : `
-      <tr>
-        <td colspan="2" style="color: #94a3b8; font-style: italic;">Nenhum item de checklist registrado.</td>
-      </tr>
-    `;
+    } else {
+      checklistRowsHTML = `
+        <tr>
+          <td colspan="2" style="color: #94a3b8; font-style: italic;">Inspeção validada no cronograma da Matriz Mestra.</td>
+        </tr>
+      `;
+    }
 
     // Fotos
-    const foto1HTML = dev.foto1Url ? `
-      <div class="exact-photo-wrapper">
-        <img src="${dev.foto1Url}" alt="Evidência 1">
-        <div class="exact-photo-footer-bar">Foto 1: Registro de Inspeção</div>
-      </div>
-    ` : `
-      <div class="exact-photo-wrapper">
-        <div class="exact-photo-placeholder">
-          Nenhuma primeira imagem coletada para este ponto.
-        </div>
-        <div class="exact-photo-footer-bar">Foto 1: Não Cadastrada</div>
-      </div>
-    `;
+    // Fotos dinâmicas (renderiza apenas fotos existentes, sem placeholders vazios)
+    const photos = [];
+    if (dev.foto1Url) {
+      photos.push({
+        url: dev.foto1Url,
+        label: 'Foto 1: Registro de Inspeção',
+      });
+    }
+    if (dev.foto2Url) {
+      photos.push({
+        url: dev.foto2Url,
+        label: 'Foto 2: Registro de Inspeção',
+      });
+    }
 
-    const foto2HTML = dev.foto2Url ? `
-      <div class="exact-photo-wrapper">
-        <img src="${dev.foto2Url}" alt="Evidência 2">
-        <div class="exact-photo-footer-bar">Foto 2: Registro de Inspeção</div>
-      </div>
-    ` : `
-      <div class="exact-photo-wrapper">
-        <div class="exact-photo-placeholder">
-          Nenhuma segunda imagem coletada para este ponto.
+    let photosColumnHTML = '';
+    const bodyGridClass = photos.length === 0 ? 'exact-body-grid no-photos' : 'exact-body-grid';
+
+    if (photos.length > 0) {
+      const columnClass = photos.length === 1 ? 'exact-photo-column single-photo' : 'exact-photo-column two-photos';
+      const photosHTML = photos.map((p) => `
+        <div class="exact-photo-wrapper">
+          <img src="${p.url}" alt="${p.label}">
+          <div class="exact-photo-footer-bar">${p.label}</div>
         </div>
-        <div class="exact-photo-footer-bar">Foto 2: Não Cadastrada</div>
-      </div>
-    `;
+      `).join('');
+
+      photosColumnHTML = `
+        <div class="${columnClass}">
+          ${photosHTML}
+        </div>
+      `;
+    }
 
     // Alert box se houver OS / Falha
     let osBoxHTML = '';
@@ -514,11 +530,20 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
       `;
     }
 
+    const isAtrasadoBadge = dev.isAtrasado ? `
+      <div class="exact-badge" style="background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; font-size: 11px;">
+        Recuperação (${dev.mesProgramadoNome || 'Mês Anterior'})
+      </div>
+    ` : '';
+
     return `
       <div class="device-card-exact">
         <div class="exact-header">
           <h2>TAG: ${dev.tag} <span>- ${dev.descricao}</span></h2>
-          <div class="${badgeClass}">${badgeText}</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            ${isAtrasadoBadge}
+            <div class="${badgeClass}">${badgeText}</div>
+          </div>
         </div>
 
         <div class="exact-meta-row">
@@ -528,7 +553,7 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
           <span>Executor: <strong>${dev.executor}</strong></span>
         </div>
 
-        <div class="exact-body-grid">
+        <div class="${bodyGridClass}">
           <!-- Checklist -->
           <div>
             <div class="exact-section-subtitle">Itens de Verificação Normativa</div>
@@ -537,11 +562,8 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
             </table>
           </div>
 
-          <!-- Fotos -->
-          <div class="exact-photo-column">
-            ${foto1HTML}
-            ${foto2HTML}
-          </div>
+          <!-- Fotos (se houver) -->
+          ${photosColumnHTML}
         </div>
 
         <!-- Footer do Card -->
@@ -848,11 +870,15 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
             margin-bottom: 20px;
         }
 
+        .kpi-grid.kpi-grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
         .kpi-card {
             background: #ffffff;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
-            padding: 22px 10px;
+            padding: 20px 10px;
             text-align: center;
         }
 
@@ -864,6 +890,10 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
 
         .kpi-value.color-green {
             color: #15803d;
+        }
+
+        .kpi-value.color-blue {
+            color: #1d4ed8;
         }
 
         .kpi-value.color-amber {
@@ -944,6 +974,10 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
             padding: 20px;
         }
 
+        .exact-body-grid.no-photos {
+            grid-template-columns: 1fr;
+        }
+
         .exact-section-subtitle {
             font-size: 14px;
             font-weight: 700;
@@ -987,6 +1021,7 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
             display: flex;
             flex-direction: column;
             gap: 15px;
+            height: 100%;
         }
 
         .exact-photo-wrapper {
@@ -994,13 +1029,16 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
             border-radius: 4px;
             overflow: hidden;
             background: #f8fafc;
-            height: 175px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
-        .exact-photo-wrapper img {
+        .exact-photo-column.two-photos .exact-photo-wrapper {
+            height: 175px;
+        }
+
+        .exact-photo-column.two-photos .exact-photo-wrapper img {
             width: 100%;
             height: 145px;
             object-fit: contain;
@@ -1008,16 +1046,20 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
             display: block;
         }
 
-        .exact-photo-placeholder {
-            height: 145px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
-            font-size: 13px;
-            color: #64748b;
+        .exact-photo-column.single-photo .exact-photo-wrapper {
+            height: 100%;
+            min-height: 220px;
+            max-height: 365px;
+        }
+
+        .exact-photo-column.single-photo .exact-photo-wrapper img {
+            width: 100%;
+            height: 100%;
+            min-height: 190px;
+            max-height: 335px;
+            object-fit: contain;
             background-color: #f1f5f9;
+            display: block;
         }
 
         .exact-photo-footer-bar {
@@ -1264,24 +1306,41 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
             </div>
         </div>
 
-        <!-- Indicadores -->
-        <section class="section-title">Indicadores de Performance Semanal / Mensal</section>
+        <!-- Bloco 1: Indicadores da Rotina Programada -->
+        <section class="section-title">Performance da Rotina Programada (${nomeMesStr} / ${ano})</section>
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-value">${kpis.dispositivosPlanejados}</div>
                 <div class="kpi-label">Dispositivos Planejados</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-value">${kpis.dispositivosInspecionados}</div>
-                <div class="kpi-label">Dispositivos Inspecionados</div>
+                <div class="kpi-value">${kpis.inspecionadosDoMes}</div>
+                <div class="kpi-label">Realizados da Competência</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-value color-green">${kpis.taxaAderencia}</div>
-                <div class="kpi-label">Taxa de Aderência</div>
+                <div class="kpi-label">Taxa de Aderência ao Plano</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-value color-amber">${kpis.indiceConformidade}</div>
                 <div class="kpi-label">Índice de Conformidade</div>
+            </div>
+        </div>
+
+        <!-- Bloco 2: Recuperação de Passivo e Eficiência Global -->
+        <section class="section-title">Recuperação de Passivo e Eficiência Global</section>
+        <div class="kpi-grid kpi-grid-3">
+            <div class="kpi-card">
+                <div class="kpi-value color-blue">${kpis.atrasadosRecuperados}</div>
+                <div class="kpi-label">Atrasados Recuperados no Mês</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">${kpis.totalGeralInspecionados}</div>
+                <div class="kpi-label">Total Geral de Ensaios no Mês</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value ${kpis.passivoRestante > 0 ? 'color-amber' : 'color-green'}">${kpis.passivoRestante}</div>
+                <div class="kpi-label">Passivo Pendente Restante</div>
             </div>
         </div>
 
@@ -1316,17 +1375,72 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
 async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantConfig, mes, ano, sistema = 'sdai') {
   console.log(`📊 [ReportService] Gerando relatório para ${tenantConfig.name} - ${mes}/${ano}...`);
 
-  // 1. Obter histórico de inspeções no período
-  const history = await fetchPreventiveHistory(graphClient, tenantConfig, mes, ano);
-  console.log(`📋 [ReportService] ${history.length} inspeções encontradas no período`);
+  // 1. Obter histórico de inspeções no período (mês/ano)
+  const rawHistory = await fetchPreventiveHistory(graphClient, tenantConfig, mes, ano);
+  console.log(`📋 [ReportService] ${rawHistory.length} inspeções encontradas no período`);
 
   // 2. Obter mapa de ordens corretivas
   const corretivasMap = await fetchCorretivas(graphClient, tenantConfig);
   console.log(`⚙️ [ReportService] ${corretivasMap.size} ordens corretivas mapeadas`);
 
-  // 3. Obter total de dispositivos planejados
-  const dispositivosPlanejados = await fetchDispositivosPlanejados(accessToken, tenantConfig, mes);
-  const dispositivosInspecionados = history.length;
+  // 3. Obter Matriz Mestra (Excel) completa
+  const todosDispositivos = await fetchMatrizMestra(accessToken, tenantConfig);
+  const mesNum = Number(mes);
+
+  // Planejados para o mês selecionado
+  const planejadosDoMes = todosDispositivos.filter((d) => d.mesNumero === mesNum);
+  const dispositivosPlanejados = planejadosDoMes.length;
+
+  // Passivo de meses anteriores (1 até mesNum - 1)
+  const passivoMesesAnteriores = todosDispositivos.filter((d) => d.mesNumero > 0 && d.mesNumero < mesNum);
+  const passivoRestante = passivoMesesAnteriores.filter((d) => !d.realizado).length;
+
+  // Classificar itens do histórico em 'Rotina do Mês' vs 'Recuperação de Atrasados'
+  let atrasadosRecuperadosCount = 0;
+  let inspecionadosDoMesCount = 0;
+
+  const history = rawHistory.map((dev) => {
+    const devTag = (dev.tag || '').trim().toUpperCase();
+    const devDesc = (dev.descricao || '').trim().toUpperCase();
+
+    // Match na Matriz Mestra por Descrição Exata > Tag (Pavimento + Laço) > Descrição Parcial
+    let matched = null;
+    if (devDesc) {
+      matched = todosDispositivos.find((d) => (d.descricao || '').trim().toUpperCase() === devDesc);
+    }
+    if (!matched && devTag) {
+      matched = todosDispositivos.find((d) => {
+        const t = (d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || '');
+        return t.trim().toUpperCase() === devTag;
+      });
+    }
+    if (!matched && devDesc) {
+      matched = todosDispositivos.find((d) => {
+        const dDesc = (d.descricao || '').trim().toUpperCase();
+        return dDesc && (dDesc.includes(devDesc) || devDesc.includes(dDesc));
+      });
+    }
+
+    const isAtrasado = Boolean(matched && matched.mesNumero > 0 && matched.mesNumero < mesNum);
+    const mesProgramadoNome = matched && matched.mesNumero > 0 ? (NOME_MESES[matched.mesNumero] || `Mês ${matched.mesNumero}`) : '';
+
+    if (isAtrasado) {
+      atrasadosRecuperadosCount++;
+    } else {
+      inspecionadosDoMesCount++;
+    }
+
+    return {
+      ...dev,
+      isAtrasado,
+      mesProgramadoNome,
+      mesProgramadoNumero: matched?.mesNumero || mesNum,
+    };
+  });
+
+  const totalGeralInspecionados = history.length;
+  const inspecionadosDoMes = inspecionadosDoMesCount;
+  const atrasadosRecuperados = atrasadosRecuperadosCount;
 
   // 4. Calcular KPIs
   const totalFuncionando = history.filter((d) => {
@@ -1336,23 +1450,28 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
 
   let taxaAderencia = '0%';
   if (dispositivosPlanejados > 0) {
-    taxaAderencia = `${Math.round((dispositivosInspecionados / dispositivosPlanejados) * 100)}%`;
-  } else if (dispositivosInspecionados > 0) {
+    taxaAderencia = `${Math.min(100, Math.round((inspecionadosDoMes / dispositivosPlanejados) * 100))}%`;
+  } else if (totalGeralInspecionados > 0) {
     taxaAderencia = '100%';
   } else {
     taxaAderencia = 'N/A';
   }
 
   let indiceConformidade = '0%';
-  if (dispositivosInspecionados > 0) {
-    indiceConformidade = `${Math.round((totalFuncionando / dispositivosInspecionados) * 100)}%`;
+  if (totalGeralInspecionados > 0) {
+    indiceConformidade = `${Math.round((totalFuncionando / totalGeralInspecionados) * 100)}%`;
+  } else {
+    indiceConformidade = '100%';
   }
 
   const kpis = {
     dispositivosPlanejados,
-    dispositivosInspecionados,
+    inspecionadosDoMes,
     taxaAderencia,
     indiceConformidade,
+    atrasadosRecuperados,
+    totalGeralInspecionados,
+    passivoRestante,
   };
 
   // 5. Interpolar HTML

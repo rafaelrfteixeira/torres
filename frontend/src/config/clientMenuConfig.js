@@ -21,8 +21,12 @@ function getSDAISubmenus(tenant) {
   const isShoppingGuararapes = tenant === 'shopping-guararapes';
   const isEmpresarialCiceroDias = tenant === 'empresarial-cicero-dias';
   const isEmpresarialKronos = tenant === 'empresarial-kronos';
-  // Tenants com funcionalidades de preventivas/corretivas ativas
+  const isPlazaShoppingRecife = tenant === 'plaza-shopping-recife';
+  const isRioMarKennedy = tenant === 'riomar-kennedy';
+  // Tenants com funcionalidades de preventivas ativas
   const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos;
+  // Tenants com funcionalidades de corretivas ativas
+  const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarKennedy;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
   const hasInspecaoComingSoon = isSalvadorNorte;
   return [
@@ -59,7 +63,7 @@ function getSDAISubmenus(tenant) {
       label: 'Corretivas/Ocorrências',
       route: `/${tenant}/sdai/corretivas`,
       icon: 'alert-triangle',
-      comingSoon: !hasPreventivasActive,
+      comingSoon: !hasCorretivasActive,
     },
     {
       id: 'relatorios',
@@ -272,6 +276,9 @@ export function getMenuConfig(tenant) {
       { id: 'cftv', label: 'CFTV', icon: 'video', submenus: getCFTVSubmenus(tenant) },
     ],
     'empresarial-kronos': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+    ],
+    'plaza-shopping-recife': [
       { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
     ],
   };
