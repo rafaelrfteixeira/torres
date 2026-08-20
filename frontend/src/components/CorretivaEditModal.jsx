@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, CheckCircle, AlertTriangle, Clock, Camera, Upload, Trash2, Image as ImageIcon, Calendar, User, FileText, Tag, Loader2, Package } from 'lucide-react';
+import { syncManager } from '../services/syncManager';
 
 /**
  * Formata qualquer data (ISO, YYYY-MM-DD, DD/MM/YYYY) de forma segura em PT-BR (DD/MM/AAAA)
@@ -116,21 +117,15 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
         bodyData.imagem3 = imagem3Base64;
       }
 
-      const response = await fetch(`${API_URL}/corretivas/${corretiva.id}?tenant=${tenant}`, {
+      const result = await syncManager.submitWithOfflineSupport({
+        url: `${API_URL}/corretivas/${corretiva.id}?tenant=${tenant}`,
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(bodyData),
+        payload: bodyData,
+        description: `Corretiva #${corretiva.id || ''}: ${corretiva.tipo || 'Ocorrência'} (${corretiva.localizacao || ''}) -> ${status}`,
+        tenant,
+        type: 'corretiva',
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.message || `Erro ${response.status} ao salvar.`);
-      }
-
-      const result = await response.json();
       if (result.success) {
         if (onSaved) onSaved();
         onClose();

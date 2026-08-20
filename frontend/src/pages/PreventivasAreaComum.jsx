@@ -5,6 +5,7 @@ import {
   Loader2, Wrench, MapPin, Hash, Flame, RefreshCw
 } from 'lucide-react';
 import InspecaoFormModal from '../components/InspecaoFormModal';
+import { syncManager } from '../services/syncManager';
 
 /**
  * PreventivasAreaComum — Painel Operacional do Mês
@@ -42,27 +43,29 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
   const mesAtual = new Date().getMonth() + 1;
   const mesAtualNome = MESES_NOMES[mesAtual] || '';
 
-  // Buscar dispositivos do backend
+  // Buscar dispositivos do backend (com cache offline Dexie)
   const fetchDispositivos = async (refresh = false) => {
     setIsLoading(true);
     setError(null);
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
       const refreshQuery = refresh ? '&refresh=true' : '';
-      const response = await fetch(`${API_URL}/preventivas/dispositivos?tenant=${tenant}${refreshQuery}`, {
-        credentials: 'include',
+
+      const { data, fromCache, error: fetchErr } = await syncManager.fetchWithCache({
+        key: `preventivas:dispositivos:${tenant}`,
+        url: `${API_URL}/preventivas/dispositivos?tenant=${tenant}${refreshQuery}`,
+        tenant,
+        forceRefresh: refresh,
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.message || `Erro ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setDispositivos(result.data || []);
+      if (data && data.success) {
+        setDispositivos(data.data || []);
+      } else if (Array.isArray(data)) {
+        setDispositivos(data);
+      } else if (fetchErr) {
+        throw new Error(fetchErr);
       } else {
-        throw new Error(result.message || 'Erro ao carregar dispositivos.');
+        throw new Error('Erro ao carregar dispositivos.');
       }
     } catch (err) {
       console.error('❌ Erro ao buscar dispositivos:', err);

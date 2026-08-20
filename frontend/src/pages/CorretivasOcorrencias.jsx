@@ -6,6 +6,7 @@ import {
   ShieldAlert, Sparkles, SlidersHorizontal
 } from 'lucide-react';
 import CorretivaEditModal from '../components/CorretivaEditModal';
+import { syncManager } from '../services/syncManager';
 
 /**
  * Formata qualquer data (ISO, YYYY-MM-DD, DD/MM/YYYY) de forma segura em PT-BR (DD/MM/AAAA)
@@ -87,25 +88,26 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
     logo: '',
   };
 
-  const fetchCorretivas = async () => {
+  const fetchCorretivas = async (refresh = false) => {
     setIsLoading(true);
     setError(null);
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${API_URL}/corretivas?tenant=${tenant}`, {
-        credentials: 'include',
+      const { data, fromCache, error: fetchErr } = await syncManager.fetchWithCache({
+        key: `corretivas:${tenant}`,
+        url: `${API_URL}/corretivas?tenant=${tenant}`,
+        tenant,
+        forceRefresh: refresh,
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.message || `Erro ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setCorretivas(result.data || []);
+      if (data && data.success) {
+        setCorretivas(data.data || []);
+      } else if (Array.isArray(data)) {
+        setCorretivas(data);
+      } else if (fetchErr) {
+        throw new Error(fetchErr);
       } else {
-        throw new Error(result.message || 'Erro ao carregar lista de corretivas.');
+        throw new Error('Erro ao carregar lista de corretivas.');
       }
     } catch (err) {
       console.error('❌ Erro ao carregar corretivas:', err);

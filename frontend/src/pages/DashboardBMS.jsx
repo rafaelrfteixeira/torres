@@ -335,16 +335,27 @@ export default function DashboardBMS({ user, shoppingsMetadata = [] }) {
 
         {/* ERROR STATE */}
         {error && (
-          <div className="text-center py-8 bg-white rounded-xl border border-red-200 shadow-sm">
-            <p className="text-red-600 text-sm font-semibold">
-              ❌ Erro ao carregar dados: {error}
+          <div className="text-center py-8 px-4 bg-white rounded-xl border border-red-200 shadow-sm max-w-xl mx-auto">
+            <p className="text-red-600 text-sm font-semibold mb-2">
+              {error.includes('401') || error.includes('Acesso negado') || error.includes('login')
+                ? '🔒 Sua sessão de login expirou ou não possui autorização.'
+                : `❌ Erro ao carregar dados: ${error}`}
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-3 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors cursor-pointer"
-            >
-              Tentar novamente
-            </button>
+            {error.includes('401') || error.includes('Acesso negado') || error.includes('login') ? (
+              <a
+                href={`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/signin`}
+                className="inline-flex items-center gap-2 mt-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-all shadow-md"
+              >
+                Entrar com Microsoft 365
+              </a>
+            ) : (
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-3 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors cursor-pointer"
+              >
+                Tentar novamente
+              </button>
+            )}
           </div>
         )}
 

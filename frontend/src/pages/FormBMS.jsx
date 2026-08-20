@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
+import { syncManager } from '../services/syncManager';
 
 
 
@@ -108,17 +109,21 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
   const sistemasWatch = watch('sistemas');
   const tipoLojaSelected = watch('tipoLoja');
 
-  // Buscar lojas do Excel ao montar o componente
+  // Buscar lojas do Excel ao montar o componente (com cache offline Dexie)
   useEffect(() => {
     const fetchLojas = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${API_URL}/lojas?tenant=${tenant}`, { credentials: 'include' });
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data) {
-            setLojasList(result.data);
-          }
+        const { data } = await syncManager.fetchWithCache({
+          key: `lojas:${tenant}`,
+          url: `${API_URL}/lojas?tenant=${tenant}`,
+          tenant,
+        });
+
+        if (data && data.success && data.data) {
+          setLojasList(data.data);
+        } else if (Array.isArray(data)) {
+          setLojasList(data);
         }
       } catch (error) {
         console.error('Erro ao buscar lista de lojas:', error);
@@ -249,31 +254,44 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-      const response = await fetch(`${API_URL}/checklists`, {
+      const result = await syncManager.submitWithOfflineSupport({
+        url: `${API_URL}/checklists`,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formMapped),
+        payload: formMapped,
+        description: `Inspeção BMS: Loja ${formData.loja || ''} (${formData.codigoLoja || ''})`,
+        tenant,
+        type: 'checklist_bms',
       });
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // 3. Limpar Formulário e Exibir Sucesso
-        setSubmitStatus({ type: 'success', message: '🚀 Relatório salvo no Lists e enviado por e-mail com sucesso!' });
-        reset(); // Limpa todos os campos, retornando aos defaultValues definidos (vazios)
-        console.log('✅ Resposta do backend BMS:', result);
+      if (result.success) {
+        if (result.offline) {
+          setSubmitStatus({
+            type: 'success',
+            message: '💾 Modo Offline: Relatório salvo com segurança no dispositivo! Ele será enviado automaticamente quando a conexão retornar.',
+          });
+        } else {
+          setSubmitStatus({
+            type: 'success',
+            message: '🚀 Relatório salvo no Lists e enviado por e-mail com sucesso!',
+          });
+        }
+        reset(); // Limpa todos os campos
       } else {
-        setSubmitStatus({ type: 'error', message: result.message || 'Erro ao processar o relatório.' });
-        console.error('❌ Erro do backend:', result);
+        setSubmitStatus({
+          type: 'error',
+          message: result.message || 'Erro ao processar o relatório.',
+        });
       }
     } catch (error) {
-      setSubmitStatus({ type: 'error', message: 'Erro de conexão com o servidor. Verifique se o backend está rodando.' });
-      console.error('❌ Erro de rede:', error);
+      setSubmitStatus({
+        type: 'error',
+        message: 'Erro inesperado ao salvar relatório BMS.',
+      });
+      console.error('❌ Erro no submit:', error);
     } finally {
       setIsLoading(false);
-      // Auto-dismiss após 6 segundos
-      setTimeout(() => setSubmitStatus(null), 6000);
+      // Auto-dismiss após 7 segundos
+      setTimeout(() => setSubmitStatus(null), 7000);
     }
   };
 

@@ -3,6 +3,7 @@ import {
   X, Camera, Clock, AlertTriangle, CheckCircle2, ShieldAlert,
   Wrench, ChevronDown, Loader2, Save, Lock, Unlock
 } from 'lucide-react';
+import { syncManager } from '../services/syncManager';
 
 /**
  * InspecaoFormModal — Modal de Inspeção de Preventiva
@@ -309,32 +310,42 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${API_URL}/preventivas/salvar`, {
+      const result = await syncManager.submitWithOfflineSupport({
+        url: `${API_URL}/preventivas/salvar`,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
+        payload,
+        description: `Preventiva: ${dispositivo.tipoDispositivo || 'Dispositivo'} ${dispositivo.tagId || ''} (${dispositivo.localizacao || ''})`,
+        tenant,
+        type: 'preventiva',
       });
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setSubmitStatus({
-          type: 'success',
-          message: result.data?.osVinculada
-            ? `Preventiva salva e OS #${result.data.osVinculada} aberta!`
-            : 'Preventiva salva com sucesso!',
-        });
+      if (result.success) {
+        if (result.offline) {
+          setSubmitStatus({
+            type: 'success',
+            message: '💾 Modo Offline: Inspeção salva no dispositivo! Será sincronizada assim que a internet voltar.',
+          });
+        } else {
+          setSubmitStatus({
+            type: 'success',
+            message: result.data?.osVinculada
+              ? `Preventiva salva e OS #${result.data.osVinculada} aberta!`
+              : 'Preventiva salva com sucesso!',
+          });
+        }
 
         setTimeout(() => {
           onSaved?.();
           onClose();
-        }, 2000);
+        }, 1800);
       } else {
-        setSubmitStatus({ type: 'error', message: result.message || 'Erro ao processar a preventiva.' });
+        setSubmitStatus({
+          type: 'error',
+          message: result.message || 'Erro ao processar a preventiva.',
+        });
       }
     } catch (error) {
-      setSubmitStatus({ type: 'error', message: 'Erro de conexão com o servidor.' });
+      setSubmitStatus({ type: 'error', message: 'Erro inesperado ao salvar preventiva.' });
       console.error('❌ Erro ao salvar preventiva:', error);
     } finally {
       setIsLoading(false);
