@@ -67,6 +67,43 @@ function getImageUrl(imgObj) {
   return `${serverUrl}${relUrl}`;
 }
 
+/**
+ * Normaliza qualquer variação de status para uma chave padrão:
+ * 'concluida' | 'em andamento' | 'aguardando peca' | 'pendente'
+ */
+export function normalizeCorretivaStatus(statusStr) {
+  if (!statusStr) return 'pendente';
+  const s = String(statusStr)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+  if (
+    s.includes('conclu') ||
+    s.includes('finaliz') ||
+    s.includes('resolv') ||
+    s.includes('fechad')
+  ) {
+    return 'concluida';
+  }
+  if (
+    s.includes('andamento') ||
+    s.includes('execuc') ||
+    s.includes('atend')
+  ) {
+    return 'em andamento';
+  }
+  if (
+    s.includes('peca') ||
+    s.includes('material') ||
+    s.includes('aguard')
+  ) {
+    return 'aguardando peca';
+  }
+  return 'pendente';
+}
+
 export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) {
   const { tenant } = useParams();
   const [corretivas, setCorretivas] = useState([]);
@@ -137,12 +174,15 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
       // Filtro de Status
       const matchStatus =
         selectedStatus === 'TODOS' ||
-        (c.status || 'Pendente').toLowerCase() === selectedStatus.toLowerCase();
+        normalizeCorretivaStatus(c.status) === normalizeCorretivaStatus(selectedStatus);
 
       // Filtro de Prioridade
+      const prioStr = (c.prioridade || 'Normal').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const filterPrio = selectedPrioridade.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const matchPrioridade =
         selectedPrioridade === 'TODOS' ||
-        (c.prioridade || 'Normal').toLowerCase() === selectedPrioridade.toLowerCase();
+        prioStr.includes(filterPrio) ||
+        filterPrio.includes(prioStr);
 
       return matchSearch && matchStatus && matchPrioridade;
     });
@@ -150,15 +190,15 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
 
   // Cálculos para os Cards de Estatísticas (KPIs)
   const totalGeral = corretivas.length;
-  const totalPendentes = corretivas.filter((c) => (c.status || '').toLowerCase() === 'pendente').length;
-  const totalEmAndamento = corretivas.filter((c) => (c.status || '').toLowerCase() === 'em andamento').length;
-  const totalAguardandoPeca = corretivas.filter((c) => (c.status || '').toLowerCase() === 'aguardando peça' || (c.status || '').toLowerCase() === 'aguardando peca').length;
-  const totalConcluidas = corretivas.filter((c) => (c.status || '').toLowerCase() === 'concluída' || (c.status || '').toLowerCase() === 'concluido').length;
+  const totalPendentes = corretivas.filter((c) => normalizeCorretivaStatus(c.status) === 'pendente').length;
+  const totalEmAndamento = corretivas.filter((c) => normalizeCorretivaStatus(c.status) === 'em andamento').length;
+  const totalAguardandoPeca = corretivas.filter((c) => normalizeCorretivaStatus(c.status) === 'aguardando peca').length;
+  const totalConcluidas = corretivas.filter((c) => normalizeCorretivaStatus(c.status) === 'concluida').length;
   const totalCriticas = corretivas.filter(
-    (c) =>
-      (c.prioridade || '').toLowerCase() === 'crítico' ||
-      (c.prioridade || '').toLowerCase() === 'critico' ||
-      (c.prioridade || '').toLowerCase() === 'alta'
+    (c) => {
+      const p = (c.prioridade || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return p.includes('critic') || p.includes('alta');
+    }
   ).length;
 
   const handleOpenEdit = (corretiva) => {
@@ -172,22 +212,22 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
 
   // Helper para cor do badge de status
   const getStatusBadge = (statusStr) => {
-    const s = (statusStr || 'pendente').toLowerCase();
-    if (s.includes('conclu')) {
+    const norm = normalizeCorretivaStatus(statusStr);
+    if (norm === 'concluida') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
           <CheckCircle size={13} /> Concluída
         </span>
       );
     }
-    if (s.includes('andamento')) {
+    if (norm === 'em andamento') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
           <Clock size={13} /> Em Andamento
         </span>
       );
     }
-    if (s.includes('peça') || s.includes('peca')) {
+    if (norm === 'aguardando peca') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
           <Package size={13} /> Aguardando Peça
@@ -248,49 +288,79 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           
           {/* Total */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <button
+            type="button"
+            onClick={() => setSelectedStatus('TODOS')}
+            className={`text-left bg-white p-4 rounded-2xl border transition-all cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] flex flex-col justify-between ${
+              selectedStatus === 'TODOS' ? 'border-slate-800 ring-2 ring-slate-800/10' : 'border-slate-200'
+            }`}
+          >
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Ocorrências</span>
-            <div className="mt-2 flex items-baseline justify-between">
+            <div className="mt-2 flex items-baseline justify-between w-full">
               <span className="text-2xl font-black text-slate-900">{totalGeral}</span>
               <FileText className="text-slate-400" size={20} />
             </div>
-          </div>
+          </button>
 
           {/* Pendentes */}
-          <div className="bg-gradient-to-br from-red-50 to-red-100/50 p-4 rounded-2xl border border-red-200 shadow-sm flex flex-col justify-between">
+          <button
+            type="button"
+            onClick={() => setSelectedStatus(selectedStatus === 'Pendente' ? 'TODOS' : 'Pendente')}
+            className={`text-left bg-gradient-to-br from-red-50 to-red-100/50 p-4 rounded-2xl border transition-all cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] flex flex-col justify-between ${
+              selectedStatus === 'Pendente' ? 'border-red-500 ring-2 ring-red-500/20' : 'border-red-200'
+            }`}
+          >
             <span className="text-xs font-semibold text-red-700 uppercase tracking-wider">Pendentes</span>
-            <div className="mt-2 flex items-baseline justify-between">
+            <div className="mt-2 flex items-baseline justify-between w-full">
               <span className="text-2xl font-black text-red-700">{totalPendentes}</span>
               <AlertTriangle className="text-red-500" size={20} />
             </div>
-          </div>
+          </button>
 
           {/* Em Andamento */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 rounded-2xl border border-blue-200 shadow-sm flex flex-col justify-between">
+          <button
+            type="button"
+            onClick={() => setSelectedStatus(selectedStatus === 'Em Andamento' ? 'TODOS' : 'Em Andamento')}
+            className={`text-left bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 rounded-2xl border transition-all cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] flex flex-col justify-between ${
+              selectedStatus === 'Em Andamento' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-blue-200'
+            }`}
+          >
             <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Em Andamento</span>
-            <div className="mt-2 flex items-baseline justify-between">
+            <div className="mt-2 flex items-baseline justify-between w-full">
               <span className="text-2xl font-black text-blue-700">{totalEmAndamento}</span>
               <Clock className="text-blue-500" size={20} />
             </div>
-          </div>
+          </button>
 
           {/* Aguardando Peça */}
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 p-4 rounded-2xl border border-amber-200 shadow-sm flex flex-col justify-between">
+          <button
+            type="button"
+            onClick={() => setSelectedStatus(selectedStatus === 'Aguardando Peça' ? 'TODOS' : 'Aguardando Peça')}
+            className={`text-left bg-gradient-to-br from-amber-50 to-amber-100/50 p-4 rounded-2xl border transition-all cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] flex flex-col justify-between ${
+              selectedStatus === 'Aguardando Peça' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-amber-200'
+            }`}
+          >
             <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">Aguard. Peça</span>
-            <div className="mt-2 flex items-baseline justify-between">
+            <div className="mt-2 flex items-baseline justify-between w-full">
               <span className="text-2xl font-black text-amber-800">{totalAguardandoPeca}</span>
               <Package className="text-amber-600" size={20} />
             </div>
-          </div>
+          </button>
 
           {/* Concluídas */}
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-4 rounded-2xl border border-emerald-200 shadow-sm flex flex-col justify-between">
+          <button
+            type="button"
+            onClick={() => setSelectedStatus(selectedStatus === 'Concluída' ? 'TODOS' : 'Concluída')}
+            className={`text-left bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-4 rounded-2xl border transition-all cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] flex flex-col justify-between ${
+              selectedStatus === 'Concluída' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-emerald-200'
+            }`}
+          >
             <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">Concluídas</span>
-            <div className="mt-2 flex items-baseline justify-between">
+            <div className="mt-2 flex items-baseline justify-between w-full">
               <span className="text-2xl font-black text-emerald-800">{totalConcluidas}</span>
               <CheckCircle className="text-emerald-600" size={20} />
             </div>
-          </div>
+          </button>
 
         </div>
 
@@ -431,7 +501,7 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
 
                   {/* Lado Direito: Ação */}
                   <div className="w-full md:w-auto flex md:flex-col items-center justify-end gap-2 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 shrink-0">
-                    {(c.status || '').toLowerCase().includes('conclu') ? (
+                    {normalizeCorretivaStatus(c.status) === 'concluida' ? (
                       <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl flex items-center gap-1.5 shrink-0">
                         <CheckCircle size={14} className="text-emerald-600" />
                         Finalizada

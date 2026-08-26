@@ -126,6 +126,9 @@ async function getListColumnMapping(graphClient, siteId, listId, listName) {
       }
       if (name === 'field_6' || disp === 'status') {
         mapping.status = name;
+        if (col.choice && Array.isArray(col.choice.choices)) {
+          mapping.statusChoices = col.choice.choices;
+        }
       }
       if (name === 'field_7' || disp.includes('data relatada') || disp.includes('data de abertura') || disp.includes('data abertura')) {
         mapping.dataRelatada = name;
@@ -419,7 +422,18 @@ const updateCorretiva = async (req, res, next) => {
     const fieldsCandidate = {};
 
     if (status && colMap.status) {
-      fieldsCandidate[colMap.status] = status;
+      let finalStatus = status;
+      if (colMap.statusChoices && colMap.statusChoices.length > 0) {
+        const matched = colMap.statusChoices.find(c => {
+          const cNorm = c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const sNorm = status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          return cNorm === sNorm || cNorm.includes(sNorm) || sNorm.includes(cNorm);
+        });
+        if (matched) {
+          finalStatus = matched;
+        }
+      }
+      fieldsCandidate[colMap.status] = finalStatus;
     }
 
     if (colMap.dataAtendimento) {

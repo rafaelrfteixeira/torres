@@ -626,7 +626,7 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
       </div>
     ` : '';
 
-    const isOsConcluida = osStatusText.toUpperCase() === 'CONCLUÍDA' || osStatusText.toUpperCase() === 'CONCLUIDA';
+    const isOsConcluida = osStatusText.toUpperCase().includes('CONCLU') || osStatusText.toUpperCase().includes('FINALIZ') || osStatusText.toUpperCase().includes('RESOLV');
 
     const osPhotoHTML = osData?.fotoResolucaoUrl ? `
       <div class="track-os-photo">

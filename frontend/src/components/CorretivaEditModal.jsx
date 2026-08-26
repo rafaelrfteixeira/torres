@@ -58,9 +58,17 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
     year: 'numeric',
   });
 
+  const normalizeStatusChoice = (s) => {
+    const norm = (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    if (norm.includes('conclu') || norm.includes('finaliz') || norm.includes('resolv')) return 'Concluída';
+    if (norm.includes('andamento') || norm.includes('execu') || norm.includes('atend')) return 'Em Andamento';
+    if (norm.includes('peca') || norm.includes('material') || norm.includes('aguard')) return 'Aguardando Peça';
+    return 'Pendente';
+  };
+
   useEffect(() => {
     if (corretiva) {
-      setStatus(corretiva.status || 'Pendente');
+      setStatus(normalizeStatusChoice(corretiva.status));
       setResolucaoProblema(corretiva.resolucaoProblema || '');
       setImagem3Base64(null);
 
