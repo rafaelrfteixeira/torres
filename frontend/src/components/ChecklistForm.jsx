@@ -116,6 +116,22 @@ export default function ChecklistForm({ user, shoppingsMetadata = [] }) {
 
   const sistemasWatch = watch('sistemas');
 
+  // Sanitiza lista de lojas caso os campos loja e luc venham invertidos do Excel/cache
+  const sanitizeLojasList = (list) => {
+    if (!Array.isArray(list)) return [];
+    return list.map((item) => {
+      if (!item) return item;
+      const lojaStr = String(item.loja || '').trim();
+      const lucStr = String(item.luc || '').trim();
+      const lojaIsCode = /^[\d\/\-]+$/.test(lojaStr) || (/^\d+/.test(lojaStr) && !/[a-zA-Z]{4,}/.test(lojaStr));
+      const lucIsName = /[a-zA-ZÀ-ÿ]{3,}/.test(lucStr) && !/^[\d\/\-]+$/.test(lucStr);
+      if (lojaIsCode && lucIsName) {
+        return { ...item, loja: lucStr, luc: lojaStr };
+      }
+      return item;
+    });
+  };
+
   // Buscar lojas do Excel ao montar o componente ou quando o usuário clicar em atualizar
   const fetchLojas = async (force = false) => {
     try {
@@ -132,13 +148,13 @@ export default function ChecklistForm({ user, shoppingsMetadata = [] }) {
       });
 
       if (data && data.success && data.data) {
-        setLojasList(data.data);
+        setLojasList(sanitizeLojasList(data.data));
         if (force) {
           setLojasRefreshMessage(`✅ ${data.data.length} lojas atualizadas do SharePoint!`);
           setTimeout(() => setLojasRefreshMessage(null), 4000);
         }
       } else if (Array.isArray(data)) {
-        setLojasList(data);
+        setLojasList(sanitizeLojasList(data));
         if (force) {
           setLojasRefreshMessage(`✅ ${data.length} lojas atualizadas do SharePoint!`);
           setTimeout(() => setLojasRefreshMessage(null), 4000);
@@ -189,9 +205,19 @@ export default function ChecklistForm({ user, shoppingsMetadata = [] }) {
             credentials: 'include',
           });
           if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.data) {
-              reset(result.data);
+            const resultData = await response.json();
+            if (resultData.success && resultData.data) {
+              const d = { ...resultData.data };
+              const lojaStr = String(d.loja || '').trim();
+              const lucStr = String(d.codigoLoja || '').trim();
+              const lojaIsCode = /^[\d\/\-]+$/.test(lojaStr) || (/^\d+/.test(lojaStr) && !/[a-zA-Z]{4,}/.test(lojaStr));
+              const lucIsName = /[a-zA-ZÀ-ÿ]{3,}/.test(lucStr) && !/^[\d\/\-]+$/.test(lucStr);
+              if (lojaIsCode && lucIsName) {
+                d.loja = lucStr;
+                d.codigoLoja = lojaStr;
+              }
+              reset(d);
+              setLojaSearch(d.loja || '');
             }
           }
         } catch (error) {

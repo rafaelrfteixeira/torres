@@ -22,7 +22,7 @@ router.get('/', isAuthenticated, tenantAuthorization, async (req, res, next) => 
       clearLojasCache(req.tenantConfig.excelLojasUrl);
     }
 
-    const lojas = await getLojas(req.session.accessToken, req.tenantConfig.excelLojasUrl, isRefresh);
+    const lojas = await getLojas(req.session.accessToken, req.tenantConfig.excelLojasUrl, isRefresh, req.tenantConfig);
 
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -51,7 +51,7 @@ router.get('/', isAuthenticated, tenantAuthorization, async (req, res, next) => 
 router.post('/refresh', isAuthenticated, tenantAuthorization, async (req, res, next) => {
   try {
     clearLojasCache(req.tenantConfig.excelLojasUrl);
-    const lojas = await getLojas(req.session.accessToken, req.tenantConfig.excelLojasUrl);
+    const lojas = await getLojas(req.session.accessToken, req.tenantConfig.excelLojasUrl, true, req.tenantConfig);
 
     res.json({
       success: true,

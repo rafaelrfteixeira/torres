@@ -89,10 +89,43 @@ async function graphDownload(endpoint, accessToken) {
 }
 
 /**
+ * Analisa amostras de lojas para verificar se loja e luc estão invertidos.
+ * Ex: loja='224/225' (numérico/código) e luc='BAGAGGIO' (nome de marca).
+ */
+function shouldInvertLojasLuc(items) {
+  if (!items || items.length === 0) return false;
+
+  const sample = items.slice(0, 30);
+  let invertedVotes = 0;
+  let normalVotes = 0;
+
+  for (const item of sample) {
+    const lojaStr = String(item.loja || '').trim();
+    const lucStr = String(item.luc || '').trim();
+
+    // Se loja tem padrão de código/número (ex: "224/225", "101", "L-02")
+    // e luc tem letras de marca (ex: "BAGAGGIO", "RENNER")
+    const lojaIsCode = /^[\d\/\-]+$/.test(lojaStr) || (/^\d+/.test(lojaStr) && !/[a-zA-Z]{4,}/.test(lojaStr));
+    const lucIsName = /[a-zA-ZÀ-ÿ]{3,}/.test(lucStr) && !/^[\d\/\-]+$/.test(lucStr);
+
+    const lucIsCode = /^[\d\/\-]+$/.test(lucStr) || (/^\d+/.test(lucStr) && !/[a-zA-Z]{4,}/.test(lucStr));
+    const lojaIsName = /[a-zA-ZÀ-ÿ]{3,}/.test(lojaStr) && !/^[\d\/\-]+$/.test(lojaStr);
+
+    if (lojaIsCode && lucIsName) {
+      invertedVotes++;
+    } else if (lucIsCode && lojaIsName) {
+      normalVotes++;
+    }
+  }
+
+  return invertedVotes > normalVotes && invertedVotes >= 2;
+}
+
+/**
  * Parseia um buffer Excel (.xlsx/.xls) e retorna array de objetos { piso, luc, loja }.
  * Colunas esperadas: [0]=?, [1]=Piso, [2]=LUC, [3]=Loja
  */
-function parseExcelBuffer(buffer) {
+function parseExcelBuffer(buffer, options = {}) {
   const workbook = XLSX.read(buffer, { type: 'buffer' });
 
   // Usar a primeira aba
@@ -118,8 +151,8 @@ function parseExcelBuffer(buffer) {
 
     const cells = row.map((h) => String(h || '').trim().toLowerCase());
     const hasPiso = cells.some((h) => h === 'piso' || h === 'pavimento');
-    const hasLuc = cells.some((h) => h === 'luc' || h === 'código' || h === 'codigo' || h === 'luc\'s');
-    const hasLoja = cells.some((h) => h === 'loja' || h === 'nome' || h === 'nome fantasia' || h === 'lojas');
+    const hasLuc = cells.some((h) => h === 'luc' || h === 'código' || h === 'codigo' || h === "luc's" || h === 'lucs');
+    const hasLoja = cells.some((h) => h === 'loja' || h === 'nome' || h === 'nome fantasia' || h === 'lojas' || h === 'fantasia');
 
     // Pelo menos 2 dos 3 campos esperados devem estar presentes
     const matches = [hasPiso, hasLuc, hasLoja].filter(Boolean).length;
@@ -134,9 +167,49 @@ function parseExcelBuffer(buffer) {
 
   // Detectar colunas automaticamente pelo cabeçalho
   const header = rows[headerRowIdx].map((h) => String(h || '').trim().toLowerCase());
-  let pisoIdx = header.findIndex((h) => h.includes('piso'));
-  let lucIdx = header.findIndex((h) => h.includes('luc') || h.includes('código') || h.includes('codigo'));
-  let lojaIdx = header.findIndex((h) => h.includes('loja') || h.includes('nome'));
+  let pisoIdx = header.findIndex((h) => h.includes('piso') || h.includes('pavimento'));
+
+  // 1. LUC / Código Loja: priorizar colunas de código/LUC
+  let lucIdx = header.findIndex((h) => 
+    h === 'luc' || 
+    h === 'lucs' || 
+    h === "luc's" || 
+    h.includes('código') || 
+    h.includes('codigo') || 
+    h === 'cod' ||
+    h.includes('nº') || 
+    h.includes('numero') ||
+    h === 'ponto'
+  );
+
+  // 2. Nome da Loja / Fantasia: priorizar fantasia, razão, nome, operação
+  let lojaIdx = header.findIndex((h) => 
+    h.includes('fantasia') || 
+    h.includes('razão') || 
+    h.includes('razao') || 
+    h.includes('locatário') || 
+    h.includes('locatario') || 
+    h.includes('operação') || 
+    h.includes('operacao') ||
+    (h.includes('nome') && !h.includes('solicitante') && !h.includes('responsável'))
+  );
+
+  // Se não encontrou pelo nome fantasia/razão, procurar por 'loja' que não seja código
+  if (lojaIdx === -1) {
+    lojaIdx = header.findIndex((h, idx) => 
+      idx !== lucIdx && 
+      h.includes('loja') && 
+      !h.includes('código') && 
+      !h.includes('codigo') && 
+      !h.includes('nº') && 
+      !h.includes('num')
+    );
+  }
+
+  // Se ainda não encontrou ou colidiu com lucIdx:
+  if (lojaIdx === -1 && lucIdx !== -1) {
+    lojaIdx = header.findIndex((h, idx) => idx !== lucIdx && idx !== pisoIdx && h !== '');
+  }
 
   // Fallback para posições fixas se não encontrar pelo nome
   if (pisoIdx === -1) pisoIdx = 1;
@@ -145,14 +218,27 @@ function parseExcelBuffer(buffer) {
 
   console.log(`🔍 Índices detectados: piso=${pisoIdx}, luc=${lucIdx}, loja=${lojaIdx}`);
 
-  const lojas = rows.slice(headerRowIdx + 1)
+  let lojas = rows.slice(headerRowIdx + 1)
     .filter((row) => row && row.length > 0) // Ignorar linhas vazias
     .map((row) => ({
       piso: row[pisoIdx] != null ? String(row[pisoIdx]).trim() : '',
       luc: row[lucIdx] != null ? String(row[lucIdx]).trim() : '',
       loja: row[lojaIdx] != null ? String(row[lojaIdx]).trim() : '',
     }))
-    .filter((item) => item.loja !== ''); // Ignorar linhas sem nome de loja
+    .filter((item) => item.loja !== '' || item.luc !== ''); // Manter se tiver loja ou luc
+
+  // Validação de conteúdo: auto-detectar se loja e luc estão invertidos ou forçado por options
+  if (options.invertLojasLuc || shouldInvertLojasLuc(lojas)) {
+    console.log('🔄 [ExcelService] Inversão detectada/configurada entre Loja e LUC nos dados. Corrigindo posições...');
+    lojas = lojas.map((item) => ({
+      piso: item.piso,
+      luc: item.loja,
+      loja: item.luc,
+    }));
+  }
+
+  // Filtrar apenas itens que possuem nome de loja válido
+  lojas = lojas.filter((item) => item.loja !== '');
 
   console.log(`✅ ${lojas.length} lojas parseadas`);
   return lojas;
@@ -161,7 +247,7 @@ function parseExcelBuffer(buffer) {
 // =====================================================
 // Estratégia 1: /shares/{token}/driveItem → download
 // =====================================================
-async function trySharesDownload(sharingToken, accessToken) {
+async function trySharesDownload(sharingToken, accessToken, options = {}) {
   console.log('\n🔄 Estratégia 1: Shares + Download local...');
 
   // Resolver driveItem via Sharing Link
@@ -198,13 +284,13 @@ async function trySharesDownload(sharingToken, accessToken) {
     return null;
   }
 
-  return parseExcelBuffer(download.buffer);
+  return parseExcelBuffer(download.buffer, options);
 }
 
 // =====================================================
 // Estratégia 2: /shares/{token}/driveItem → Excel API
 // =====================================================
-async function trySharesExcelApi(sharingToken, accessToken) {
+async function trySharesExcelApi(sharingToken, accessToken, options = {}) {
   console.log('\n🔄 Estratégia 2: Shares + Excel API...');
 
   const result = await graphFetch(
@@ -243,17 +329,28 @@ async function trySharesExcelApi(sharingToken, accessToken) {
 
   if (rows.length <= 1) return [];
 
-  return rows.slice(1).map((row) => ({
+  let lojas = rows.slice(1).map((row) => ({
     piso: row[1] != null ? String(row[1]).trim() : '',
     luc: row[2] != null ? String(row[2]).trim() : '',
     loja: row[3] != null ? String(row[3]).trim() : '',
-  }));
+  })).filter((item) => item.loja !== '' || item.luc !== '');
+
+  if (options.invertLojasLuc || shouldInvertLojasLuc(lojas)) {
+    console.log('🔄 [ExcelService - Estratégia 2] Inversão detectada entre Loja e LUC.');
+    lojas = lojas.map((item) => ({
+      piso: item.piso,
+      luc: item.loja,
+      loja: item.luc,
+    }));
+  }
+
+  return lojas.filter((item) => item.loja !== '');
 }
 
 // =====================================================
 // Estratégia 3: /me/drive/sharedWithMe → download
 // =====================================================
-async function trySharedWithMe(accessToken) {
+async function trySharedWithMe(accessToken, options = {}) {
   console.log('\n🔄 Estratégia 3: sharedWithMe + Download...');
 
   const result = await graphFetch('/me/drive/sharedWithMe', accessToken);
@@ -302,14 +399,14 @@ async function trySharedWithMe(accessToken) {
     return null;
   }
 
-  return parseExcelBuffer(download.buffer);
+  return parseExcelBuffer(download.buffer, options);
 }
 
 // =====================================================
 // Estratégia 4: Download direto via @microsoft.graph.downloadUrl
 // Usa o /shares endpoint para obter o downloadUrl diretamente
 // =====================================================
-async function tryDirectDownloadUrl(sharingToken, accessToken) {
+async function tryDirectDownloadUrl(sharingToken, accessToken, options = {}) {
   console.log('\n🔄 Estratégia 4: Download direto via shares/driveItem select downloadUrl...');
 
   const result = await graphFetch(
@@ -344,14 +441,14 @@ async function tryDirectDownloadUrl(sharingToken, accessToken) {
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  return parseExcelBuffer(Buffer.from(arrayBuffer));
+  return parseExcelBuffer(Buffer.from(arrayBuffer), options);
 }
 
 /**
  * Busca os dados das lojas a partir de uma planilha Excel compartilhada.
  * Tenta múltiplas estratégias de acesso.
  */
-async function getLojas(accessToken, excelLojasUrl, forceRefresh = false) {
+async function getLojas(accessToken, excelLojasUrl, forceRefresh = false, options = {}) {
   if (!excelLojasUrl) {
     throw new Error('URL do Excel de lojas não configurada para este tenant.');
   }
@@ -376,10 +473,10 @@ async function getLojas(accessToken, excelLojasUrl, forceRefresh = false) {
 
   // Lista de estratégias a tentar (em ordem de preferência)
   const strategies = [
-    () => trySharesDownload(sharingToken, accessToken),
-    () => tryDirectDownloadUrl(sharingToken, accessToken),
-    () => trySharesExcelApi(sharingToken, accessToken),
-    () => trySharedWithMe(accessToken),
+    () => trySharesDownload(sharingToken, accessToken, options),
+    () => tryDirectDownloadUrl(sharingToken, accessToken, options),
+    () => trySharesExcelApi(sharingToken, accessToken, options),
+    () => trySharedWithMe(accessToken, options),
   ];
 
   let lojas = null;
@@ -408,6 +505,17 @@ async function getLojas(accessToken, excelLojasUrl, forceRefresh = false) {
       '  4. O App Registration tem a permissão Files.Read.All';
     throw new Error(lastError ? `${errorMsg}\n\nÚltimo erro: ${lastError.message}` : errorMsg);
   }
+
+  // Garantir validação de inversão antes de salvar no cache
+  if (options.invertLojasLuc || shouldInvertLojasLuc(lojas)) {
+    console.log('🔄 [ExcelService - getLojas] Inversão detectada/configurada entre Loja e LUC.');
+    lojas = lojas.map((item) => ({
+      piso: item.piso,
+      luc: item.loja,
+      loja: item.luc,
+    }));
+  }
+  lojas = lojas.filter((item) => item.loja !== '');
 
   // Atualizar cache por tenant
   _lojasCache.set(excelLojasUrl, { data: lojas, timestamp: Date.now() });

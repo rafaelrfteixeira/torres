@@ -216,6 +216,7 @@ const shoppings = {
     listaSDAI: '2026-7-1915-SDAI-MAN-PLAZA-SHOPPING',
     listaBMS: null,
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQB7_W8JJcfzSL1Neim_8u2DAakqtl4ObavzsxzZr9Oi1vc',
+    invertLojasLuc: true,
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
     // Preventivas Área Comum
     excelPreventivasUrl: null,
