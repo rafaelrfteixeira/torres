@@ -23,7 +23,7 @@ const shoppings = {
     // Preventivas Área Comum
     excelPreventivasUrl: null, // TODO: Configurar URL da Matriz Mestra para RioMar Recife
     listaHistoricoPreventivas: null,
-    listaCorretivas: null,
+    listaCorretivas: 'CC-2024-6-1361-MAN-SHOP_RIOMAR_RECIFE',
     // Responsável Shopping padrão (usado como default nos formulários)
     responsavelShopping: {
       sdai: {
@@ -72,7 +72,7 @@ const shoppings = {
     // Preventivas Área Comum
     excelPreventivasUrl: null,
     listaHistoricoPreventivas: null,
-    listaCorretivas: null,
+    listaCorretivas: 'CC-2026-3-180-MAN-SHOP_RECIFE',
     responsavelShopping: {
       sdai: {
         solicitante: 'Roberto Santana',

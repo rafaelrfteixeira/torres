@@ -23,10 +23,11 @@ function getSDAISubmenus(tenant) {
   const isEmpresarialKronos = tenant === 'empresarial-kronos';
   const isPlazaShoppingRecife = tenant === 'plaza-shopping-recife';
   const isRioMarKennedy = tenant === 'riomar-kennedy';
+  const isRioMarRecife = tenant === 'riomar-recife';
   // Tenants com funcionalidades de preventivas ativas
   const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos;
   // Tenants com funcionalidades de corretivas ativas
-  const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarKennedy;
+  const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarKennedy || isRioMarRecife;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
   const hasInspecaoComingSoon = isSalvadorNorte;
   return [
