@@ -17,12 +17,22 @@ const { getLojas, clearLojasCache } = require('../services/excelService');
 // -----------------------------------------------
 router.get('/', isAuthenticated, tenantAuthorization, async (req, res, next) => {
   try {
-    const lojas = await getLojas(req.session.accessToken, req.tenantConfig.excelLojasUrl);
+    const isRefresh = req.query.refresh === 'true' || req.query.force === 'true';
+    if (isRefresh) {
+      clearLojasCache(req.tenantConfig.excelLojasUrl);
+    }
+
+    const lojas = await getLojas(req.session.accessToken, req.tenantConfig.excelLojasUrl, isRefresh);
+
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
     res.json({
       success: true,
       count: lojas.length,
       data: lojas,
+      refreshed: isRefresh,
     });
   } catch (error) {
     console.error('❌ Erro ao buscar lojas do Excel:', error.message);

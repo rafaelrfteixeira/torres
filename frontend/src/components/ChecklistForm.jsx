@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
+import { RotateCw, CheckCircle2 } from 'lucide-react';
 import { syncManager } from '../services/syncManager';
 
 
@@ -67,6 +68,8 @@ export default function ChecklistForm({ user, shoppingsMetadata = [] }) {
   const isReadOnly = !!id;
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // { type: 'success'|'error', message: '' }
+  const [isRefreshingLojas, setIsRefreshingLojas] = useState(false);
+  const [lojasRefreshMessage, setLojasRefreshMessage] = useState(null);
 
   // Resolver metadados do tenant atual
   const currentShopping = shoppingsMetadata.find((s) => s.id === tenant) || { id: tenant, name: tenant, logo: '' };
@@ -113,27 +116,47 @@ export default function ChecklistForm({ user, shoppingsMetadata = [] }) {
 
   const sistemasWatch = watch('sistemas');
 
-  // Buscar lojas do Excel ao montar o componente (com cache offline Dexie)
-  useEffect(() => {
-    const fetchLojas = async () => {
-      try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const { data } = await syncManager.fetchWithCache({
-          key: `lojas:${tenant}`,
-          url: `${API_URL}/lojas?tenant=${tenant}`,
-          tenant,
-        });
-
-        if (data && data.success && data.data) {
-          setLojasList(data.data);
-        } else if (Array.isArray(data)) {
-          setLojasList(data);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar lista de lojas:', error);
+  // Buscar lojas do Excel ao montar o componente ou quando o usuário clicar em atualizar
+  const fetchLojas = async (force = false) => {
+    try {
+      if (force) {
+        setIsRefreshingLojas(true);
+        setLojasRefreshMessage(null);
       }
-    };
-    fetchLojas();
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const { data } = await syncManager.fetchWithCache({
+        key: `lojas:${tenant}`,
+        url: `${API_URL}/lojas?tenant=${tenant}`,
+        tenant,
+        forceRefresh: force,
+      });
+
+      if (data && data.success && data.data) {
+        setLojasList(data.data);
+        if (force) {
+          setLojasRefreshMessage(`✅ ${data.data.length} lojas atualizadas do SharePoint!`);
+          setTimeout(() => setLojasRefreshMessage(null), 4000);
+        }
+      } else if (Array.isArray(data)) {
+        setLojasList(data);
+        if (force) {
+          setLojasRefreshMessage(`✅ ${data.length} lojas atualizadas do SharePoint!`);
+          setTimeout(() => setLojasRefreshMessage(null), 4000);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar lista de lojas:', error);
+      if (force) {
+        setLojasRefreshMessage('❌ Erro ao atualizar lojas.');
+        setTimeout(() => setLojasRefreshMessage(null), 4000);
+      }
+    } finally {
+      if (force) setIsRefreshingLojas(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLojas(false);
   }, [tenant]);
 
   // Fechar sugestões ao clicar fora
@@ -351,7 +374,26 @@ export default function ChecklistForm({ user, shoppingsMetadata = [] }) {
 
               {/* Autocomplete Loja */}
               <div className="autocomplete-wrapper" ref={autocompleteRef}>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Loja</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-slate-600">
+                    Loja {lojasList.length > 0 && <span className="text-xs text-slate-400 font-normal">({lojasList.length} cadastradas)</span>}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => fetchLojas(true)}
+                    disabled={isRefreshingLojas}
+                    className="text-xs text-brand-600 hover:text-brand-700 flex items-center gap-1 font-semibold transition-colors cursor-pointer py-0.5 px-2 rounded-md hover:bg-brand-50 border border-brand-200"
+                    title="Buscar dados mais recentes da planilha Excel no SharePoint"
+                  >
+                    <RotateCw className={`w-3.5 h-3.5 ${isRefreshingLojas ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshingLojas ? 'Atualizando...' : 'Atualizar Lojas'}</span>
+                  </button>
+                </div>
+                {lojasRefreshMessage && (
+                  <p className="text-xs text-emerald-600 font-medium mb-1 animate-fade-in">
+                    {lojasRefreshMessage}
+                  </p>
+                )}
                 <input
                   type="text"
                   value={lojaSearch}

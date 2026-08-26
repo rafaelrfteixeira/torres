@@ -20,7 +20,7 @@ const XLSX = require('xlsx');
 // Formato: { data: [...], timestamp: Date }
 // -------------------------------------------------
 const _lojasCache = new Map(); // chave = excelLojasUrl
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const CACHE_TTL_MS = 60 * 1000; // 1 minuto (garante atualização rápida de lojas alteradas no SharePoint)
 
 /**
  * Converte uma URL de compartilhamento em Sharing Token (Base64 URL-safe + prefixo u!)
@@ -48,6 +48,8 @@ async function graphFetch(endpoint, accessToken, extraHeaders = {}) {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
       ...extraHeaders,
     },
   });
@@ -71,6 +73,8 @@ async function graphDownload(endpoint, accessToken) {
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
     },
   });
 
@@ -328,7 +332,12 @@ async function tryDirectDownloadUrl(sharingToken, accessToken) {
   console.log(`⬇️  Download direto do arquivo...`);
 
   // Download sem autenticação (downloadUrl é pré-autenticado)
-  const response = await fetch(downloadUrl);
+  const response = await fetch(downloadUrl, {
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+    },
+  });
   if (!response.ok) {
     console.warn(`⚠️  Falha no download direto [${response.status}]`);
     return null;
@@ -342,15 +351,21 @@ async function tryDirectDownloadUrl(sharingToken, accessToken) {
  * Busca os dados das lojas a partir de uma planilha Excel compartilhada.
  * Tenta múltiplas estratégias de acesso.
  */
-async function getLojas(accessToken, excelLojasUrl) {
+async function getLojas(accessToken, excelLojasUrl, forceRefresh = false) {
   if (!excelLojasUrl) {
     throw new Error('URL do Excel de lojas não configurada para este tenant.');
   }
 
-  // Verificar cache por URL do tenant
+  // Se forceRefresh for solicitado, remove do cache imediatamente
+  if (forceRefresh) {
+    _lojasCache.delete(excelLojasUrl);
+    console.log(`🔄 Force refresh ativado para lojas: ${excelLojasUrl}`);
+  }
+
+  // Verificar cache por URL do tenant (apenas se não for forceRefresh)
   const cached = _lojasCache.get(excelLojasUrl);
-  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
-    console.log(`⚡ Retornando ${cached.data.length} lojas do cache`);
+  if (!forceRefresh && cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
+    console.log(`⚡ Retornando ${cached.data.length} lojas do cache (${Math.round((Date.now() - cached.timestamp)/1000)}s atrás)`);
     return cached.data;
   }
 

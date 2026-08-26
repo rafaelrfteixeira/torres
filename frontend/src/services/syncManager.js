@@ -336,17 +336,28 @@ class SyncManager {
     tenant = '',
     forceRefresh = false,
   }) {
-    // 1. Se online e não estamos forçando apenas cache, tenta a rede
-    if (navigator.onLine && !forceRefresh) {
+    // 1. Se online: busca da rede (obrigatoriamente se forceRefresh for true)
+    if (navigator.onLine) {
       try {
-        const response = await fetch(url, {
+        const separator = url.includes('?') ? '&' : '?';
+        const fetchUrl = forceRefresh
+          ? `${url}${separator}refresh=true&_t=${Date.now()}`
+          : url;
+
+        const requestHeaders = {
+          ...(options.headers || {}),
+          ...(forceRefresh ? { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' } : {}),
+        };
+
+        const response = await fetch(fetchUrl, {
           credentials: 'include',
           ...options,
+          headers: requestHeaders,
         });
 
         if (response.ok) {
           const result = await response.json();
-          // Salva no cache do Dexie
+          // Salva ou atualiza no cache do Dexie
           await db.setCachedData(key, result, tenant);
           return { data: result, fromCache: false };
         }
