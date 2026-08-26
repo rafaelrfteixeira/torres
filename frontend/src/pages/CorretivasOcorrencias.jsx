@@ -3,10 +3,61 @@ import { useParams } from 'react-router-dom';
 import {
   AlertTriangle, Clock, CheckCircle, Package, Search, RefreshCw,
   Loader2, Filter, FileText, Image as ImageIcon, Edit3, ChevronRight,
-  ShieldAlert, Sparkles, SlidersHorizontal
+  ShieldAlert, Sparkles, SlidersHorizontal, X
 } from 'lucide-react';
 import CorretivaEditModal from '../components/CorretivaEditModal';
 import { syncManager } from '../services/syncManager';
+
+const MESES_NOMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+/**
+ * Extrai o ano e mês de uma ocorrência de forma segura
+ */
+function getCorretivaYearMonth(c) {
+  if (!c) return null;
+  
+  let dateVal = c.dataRelatada || c.dataAtendimento || '';
+  if (typeof dateVal === 'object' && dateVal !== null) {
+    dateVal = dateVal.dateTime || '';
+  }
+
+  const str = String(dateVal).trim();
+  if (str) {
+    // Formato DD/MM/YYYY
+    const ddmmyyyy = str.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (ddmmyyyy) {
+      return { year: parseInt(ddmmyyyy[3], 10), month: parseInt(ddmmyyyy[2], 10) };
+    }
+    // Formato YYYY-MM-DD
+    const yyyymmdd = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (yyyymmdd) {
+      return { year: parseInt(yyyymmdd[1], 10), month: parseInt(yyyymmdd[2], 10) };
+    }
+    // Fallback Date parse
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return { year: d.getFullYear(), month: d.getMonth() + 1 };
+    }
+  }
+
+  // Fallback: extrair do padrão numérico de OS (ex: 20260825001 -> 2026 / 08)
+  if (c.osNumber) {
+    const s = String(c.osNumber).trim();
+    const match = s.match(/^(\d{4})(\d{2})\d{2}/);
+    if (match) {
+      const y = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10);
+      if (y >= 2020 && y <= 2035 && m >= 1 && m <= 12) {
+        return { year: y, month: m };
+      }
+    }
+  }
+
+  return null;
+}
 
 /**
  * Formata qualquer data (ISO, YYYY-MM-DD, DD/MM/YYYY) de forma segura em PT-BR (DD/MM/AAAA)
@@ -114,6 +165,8 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('TODOS');
   const [selectedPrioridade, setSelectedPrioridade] = useState('TODOS');
+  const [selectedCategoria, setSelectedCategoria] = useState('TODOS');
+  const [selectedPeriodo, setSelectedPeriodo] = useState('TODOS');
 
   // Modal
   const [selectedCorretiva, setSelectedCorretiva] = useState(null);
@@ -158,10 +211,98 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
     fetchCorretivas();
   }, [tenant]);
 
-  // Filtragem
+  // Opções para Categoria de Sistema
+  const categoryOptions = useMemo(() => {
+    const base = [
+      { value: 'TODOS', label: 'Todas as Categorias' },
+      { value: 'BMS', label: 'BMS - Automação' },
+      { value: 'SDAI', label: 'SDAI - Incêndio' },
+    ];
+
+    // Incluir outras categorias encontradas na lista de corretivas (ex: SCA, CFTV)
+    const extraCategories = new Set();
+    corretivas.forEach((c) => {
+      if (!c.categoria) return;
+      const cat = String(c.categoria).trim();
+      const norm = cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (
+        !norm.includes('bms') &&
+        !norm.includes('automa') &&
+        !norm.includes('sdai') &&
+        !norm.includes('incend') &&
+        cat.length > 2
+      ) {
+        extraCategories.add(cat);
+      }
+    });
+
+    extraCategories.forEach((extra) => {
+      base.push({ value: extra, label: extra });
+    });
+
+    return base;
+  }, [corretivas]);
+
+  // Opções para Mês / Ano
+  const periodosDisponiveis = useMemo(() => {
+    const periodosMap = new Map();
+
+    // 1. Extrair períodos reais presentes nas corretivas
+    corretivas.forEach((c) => {
+      const ym = getCorretivaYearMonth(c);
+      if (ym && ym.year && ym.month) {
+        const key = `${ym.year}-${String(ym.month).padStart(2, '0')}`;
+        if (!periodosMap.has(key)) {
+          periodosMap.set(key, {
+            value: key,
+            year: ym.year,
+            month: ym.month,
+            label: `${MESES_NOMES[ym.month - 1]} / ${ym.year}`,
+          });
+        }
+      }
+    });
+
+    // 2. Garantir meses recentes de 2026 (Maio a Agosto)
+    for (let m = 8; m >= 5; m--) {
+      const key = `2026-${String(m).padStart(2, '0')}`;
+      if (!periodosMap.has(key)) {
+        periodosMap.set(key, {
+          value: key,
+          year: 2026,
+          month: m,
+          label: `${MESES_NOMES[m - 1]} / 2026`,
+        });
+      }
+    }
+
+    // 3. Ordenar do mais recente para o mais antigo
+    return Array.from(periodosMap.values()).sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+  }, [corretivas]);
+
+  // Helper para verificar se há filtros ativos
+  const hasActiveFilters =
+    searchTerm !== '' ||
+    selectedStatus !== 'TODOS' ||
+    selectedPrioridade !== 'TODOS' ||
+    selectedCategoria !== 'TODOS' ||
+    selectedPeriodo !== 'TODOS';
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setSelectedStatus('TODOS');
+    setSelectedPrioridade('TODOS');
+    setSelectedCategoria('TODOS');
+    setSelectedPeriodo('TODOS');
+  };
+
+  // Filtragem Geral para a Listagem
   const corretivasFiltradas = useMemo(() => {
     return corretivas.filter((c) => {
-      // Filtro de Texto
+      // 1. Filtro de Texto
       const term = searchTerm.toLowerCase().trim();
       const matchSearch =
         !term ||
@@ -169,14 +310,15 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
         (c.titulo || '').toLowerCase().includes(term) ||
         (c.descricaoDefeito || '').toLowerCase().includes(term) ||
         (c.resolucaoProblema || '').toLowerCase().includes(term) ||
-        (c.solicitante || '').toLowerCase().includes(term);
+        (c.solicitante || '').toLowerCase().includes(term) ||
+        (c.categoria || '').toLowerCase().includes(term);
 
-      // Filtro de Status
+      // 2. Filtro de Status
       const matchStatus =
         selectedStatus === 'TODOS' ||
         normalizeCorretivaStatus(c.status) === normalizeCorretivaStatus(selectedStatus);
 
-      // Filtro de Prioridade
+      // 3. Filtro de Prioridade
       const prioStr = (c.prioridade || 'Normal').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const filterPrio = selectedPrioridade.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const matchPrioridade =
@@ -184,17 +326,72 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
         prioStr.includes(filterPrio) ||
         filterPrio.includes(prioStr);
 
-      return matchSearch && matchStatus && matchPrioridade;
+      // 4. Filtro de Categoria de Sistema
+      const matchCategoria = (() => {
+        if (selectedCategoria === 'TODOS') return true;
+        const cat = (c.categoria || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const title = (c.titulo || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (selectedCategoria === 'BMS') {
+          return cat.includes('bms') || cat.includes('automa') || cat.includes('predial') || title.includes('bms') || title.includes('bomba');
+        }
+        if (selectedCategoria === 'SDAI') {
+          return cat.includes('sdai') || cat.includes('incend') || cat.includes('alarme') || cat.includes('fogo') || cat.includes('detec');
+        }
+        const selNorm = selectedCategoria.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return cat.includes(selNorm) || selNorm.includes(cat);
+      })();
+
+      // 5. Filtro de Mês / Ano
+      const matchPeriodo = (() => {
+        if (selectedPeriodo === 'TODOS') return true;
+        const ym = getCorretivaYearMonth(c);
+        if (!ym) return false;
+        const key = `${ym.year}-${String(ym.month).padStart(2, '0')}`;
+        return key === selectedPeriodo;
+      })();
+
+      return matchSearch && matchStatus && matchPrioridade && matchCategoria && matchPeriodo;
     });
-  }, [corretivas, searchTerm, selectedStatus, selectedPrioridade]);
+  }, [corretivas, searchTerm, selectedStatus, selectedPrioridade, selectedCategoria, selectedPeriodo]);
+
+  // Base para cálculo de KPIs (respeita Categoria e Mês/Ano selecionados)
+  const corretivasParaKpis = useMemo(() => {
+    return corretivas.filter((c) => {
+      // Filtro de Categoria
+      const matchCategoria = (() => {
+        if (selectedCategoria === 'TODOS') return true;
+        const cat = (c.categoria || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const title = (c.titulo || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (selectedCategoria === 'BMS') {
+          return cat.includes('bms') || cat.includes('automa') || cat.includes('predial') || title.includes('bms') || title.includes('bomba');
+        }
+        if (selectedCategoria === 'SDAI') {
+          return cat.includes('sdai') || cat.includes('incend') || cat.includes('alarme') || cat.includes('fogo') || cat.includes('detec');
+        }
+        const selNorm = selectedCategoria.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return cat.includes(selNorm) || selNorm.includes(cat);
+      })();
+
+      // Filtro de Mês / Ano
+      const matchPeriodo = (() => {
+        if (selectedPeriodo === 'TODOS') return true;
+        const ym = getCorretivaYearMonth(c);
+        if (!ym) return false;
+        const key = `${ym.year}-${String(ym.month).padStart(2, '0')}`;
+        return key === selectedPeriodo;
+      })();
+
+      return matchCategoria && matchPeriodo;
+    });
+  }, [corretivas, selectedCategoria, selectedPeriodo]);
 
   // Cálculos para os Cards de Estatísticas (KPIs)
-  const totalGeral = corretivas.length;
-  const totalPendentes = corretivas.filter((c) => normalizeCorretivaStatus(c.status) === 'pendente').length;
-  const totalEmAndamento = corretivas.filter((c) => normalizeCorretivaStatus(c.status) === 'em andamento').length;
-  const totalAguardandoPeca = corretivas.filter((c) => normalizeCorretivaStatus(c.status) === 'aguardando peca').length;
-  const totalConcluidas = corretivas.filter((c) => normalizeCorretivaStatus(c.status) === 'concluida').length;
-  const totalCriticas = corretivas.filter(
+  const totalGeral = corretivasParaKpis.length;
+  const totalPendentes = corretivasParaKpis.filter((c) => normalizeCorretivaStatus(c.status) === 'pendente').length;
+  const totalEmAndamento = corretivasParaKpis.filter((c) => normalizeCorretivaStatus(c.status) === 'em andamento').length;
+  const totalAguardandoPeca = corretivasParaKpis.filter((c) => normalizeCorretivaStatus(c.status) === 'aguardando peca').length;
+  const totalConcluidas = corretivasParaKpis.filter((c) => normalizeCorretivaStatus(c.status) === 'concluida').length;
+  const totalCriticas = corretivasParaKpis.filter(
     (c) => {
       const p = (c.prioridade || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       return p.includes('critic') || p.includes('alta');
@@ -368,20 +565,65 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
         {/* SEÇÃO 2: FILTROS E BUSCA                             */}
         {/* ---------------------------------------------------- */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
-            <SlidersHorizontal size={18} className="text-blue-600" />
-            <span>Filtros Operacionais</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
+              <SlidersHorizontal size={18} className="text-blue-600" />
+              <span>Filtros Operacionais</span>
+            </div>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="text-xs font-semibold text-red-600 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <X size={14} />
+                Limpar filtros
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
-            {/* Dropdown de Status */}
+            {/* 1. Dropdown Categoria de Sistema */}
             <div className="space-y-1">
-              <label className="block text-[11px] font-medium text-slate-400">Status do Sistema na Loja</label>
+              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide">CATEGORIA DE SISTEMA</label>
+              <select
+                value={selectedCategoria}
+                onChange={(e) => setSelectedCategoria(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 text-xs font-semibold text-slate-700 bg-white cursor-pointer transition-all"
+              >
+                {categoryOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 2. Dropdown Mês / Ano */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide">MÊS / ANO</label>
+              <select
+                value={selectedPeriodo}
+                onChange={(e) => setSelectedPeriodo(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 text-xs font-semibold text-slate-700 bg-white cursor-pointer transition-all"
+              >
+                <option value="TODOS">Todos os Períodos</option>
+                {periodosDisponiveis.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 3. Dropdown de Status */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide">STATUS DO SISTEMA NA LOJA</label>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 text-xs font-semibold text-slate-700 bg-white cursor-pointer transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 text-xs font-semibold text-slate-700 bg-white cursor-pointer transition-all"
               >
                 <option value="TODOS">Todos os Status</option>
                 <option value="Pendente">Pendentes</option>
@@ -391,13 +633,13 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
               </select>
             </div>
 
-            {/* Dropdown de Criticidade */}
+            {/* 4. Dropdown de Prioridade */}
             <div className="space-y-1">
-              <label className="block text-[11px] font-medium text-slate-400">Prioridade / Criticidade</label>
+              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide">PRIORIDADE / CRITICIDADE</label>
               <select
                 value={selectedPrioridade}
                 onChange={(e) => setSelectedPrioridade(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 text-xs font-semibold text-slate-700 bg-white cursor-pointer transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 text-xs font-semibold text-slate-700 bg-white cursor-pointer transition-all"
               >
                 <option value="TODOS">Todas as Prioridades</option>
                 <option value="Baixa">Prioridade: Baixa</option>
@@ -407,21 +649,21 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
               </select>
             </div>
 
-            {/* Campo de Pesquisa */}
-            <div className="space-y-1">
-              <label className="block text-[11px] font-medium text-slate-400">Buscar Ocorrência (Título, Descrição, OS)</label>
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input
-                  type="text"
-                  placeholder="Ex: detector de fumaça, OS #11..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 text-xs font-semibold text-slate-800 placeholder:text-slate-400 transition-all"
-                />
-              </div>
-            </div>
+          </div>
 
+          {/* Campo de Pesquisa */}
+          <div className="space-y-1 pt-2 border-t border-slate-100">
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide">BUSCAR OCORRÊNCIA (TÍTULO, DESCRIÇÃO, OS)</label>
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Ex: detector de fumaça, OS #20260825001, supervisório, bomba..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 text-xs font-semibold text-slate-800 placeholder:text-slate-400 transition-all"
+              />
+            </div>
           </div>
         </div>
 
