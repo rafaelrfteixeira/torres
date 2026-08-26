@@ -43,7 +43,7 @@ function ActivePreventivasRoute({ children }) {
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
 }
 
-const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife'];
+const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife'];
 function ActiveCorretivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_CORRETIVAS.includes(tenant) ? children : <ComingSoon />;
