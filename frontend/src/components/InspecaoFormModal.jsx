@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   X, Camera, Clock, AlertTriangle, CheckCircle2, ShieldAlert,
-  Wrench, ChevronDown, Loader2, Save, Lock, Unlock
+  Wrench, ChevronDown, Loader2, Save, Lock, Unlock,
+  Image as ImageIcon, Upload, Trash2, Eye, RefreshCw, FolderOpen
 } from 'lucide-react';
 import { syncManager } from '../services/syncManager';
 
@@ -164,6 +165,15 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
   const [preview1, setPreview1] = useState(null);
   const [preview2, setPreview2] = useState(null);
 
+  // Referências para os inputs de arquivo (Câmera direta vs Galeria)
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
+  const pendingSlotRef = useRef(1); // 1 ou 2
+
+  // Estado para o modal de escolha da origem da foto e zoom
+  const [photoSourceModalSlot, setPhotoSourceModalSlot] = useState(null); // null, 1 ou 2
+  const [selectedZoomImage, setSelectedZoomImage] = useState(null); // null ou string base64
+
   // Checklist dinâmico
   const { label: tipoLabel, items: checklistItems } = resolveChecklist(dispositivo?.tipo);
   const [checklistRespostas, setChecklistRespostas] = useState(() =>
@@ -183,14 +193,26 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
     setImagem2(null);
     setPreview1(null);
     setPreview2(null);
+    setPhotoSourceModalSlot(null);
+    setSelectedZoomImage(null);
   }, [dispositivo?.descricao]);
 
   // Fechar com ESC
   useEffect(() => {
-    const handleEsc = (e) => { if (e.key === 'Escape') onClose(); };
+    const handleEsc = (e) => { 
+      if (e.key === 'Escape') {
+        if (selectedZoomImage) {
+          setSelectedZoomImage(null);
+        } else if (photoSourceModalSlot) {
+          setPhotoSourceModalSlot(null);
+        } else {
+          onClose();
+        }
+      }
+    };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [onClose]);
+  }, [onClose, selectedZoomImage, photoSourceModalSlot]);
 
   // Lógica condicional de OS
   const temFalhaChecklist = checklistRespostas.some((item) => item.status === 'nao');
@@ -205,19 +227,57 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
     });
   };
 
-  // Handler para imagens com compressão ultra-otimizada (máx 800px, 50% qualidade)
-  const handleImageChange = async (e, setImage, setPreview) => {
-    const file = e.target.files[0];
+  // Funções de abertura de Câmera / Galeria
+  const openPhotoSourceModal = (slot) => {
+    pendingSlotRef.current = slot;
+    setPhotoSourceModalSlot(slot);
+  };
+
+  const handleTriggerCamera = () => {
+    setPhotoSourceModalSlot(null);
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+      cameraInputRef.current.click();
+    }
+  };
+
+  const handleTriggerGallery = () => {
+    setPhotoSourceModalSlot(null);
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = '';
+      galleryInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
+    const targetSlot = pendingSlotRef.current;
     try {
       const compressedBase64 = await compressImage(file, 800, 0.5);
-      setImage(compressedBase64);
-      setPreview(compressedBase64);
+      if (targetSlot === 1) {
+        setImagem1(compressedBase64);
+        setPreview1(compressedBase64);
+      } else if (targetSlot === 2) {
+        setImagem2(compressedBase64);
+        setPreview2(compressedBase64);
+      }
     } catch (err) {
       console.error('Erro ao comprimir imagem:', err);
       alert('Não foi possível processar a imagem selecionada.');
     }
+  };
+
+  const handleRemovePhoto = (slot) => {
+    if (slot === 1) {
+      setImagem1(null);
+      setPreview1(null);
+    } else if (slot === 2) {
+      setImagem2(null);
+      setPreview2(null);
+    }
+    setPhotoSourceModalSlot(null);
   };
 
   // Submissão
@@ -601,47 +661,143 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
 
           {/* ---- EVIDÊNCIAS FOTOGRÁFICAS ---- */}
           <section className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 pb-1 border-b border-slate-200">
-              Evidências Fotográficas (Mínimo 2 fotos)
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Foto 1 */}
-              <label className="relative flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl p-4 bg-white cursor-pointer hover:border-red-400 hover:bg-red-50/30 transition-all min-h-[100px]">
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => handleImageChange(e, setImagem1, setPreview1)}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                />
-                {preview1 ? (
-                  <img src={preview1} alt="Foto 1" className="w-full h-24 object-cover rounded-lg" />
-                ) : (
-                  <>
-                    <Camera size={24} className="text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-500">📷 Foto 01 (Geral)</span>
-                  </>
-                )}
-              </label>
+            <div className="flex items-center justify-between mb-3 pb-1 border-b border-slate-200">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Evidências Fotográficas (Mínimo 2 fotos)
+              </h3>
+              <span className="text-[11px] text-slate-400 font-medium">Câmera ou Galeria</span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Card Foto 1 */}
+              {preview1 ? (
+                <div className="relative h-36 rounded-xl overflow-hidden border border-slate-300 shadow-xs bg-slate-900 group">
+                  <img src={preview1} alt="Foto 1" className="w-full h-full object-cover" />
+                  <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow">
+                    <CheckCircle2 size={12} className="text-emerald-400" />
+                    <span>Foto 01 (Geral)</span>
+                  </div>
+                  {/* Barra de ações */}
+                  <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedZoomImage(preview1)}
+                      className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
+                      title="Visualizar ampliada"
+                    >
+                      <Eye size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openPhotoSourceModal(1)}
+                      className="p-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
+                      title="Alterar foto"
+                    >
+                      <RefreshCw size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(1)}
+                      className="p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
+                      title="Remover foto"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                  {/* Botão de toque móvel para facilitar em celulares */}
+                  <button
+                    type="button"
+                    onClick={() => openPhotoSourceModal(1)}
+                    className="sm:hidden absolute bottom-2 right-2 px-2.5 py-1 bg-slate-900/80 text-white text-[11px] font-semibold rounded-lg flex items-center gap-1"
+                  >
+                    <RefreshCw size={12} />
+                    <span>Opções</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openPhotoSourceModal(1)}
+                  className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-xl p-4 bg-white hover:bg-red-50/20 transition-all h-36 cursor-pointer text-center group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-red-100 flex items-center justify-center text-slate-500 group-hover:text-red-600 transition-colors">
+                    <Camera size={20} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-700 group-hover:text-red-700 block">
+                      📷 Foto 01 (Geral)
+                    </span>
+                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                      Toque para tirar foto ou selecionar da galeria
+                    </span>
+                  </div>
+                </button>
+              )}
 
-              {/* Foto 2 */}
-              <label className="relative flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl p-4 bg-white cursor-pointer hover:border-red-400 hover:bg-red-50/30 transition-all min-h-[100px]">
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => handleImageChange(e, setImagem2, setPreview2)}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                />
-                {preview2 ? (
-                  <img src={preview2} alt="Foto 2" className="w-full h-24 object-cover rounded-lg" />
-                ) : (
-                  <>
-                    <Camera size={24} className="text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-500">📷 Foto 02 (Teste/Detalhe)</span>
-                  </>
-                )}
-              </label>
+              {/* Card Foto 2 */}
+              {preview2 ? (
+                <div className="relative h-36 rounded-xl overflow-hidden border border-slate-300 shadow-xs bg-slate-900 group">
+                  <img src={preview2} alt="Foto 2" className="w-full h-full object-cover" />
+                  <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow">
+                    <CheckCircle2 size={12} className="text-emerald-400" />
+                    <span>Foto 02 (Teste/Detalhe)</span>
+                  </div>
+                  {/* Barra de ações */}
+                  <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedZoomImage(preview2)}
+                      className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
+                      title="Visualizar ampliada"
+                    >
+                      <Eye size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openPhotoSourceModal(2)}
+                      className="p-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
+                      title="Alterar foto"
+                    >
+                      <RefreshCw size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(2)}
+                      className="p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
+                      title="Remover foto"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                  {/* Botão de toque móvel para facilitar em celulares */}
+                  <button
+                    type="button"
+                    onClick={() => openPhotoSourceModal(2)}
+                    className="sm:hidden absolute bottom-2 right-2 px-2.5 py-1 bg-slate-900/80 text-white text-[11px] font-semibold rounded-lg flex items-center gap-1"
+                  >
+                    <RefreshCw size={12} />
+                    <span>Opções</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openPhotoSourceModal(2)}
+                  className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-xl p-4 bg-white hover:bg-red-50/20 transition-all h-36 cursor-pointer text-center group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-red-100 flex items-center justify-center text-slate-500 group-hover:text-red-600 transition-colors">
+                    <Camera size={20} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-700 group-hover:text-red-700 block">
+                      📷 Foto 02 (Teste/Detalhe)
+                    </span>
+                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                      Toque para tirar foto ou selecionar da galeria
+                    </span>
+                  </div>
+                </button>
+              )}
             </div>
           </section>
 
@@ -770,6 +926,149 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                 className="ml-auto text-white/70 hover:text-white text-lg leading-none cursor-pointer"
               >
                 ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Inputs de arquivo ocultos (Câmera com capture vs Galeria sem capture) */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
+        {/* Modal / Bottom-Sheet de Seleção da Origem da Foto (Câmera vs Galeria) */}
+        {photoSourceModalSlot && (
+          <div
+            className="fixed inset-0 z-60 bg-slate-950/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+            onClick={() => setPhotoSourceModalSlot(null)}
+          >
+            <div
+              className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-5 space-y-4 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Cabeçalho */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">
+                    {photoSourceModalSlot === 1 ? 'Foto 01 (Geral)' : 'Foto 02 (Teste/Detalhe)'}
+                  </h4>
+                  <p className="text-xs text-slate-500">Escolha a origem da imagem</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPhotoSourceModalSlot(null)}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Opções de Origem */}
+              <div className="grid grid-cols-1 gap-2.5">
+                {/* Opção 1: Câmera ao Vivo */}
+                <button
+                  type="button"
+                  onClick={handleTriggerCamera}
+                  className="flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200 hover:border-red-400 hover:bg-red-50/50 bg-white transition-all text-left group cursor-pointer shadow-xs active:scale-[0.99]"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Camera size={22} />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-bold text-slate-800 block group-hover:text-red-700">
+                      Tirar Foto (Câmera)
+                    </span>
+                    <span className="text-[11px] text-slate-500 block">
+                      Abrir a câmera do dispositivo para fotografar agora
+                    </span>
+                  </div>
+                </button>
+
+                {/* Opção 2: Galeria do Dispositivo */}
+                <button
+                  type="button"
+                  onClick={handleTriggerGallery}
+                  className="flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 bg-white transition-all text-left group cursor-pointer shadow-xs active:scale-[0.99]"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <ImageIcon size={22} />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-bold text-slate-800 block group-hover:text-blue-700">
+                      Escolher da Galeria / Arquivos
+                    </span>
+                    <span className="text-[11px] text-slate-500 block">
+                      Selecionar foto já tirada ou salva no aparelho
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Ações Extras se já houver foto anexada */}
+              {((photoSourceModalSlot === 1 && preview1) || (photoSourceModalSlot === 2 && preview2)) && (
+                <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentImg = photoSourceModalSlot === 1 ? preview1 : preview2;
+                      setSelectedZoomImage(currentImg);
+                      setPhotoSourceModalSlot(null);
+                    }}
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <Eye size={15} />
+                    Visualizar Foto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhoto(photoSourceModalSlot)}
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-red-200 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+                  >
+                    <Trash2 size={15} />
+                    Remover Foto
+                  </button>
+                </div>
+              )}
+
+              {/* Botão Cancelar */}
+              <button
+                type="button"
+                onClick={() => setPhotoSourceModalSlot(null)}
+                className="w-full py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Zoom em Tela Cheia */}
+        {selectedZoomImage && (
+          <div
+            className="fixed inset-0 z-70 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setSelectedZoomImage(null)}
+          >
+            <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+              <img src={selectedZoomImage} alt="Evidência Ampliada" className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain" />
+              <button
+                type="button"
+                onClick={() => setSelectedZoomImage(null)}
+                className="absolute -top-3 -right-3 p-2 bg-white text-slate-900 rounded-full shadow-lg hover:bg-slate-200 transition-colors cursor-pointer"
+                title="Fechar"
+              >
+                <X size={18} />
               </button>
             </div>
           </div>

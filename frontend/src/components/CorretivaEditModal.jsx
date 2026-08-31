@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertTriangle, Clock, Camera, Upload, Trash2, Image as ImageIcon, Calendar, User, FileText, Tag, Loader2, Package } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, CheckCircle, AlertTriangle, Clock, Camera, Upload, Trash2, Image as ImageIcon, Calendar, User, FileText, Tag, Loader2, Package, RefreshCw, Eye } from 'lucide-react';
 import { syncManager } from '../services/syncManager';
 
 /**
@@ -51,6 +51,11 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedFullImage, setSelectedFullImage] = useState(null);
 
+  // Seleção de origem da foto (Câmera vs Galeria)
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
+  const [photoSourceModalOpen, setPhotoSourceModalOpen] = useState(false);
+
   // Formatar a data de hoje para exibição no formulário
   const todayFormatted = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -67,7 +72,7 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
   };
 
   useEffect(() => {
-    if (corretiva) {
+    if (corretiva && isOpen) {
       setStatus(normalizeStatusChoice(corretiva.status));
       setResolucaoProblema(corretiva.resolucaoProblema || '');
       setImagem3Base64(null);
@@ -77,10 +82,27 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
       setImagem3Preview(existingImg3 || null);
 
       setErrorMessage(null);
+      setPhotoSourceModalOpen(false);
     }
   }, [corretiva, isOpen]);
 
   if (!isOpen || !corretiva) return null;
+
+  const handleTriggerCamera = () => {
+    setPhotoSourceModalOpen(false);
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+      cameraInputRef.current.click();
+    }
+  };
+
+  const handleTriggerGallery = () => {
+    setPhotoSourceModalOpen(false);
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = '';
+      galleryInputRef.current.click();
+    }
+  };
 
   // Processar upload de imagem
   const handleImageChange = (e) => {
@@ -105,6 +127,7 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
   const handleRemoveImage3 = () => {
     setImagem3Base64(null);
     setImagem3Preview(null);
+    setPhotoSourceModalOpen(false);
   };
 
   const handleSubmit = async (e) => {
@@ -339,39 +362,56 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
             </label>
             
             {imagem3Preview ? (
-              <div className="relative w-40 h-40 rounded-xl overflow-hidden border border-slate-300 shadow-md group">
+              <div className="relative w-40 h-40 rounded-xl overflow-hidden border border-slate-300 shadow-md group bg-slate-900">
                 <img src={imagem3Preview} alt="Evidência Solução" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button
                     type="button"
                     onClick={() => setSelectedFullImage(imagem3Preview)}
-                    className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-lg backdrop-blur-sm transition-colors"
+                    className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
                     title="Visualizar"
                   >
-                    <ImageIcon size={18} />
+                    <Eye size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPhotoSourceModalOpen(true)}
+                    className="p-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
+                    title="Alterar foto"
+                  >
+                    <RefreshCw size={18} />
                   </button>
                   <button
                     type="button"
                     onClick={handleRemoveImage3}
-                    className="p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg backdrop-blur-sm transition-colors"
+                    className="p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg backdrop-blur-sm transition-colors cursor-pointer"
                     title="Remover"
                   >
                     <Trash2 size={18} />
                   </button>
                 </div>
+                {/* Botão de toque em celulares */}
+                <button
+                  type="button"
+                  onClick={() => setPhotoSourceModalOpen(true)}
+                  className="sm:hidden absolute bottom-2 right-2 px-2.5 py-1 bg-slate-900/80 text-white text-[11px] font-semibold rounded-lg flex items-center gap-1"
+                >
+                  <RefreshCw size={12} />
+                  <span>Opções</span>
+                </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-slate-300 hover:border-red-500 bg-slate-50 hover:bg-red-50/30 cursor-pointer transition-all">
-                <Camera className="text-slate-400 mb-2" size={32} />
-                <span className="text-xs font-semibold text-slate-700">Clique para adicionar 1 Imagem</span>
-                <span className="text-[11px] text-slate-400 mt-0.5">Tire uma foto ou selecione do dispositivo</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
+              <button
+                type="button"
+                onClick={() => setPhotoSourceModalOpen(true)}
+                className="w-full flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-slate-300 hover:border-red-500 bg-slate-50 hover:bg-red-50/30 cursor-pointer transition-all group"
+              >
+                <div className="w-11 h-11 rounded-full bg-slate-100 group-hover:bg-red-100 flex items-center justify-center text-slate-500 group-hover:text-red-600 transition-colors mb-2">
+                  <Camera size={22} />
+                </div>
+                <span className="text-xs font-bold text-slate-700 group-hover:text-red-700">Adicionar Evidência da Solução</span>
+                <span className="text-[11px] text-slate-400 mt-0.5">Toque para tirar foto ou selecionar da galeria</span>
+              </button>
             )}
           </div>
 
@@ -394,7 +434,7 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold text-xs hover:bg-slate-200 transition-colors"
+            className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold text-xs hover:bg-slate-200 transition-colors cursor-pointer"
           >
             Cancelar
           </button>
@@ -402,12 +442,12 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
             type="button"
             onClick={handleSubmit}
             disabled={isSaving}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {isSaving ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Salva Ocorrência...
+                Salvando Ocorrência...
               </>
             ) : (
               <>
@@ -420,17 +460,134 @@ export default function CorretivaEditModal({ corretiva, isOpen, onClose, onSaved
 
       </div>
 
+      {/* Inputs de arquivo ocultos (Câmera com capture vs Galeria sem capture) */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleImageChange}
+        className="hidden"
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageChange}
+        className="hidden"
+      />
+
+      {/* Modal de Seleção de Origem da Foto (Câmera vs Galeria) */}
+      {photoSourceModalOpen && (
+        <div
+          className="fixed inset-0 z-60 bg-slate-950/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setPhotoSourceModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-5 space-y-4 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cabeçalho */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h4 className="text-sm font-bold text-slate-800">Evidência Fotográfica da Solução</h4>
+                <p className="text-xs text-slate-500">Escolha a origem da imagem</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPhotoSourceModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Opções */}
+            <div className="grid grid-cols-1 gap-2.5">
+              <button
+                type="button"
+                onClick={handleTriggerCamera}
+                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200 hover:border-red-400 hover:bg-red-50/50 bg-white transition-all text-left group cursor-pointer shadow-xs active:scale-[0.99]"
+              >
+                <div className="w-11 h-11 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Camera size={22} />
+                </div>
+                <div className="flex-1">
+                  <span className="text-xs font-bold text-slate-800 block group-hover:text-red-700">
+                    Tirar Foto (Câmera)
+                  </span>
+                  <span className="text-[11px] text-slate-500 block">
+                    Abrir a câmera do dispositivo para fotografar agora
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTriggerGallery}
+                className="flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 bg-white transition-all text-left group cursor-pointer shadow-xs active:scale-[0.99]"
+              >
+                <div className="w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <ImageIcon size={22} />
+                </div>
+                <div className="flex-1">
+                  <span className="text-xs font-bold text-slate-800 block group-hover:text-blue-700">
+                    Escolher da Galeria / Arquivos
+                  </span>
+                  <span className="text-[11px] text-slate-500 block">
+                    Selecionar foto já tirada ou salva no aparelho
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Ações se já houver imagem */}
+            {imagem3Preview && (
+              <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFullImage(imagem3Preview);
+                    setPhotoSourceModalOpen(false);
+                  }}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <Eye size={15} />
+                  Visualizar Foto
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemoveImage3}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-red-200 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+                >
+                  <Trash2 size={15} />
+                  Remover Foto
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setPhotoSourceModalOpen(false)}
+              className="w-full py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Zoom de Imagem */}
       {selectedFullImage && (
         <div
-          className="fixed inset-0 z-60 bg-slate-950/90 flex items-center justify-center p-4"
+          className="fixed inset-0 z-70 bg-slate-950/90 flex items-center justify-center p-4"
           onClick={() => setSelectedFullImage(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh]">
             <img src={selectedFullImage} alt="Zoom" className="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain" />
             <button
               onClick={() => setSelectedFullImage(null)}
-              className="absolute -top-4 -right-4 p-2 bg-white text-slate-900 rounded-full shadow-lg hover:bg-slate-200"
+              className="absolute -top-4 -right-4 p-2 bg-white text-slate-900 rounded-full shadow-lg hover:bg-slate-200 cursor-pointer"
             >
               <X size={20} />
             </button>
