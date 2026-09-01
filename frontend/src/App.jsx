@@ -37,13 +37,13 @@ function TenantRedirect() {
  * Componente que garante que a funcionalidade só está ativa para tenants habilitados.
  * Caso contrário, renderiza a tela "Em Breve".
  */
-const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy'];
+const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy', 'jcpm-trade-center'];
 function ActivePreventivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
 }
 
-const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife'];
+const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center'];
 function ActiveCorretivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_CORRETIVAS.includes(tenant) ? children : <ComingSoon />;
@@ -229,17 +229,17 @@ function App() {
 
           {/* ===== SDAI ===== */}
           <Route path="sdai/inspecao-lojas" element={
-            <ComingSoonForTenants blocked={['salvador-norte']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center']}>
               <ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="sdai/novo" element={
-            <ComingSoonForTenants blocked={['salvador-norte']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center']}>
               <ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="sdai/dashboard" element={
-            <ComingSoonForTenants blocked={['salvador-norte']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center']}>
               <DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
@@ -267,17 +267,17 @@ function App() {
 
           {/* ===== BMS ===== */}
           <Route path="bms/inspecao-lojas" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
               <FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="bms/novo" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
               <FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="bms/dashboard" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
               <DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
@@ -286,7 +286,7 @@ function App() {
           <Route path="bms/corretivas" element={<ComingSoon />} />
           <Route path="bms/relatorios" element={<ComingSoon />} />
           <Route path="bms/cadastros" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
               <Cadastros shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />

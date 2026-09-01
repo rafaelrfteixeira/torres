@@ -43,7 +43,6 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
     aderencia: 100,
     pendenciasForaPrazo: 0,
   });
-  const [tiposDisponiveis, setTiposDisponiveis] = useState([]);
 
   // Filters (React useState)
   const [filtroStatus, setFiltroStatus] = useState('todos');
@@ -75,7 +74,6 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
       if (result.success && result.data) {
         setDispositivos(result.data.dispositivos || []);
         if (result.data.kpis) setKpis(result.data.kpis);
-        if (result.data.tiposUnicos) setTiposDisponiveis(result.data.tiposUnicos);
       } else {
         throw new Error(result.message || 'Erro ao carregar dados de preventivas.');
       }
@@ -91,9 +89,24 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
     fetchData();
   }, [tenant, mesSelecionado, anoSelecionado]);
 
-  // Computed: Dispositivos filtrados
+  // Dispositivos exclusivamente da competência (mês) selecionada
+  const dispositivosDoMes = useMemo(() => {
+    return dispositivos.filter((d) => Number(d.mesNumero) === Number(mesSelecionado));
+  }, [dispositivos, mesSelecionado]);
+
+  // Tipos de periféricos disponíveis na competência selecionada
+  const tiposDisponiveis = useMemo(() => {
+    return [...new Set(dispositivosDoMes.map((d) => d.tipo).filter(Boolean))].sort();
+  }, [dispositivosDoMes]);
+
+  // Resetar filtro de tipo ao alterar o mês
+  useEffect(() => {
+    setFiltroTipo('todos');
+  }, [mesSelecionado, anoSelecionado]);
+
+  // Computed: Dispositivos filtrados para exibição na tabela
   const dispositivosFiltrados = useMemo(() => {
-    return dispositivos.filter((d) => {
+    return dispositivosDoMes.filter((d) => {
       // 1. Filtro de Status
       let bateStatus = true;
       if (filtroStatus === 'realizado') {
@@ -123,7 +136,7 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
 
       return bateStatus && bateTipo && bateBusca;
     });
-  }, [dispositivos, filtroStatus, filtroTipo, buscaTag]);
+  }, [dispositivosDoMes, filtroStatus, filtroTipo, buscaTag]);
 
   // Helper para Badges de Status
   const renderStatusBadge = (dispositivo) => {
@@ -581,7 +594,7 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
                   </p>
                 </div>
                 <span className="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-200">
-                  Total Exibido: {dispositivosFiltrados.length} / {dispositivos.length} Ativos
+                  Total Exibido: {dispositivosFiltrados.length} / {dispositivosDoMes.length} Ativos
                 </span>
               </div>
 
@@ -601,7 +614,9 @@ export default function DashboardPreventivas({ user, shoppingsMetadata = [] }) {
                     {dispositivosFiltrados.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="p-8 text-center text-slate-400">
-                          Nenhum ativo corresponde aos filtros aplicados.
+                          {dispositivosDoMes.length === 0
+                            ? 'Nenhuma preventiva programada para esta competência.'
+                            : 'Nenhum ativo corresponde aos filtros aplicados.'}
                         </td>
                       </tr>
                     ) : (

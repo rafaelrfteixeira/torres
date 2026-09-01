@@ -231,6 +231,22 @@ const shoppings = {
       bms: null,
     },
   },
+  'jcpm-trade-center': {
+    name: 'JCPM Trade Center',
+    logo: '/logo_jcpm_trade_center.png',
+    listaSDAI: null,
+    listaBMS: null,
+    excelLojasUrl: null,
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQAvYiycwgZVS7YMOqqwDyZiAUAxZoU1suQ65QmbFO5DwZg',
+    listaHistoricoPreventivas: 'JCPM_TRADE_CENTER_PREVENTIVAS_2026',
+    listaCorretivas: 'CC-2021-10-634-MAN-JCPM-TRADE-BMS-SDAI',
+    responsavelShopping: {
+      sdai: null,
+      bms: null,
+    },
+  },
 };
 
 // -----------------------------------------------
@@ -243,13 +259,13 @@ const permissions = {
   'pedro.ricardolima@torrescx.com.br': ['shopping-recife'],
   'msantos@torrescx.com.br': ['*'],
   'antonio.cezar@torrescx.com.br': ['riomar-recife'],
-  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife'],
+  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center'],
   'david.teixeira@torrescx.com.br': ['riomar-kennedy'],
   'ruan.lima@torrescx.com.br': ['shopping-recife'],
   'leandro.araujo@torrescx.com.br': ['riomar-kennedy'],
   'ananias.santana@torrescx.com.br': ['shopping-guararapes'],
-  'arnaldo.justino@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife'],
-  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife'],
+  'arnaldo.justino@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center'],
+  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center'],
   'marcos.torres@torrescx.com.br': ['*'],
   'adm.manut@torrescx.com.br': ['*'],
   'rafael.costal@torrescx.com.br': ['salvador-norte'],

@@ -24,12 +24,13 @@ function getSDAISubmenus(tenant) {
   const isPlazaShoppingRecife = tenant === 'plaza-shopping-recife';
   const isRioMarKennedy = tenant === 'riomar-kennedy';
   const isRioMarRecife = tenant === 'riomar-recife';
+  const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
   // Tenants com funcionalidades de preventivas ativas
-  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy;
+  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter;
   // Tenants com funcionalidades de corretivas ativas
   const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
-  const hasInspecaoComingSoon = isSalvadorNorte;
+  const hasInspecaoComingSoon = isSalvadorNorte || isJcpmTradeCenter;
   return [
     {
       id: 'dashboard-inspecao',
@@ -89,7 +90,7 @@ function getSDAISubmenus(tenant) {
  * @returns {Array} Lista de submenus
  */
 function getBMSSubmenus(tenant) {
-  const allComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias';
+  const allComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias' || tenant === 'jcpm-trade-center';
   return [
     {
       id: 'dashboard-inspecao',
@@ -281,6 +282,10 @@ export function getMenuConfig(tenant) {
     ],
     'plaza-shopping-recife': [
       { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+    ],
+    'jcpm-trade-center': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+      { id: 'bms', label: 'BMS', icon: 'cpu', submenus: getBMSSubmenus(tenant) },
     ],
   };
 
