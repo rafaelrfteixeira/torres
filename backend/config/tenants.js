@@ -46,8 +46,8 @@ const shoppings = {
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCd4pgWXkNERZTurFywc0WfAWsywZVNZDcVOdXxszKxUQA',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
     // Preventivas Área Comum
-    excelPreventivasUrl: null, // TODO: Configurar
-    listaHistoricoPreventivas: null,
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQB_IKmy7-TIQZmRry4ps9i7AeW0i99QFF8sQKRZBr9-yek', // TODO: Configurar
+    listaHistoricoPreventivas: 'RIOMAR_KENNEDY_PREVENTIVAS_2026',
     listaCorretivas: 'CC-2021-5-491-Riomar Kennedy',
     responsavelShopping: {
       sdai: {
