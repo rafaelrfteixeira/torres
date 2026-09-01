@@ -77,14 +77,17 @@ define(['./workbox-6cec1091'], (function (workbox) { 'use strict';
    * See https://goo.gl/S9QRab
    */
   workbox.precacheAndRoute([{
+    "url": "suppress-warnings.js",
+    "revision": "d41d8cd98f00b204e9800998ecf8427e"
+  }, {
     "url": "/index.html",
-    "revision": "0.kdi91v5ifac"
+    "revision": "0.arnts14joe4"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
     allowlist: [/^\/$/]
   }));
-  workbox.registerRoute(/^https?:.*\/api\/(lojas|preventivas|corretivas|auth\/profile|checklists).*/i, new workbox.NetworkFirst({
+  workbox.registerRoute(/^https?:.*\/api\/(lojas|preventivas|corretivas|checklists).*/i, new workbox.NetworkFirst({
     "cacheName": "torres-api-cache",
     "networkTimeoutSeconds": 4,
     plugins: [new workbox.ExpirationPlugin({

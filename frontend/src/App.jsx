@@ -37,7 +37,7 @@ function TenantRedirect() {
  * Componente que garante que a funcionalidade só está ativa para tenants habilitados.
  * Caso contrário, renderiza a tela "Em Breve".
  */
-const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos'];
+const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy'];
 function ActivePreventivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
