@@ -25,9 +25,10 @@ import { getMenuConfig } from './config/clientMenuConfig';
 function TenantRedirect() {
   const { tenant } = useParams();
   const menus = getMenuConfig(tenant);
-  const firstRoute = menus.length > 0 && menus[0].submenus.length > 0
-    ? menus[0].submenus[0].route
-    : `/${tenant}`;
+  const activeSubmenu = menus.length > 0 && menus[0].submenus ? menus[0].submenus.find((s) => !s.comingSoon) : null;
+  const firstRoute = activeSubmenu
+    ? activeSubmenu.route
+    : (menus.length > 0 && menus[0].submenus.length > 0 ? menus[0].submenus[0].route : `/${tenant}`);
   // Use relative route for nested redirect
   const relativePath = firstRoute.replace(`/${tenant}/`, '');
   return <Navigate to={relativePath} replace />;
@@ -37,13 +38,13 @@ function TenantRedirect() {
  * Componente que garante que a funcionalidade só está ativa para tenants habilitados.
  * Caso contrário, renderiza a tela "Em Breve".
  */
-const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy', 'jcpm-trade-center'];
+const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy', 'jcpm-trade-center', 'beach-class'];
 function ActivePreventivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
 }
 
-const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center'];
+const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center', 'beach-class'];
 function ActiveCorretivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_CORRETIVAS.includes(tenant) ? children : <ComingSoon />;
@@ -229,17 +230,17 @@ function App() {
 
           {/* ===== SDAI ===== */}
           <Route path="sdai/inspecao-lojas" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class']}>
               <ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="sdai/novo" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class']}>
               <ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="sdai/dashboard" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class']}>
               <DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />

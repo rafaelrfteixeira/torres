@@ -25,12 +25,13 @@ function getSDAISubmenus(tenant) {
   const isRioMarKennedy = tenant === 'riomar-kennedy';
   const isRioMarRecife = tenant === 'riomar-recife';
   const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
+  const isBeachClass = tenant === 'beach-class';
   // Tenants com funcionalidades de preventivas ativas
-  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter;
+  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass;
   // Tenants com funcionalidades de corretivas ativas
   const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
-  const hasInspecaoComingSoon = isSalvadorNorte || isJcpmTradeCenter;
+  const hasInspecaoComingSoon = isSalvadorNorte || isJcpmTradeCenter || isBeachClass;
   return [
     {
       id: 'dashboard-inspecao',
@@ -287,6 +288,9 @@ export function getMenuConfig(tenant) {
       { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
       { id: 'bms', label: 'BMS', icon: 'cpu', submenus: getBMSSubmenus(tenant) },
     ],
+    'beach-class': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+    ],
   };
 
   return configs[tenant] || [];
@@ -301,7 +305,8 @@ export function getMenuConfig(tenant) {
 export function getDefaultRoute(tenant) {
   const menus = getMenuConfig(tenant);
   if (menus.length > 0 && menus[0].submenus.length > 0) {
-    return menus[0].submenus[0].route;
+    const activeSubmenu = menus[0].submenus.find((s) => !s.comingSoon);
+    return activeSubmenu ? activeSubmenu.route : menus[0].submenus[0].route;
   }
   return `/${tenant}`;
 }
