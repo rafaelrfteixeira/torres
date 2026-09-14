@@ -70,8 +70,8 @@ const shoppings = {
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQA1oFdc24rWTKKUi_82HSrIAYCtEH7wdEc21YIgpj02lMc',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
     // Preventivas Área Comum
-    excelPreventivasUrl: null,
-    listaHistoricoPreventivas: null,
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQC-hCLGu4DFT6GWq9cwgBu5AX-SlKeodD-HTPTQ7o-AiGg',
+    listaHistoricoPreventivas: 'SHOPPING_RECIFE_PREVENTIVAS_2026',
     listaCorretivas: 'CC-2026-3-180-MAN-SHOP_RECIFE',
     responsavelShopping: {
       sdai: {

@@ -27,7 +27,7 @@ function getSDAISubmenus(tenant) {
   const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
   const isBeachClass = tenant === 'beach-class';
   // Tenants com funcionalidades de preventivas ativas
-  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass;
+  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife;
   // Tenants com funcionalidades de corretivas ativas
   const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
