@@ -338,10 +338,23 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
       ? 'Sem Acesso'
       : (temFalhaChecklist ? 'Com Defeito' : 'Funcionando');
 
+    // Extrai o endereço específico do detector (ex: L7D31, L8D267, L3M168) da descrição
+    const resolveTag = (disp) => {
+      const desc = (disp?.descricao || '').trim();
+      const match = desc.match(/(L\d+[A-Z]+\d+)/i) || desc.match(/([A-Z]\d+[-_]?[A-Z0-9]+)/i);
+      if (match) {
+        return disp?.pavimento ? `${disp.pavimento} ${match[1].toUpperCase()}` : match[1].toUpperCase();
+      }
+      if (disp?.pavimento && disp?.laco) {
+        return `${disp.pavimento} ${disp.laco}`;
+      }
+      return desc || 'TAG-N/A';
+    };
+
     // Payload
     const payload = {
       tenant,
-      tag: dispositivo?.laco ? `${dispositivo.pavimento} ${dispositivo.laco}` : dispositivo?.descricao || '',
+      tag: resolveTag(dispositivo),
       localizacao: dispositivo?.descricao || '',
       descricao: dispositivo?.descricao || '',
       pavimento: dispositivo?.pavimento || '',

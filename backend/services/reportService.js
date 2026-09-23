@@ -1411,15 +1411,16 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
     const devTag = (dev.tag || '').trim().toUpperCase();
     const devDesc = (dev.descricao || '').trim().toUpperCase();
 
-    // Match na Matriz Mestra por Descrição Exata > Tag (Pavimento + Laço) > Descrição Parcial
+    // Match na Matriz Mestra por Descrição Exata > Endereço no TAG > Descrição Parcial
     let matched = null;
     if (devDesc) {
       matched = todosDispositivos.find((d) => (d.descricao || '').trim().toUpperCase() === devDesc);
     }
-    if (!matched && devTag) {
+    // Casar por TAG apenas se o TAG não for apenas o circuito compartilhado (ex: 'L2PAV L7')
+    if (!matched && devTag && !devTag.match(/^[A-Z0-9]+PAV\s+L\d+$/i)) {
       matched = todosDispositivos.find((d) => {
-        const t = (d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || '');
-        return t.trim().toUpperCase() === devTag;
+        const dDesc = (d.descricao || '').trim().toUpperCase();
+        return dDesc && dDesc.includes(devTag);
       });
     }
     if (!matched && devDesc) {
@@ -1432,7 +1433,7 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
     // Chave única para o dispositivo físico
     const deviceUniqueKey = matched
       ? `MATCHED_${matched.rowIndex}_${(matched.descricao || '').trim().toUpperCase()}`
-      : (devTag ? `TAG_${devTag}` : `DESC_${devDesc}`);
+      : (devDesc ? `DESC_${devDesc}` : `ID_${dev.id}`);
 
     if (seenDevices.has(deviceUniqueKey)) {
       console.log(`ℹ️ [ReportService] Ensaio duplicado ignorado para ativo único: "${devDesc || devTag}" (ID: ${dev.id})`);

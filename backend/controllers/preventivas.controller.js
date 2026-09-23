@@ -132,11 +132,10 @@ const getDispositivos = async (req, res, next) => {
           .get();
 
         const anoAtual = new Date().getFullYear();
-        const realizadosSet = new Set();
+        const realizadosPorDesc = new Set();
 
         (resList.value || []).forEach((item) => {
           const f = item.fields || {};
-          const titleTag = (f.Title || f.TAG || '').trim().toUpperCase();
           const descField = (f.Localizacao || f.Ponto || f.Descricao || '').trim().toUpperCase();
 
           let anoLog = 0;
@@ -151,18 +150,16 @@ const getDispositivos = async (req, res, next) => {
           }
 
           if (!anoLog || anoLog === anoAtual) {
-            if (titleTag) realizadosSet.add(`TAG:${titleTag}`);
-            if (descField) realizadosSet.add(`DESC:${descField}`);
+            if (descField) realizadosPorDesc.add(descField);
           }
         });
 
+        // Marca como realizado apenas se a descrição única do ativo constar no histórico
         dispositivos.forEach((d) => {
           if (d.realizado) return;
-          const tag = (d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || '');
-          const tagKey = tag.trim().toUpperCase();
           const descKey = (d.descricao || '').trim().toUpperCase();
 
-          if (realizadosSet.has(`TAG:${tagKey}`) || realizadosSet.has(`DESC:${descKey}`)) {
+          if (descKey && realizadosPorDesc.has(descKey)) {
             d.realizado = true;
             d.status = 'realizado';
           }
@@ -373,11 +370,9 @@ const salvar = async (req, res, next) => {
         const isSameComp = itemMes === compMes && itemAno === compAno;
         if (!isSameComp) return false;
 
-        // Bate por TAG ou por Descrição exata
-        const matchTag = targetTag && itemTag && (itemTag === targetTag);
-        const matchDesc = targetDesc && itemDesc && (itemDesc === targetDesc);
-
-        return matchTag || matchDesc;
+        // Duplicidade estrita pela descrição única do dispositivo
+        // (evita que laço compartilhado bloqueie outros detectores independentes)
+        return targetDesc && itemDesc && (itemDesc === targetDesc);
       });
 
       if (duplicate) {
