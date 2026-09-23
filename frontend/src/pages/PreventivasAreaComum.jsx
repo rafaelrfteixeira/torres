@@ -108,9 +108,26 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
   const totalPendentes = dispositivos.filter((d) => d.status === 'pendente').length;
   const totalGeral = totalAtrasados + totalPendentes;
 
-  // Callback pós-salvamento
-  const handleSaved = () => {
-    fetchDispositivos(); // Recarrega a lista
+  // Callback pós-salvamento com remoção otimista imediata e recarregamento forçado
+  const handleSaved = (savedDispositivo) => {
+    if (savedDispositivo) {
+      setDispositivos((prev) =>
+        prev.filter((d) => {
+          if (savedDispositivo.rowIndex !== undefined && d.rowIndex !== undefined) {
+            return d.rowIndex !== savedDispositivo.rowIndex;
+          }
+          const savedTag = (savedDispositivo.tag || '').trim().toLowerCase();
+          const savedDesc = (savedDispositivo.descricao || '').trim().toLowerCase();
+          const dTag = (d.tag || (d.pavimento && d.laco ? `${d.pavimento} ${d.laco}` : '')).trim().toLowerCase();
+          const dDesc = (d.descricao || '').trim().toLowerCase();
+          if (savedTag && dTag && savedTag === dTag) return false;
+          if (savedDesc && dDesc && savedDesc === dDesc) return false;
+          return true;
+        })
+      );
+    }
+    // Forçar recarregamento sem cache (forceRefresh = true)
+    fetchDispositivos(true);
   };
 
   // ============================================

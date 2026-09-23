@@ -118,9 +118,59 @@ const getDispositivos = async (req, res, next) => {
       return res.json({ success: true, data: filtered });
     }
 
-    // Download e parse
+    // Download e parse da Matriz Mestra
     const { buffer } = await downloadExcelViaGraph(accessToken, excelUrl);
     const { dispositivos } = parseMatrizMestra(buffer);
+
+    // Cruzar com a lista de Histórico do SharePoint (garante sincronização mesmo se a escrita no Excel falhar)
+    if (tenantConfig.listaHistoricoPreventivas) {
+      try {
+        const graphClient = getGraphClient(accessToken);
+        const { siteId, listId } = await resolveSharePointIds(graphClient, tenantConfig.listaHistoricoPreventivas);
+        const resList = await graphClient
+          .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=999`)
+          .get();
+
+        const anoAtual = new Date().getFullYear();
+        const realizadosSet = new Set();
+
+        (resList.value || []).forEach((item) => {
+          const f = item.fields || {};
+          const titleTag = (f.Title || f.TAG || '').trim().toUpperCase();
+          const descField = (f.Localizacao || f.Ponto || f.Descricao || '').trim().toUpperCase();
+
+          let anoLog = 0;
+          const rawDateStr = f.Data_Execucao || f.Created;
+          if (rawDateStr) {
+            const d = new Date(rawDateStr);
+            if (!isNaN(d.getTime())) {
+              anoLog = d.getFullYear();
+            } else if (typeof rawDateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawDateStr.trim())) {
+              anoLog = parseInt(rawDateStr.trim().split('-')[0], 10);
+            }
+          }
+
+          if (!anoLog || anoLog === anoAtual) {
+            if (titleTag) realizadosSet.add(`TAG:${titleTag}`);
+            if (descField) realizadosSet.add(`DESC:${descField}`);
+          }
+        });
+
+        dispositivos.forEach((d) => {
+          if (d.realizado) return;
+          const tag = (d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || '');
+          const tagKey = tag.trim().toUpperCase();
+          const descKey = (d.descricao || '').trim().toUpperCase();
+
+          if (realizadosSet.has(`TAG:${tagKey}`) || realizadosSet.has(`DESC:${descKey}`)) {
+            d.realizado = true;
+            d.status = 'realizado';
+          }
+        });
+      } catch (histErr) {
+        console.warn('⚠️ [Preventivas] Falha ao cruzar histórico em getDispositivos:', histErr.message);
+      }
+    }
 
     // Salvar no cache (todos, inclusive realizados, para poder invalidar depois)
     _preventivasCache.set(excelUrl, { data: dispositivos, timestamp: Date.now() });
@@ -241,6 +291,10 @@ const salvar = async (req, res, next) => {
     } catch (excelErr) {
       console.warn('   ⚠️  Erro no Passo 1 (Excel):', excelErr.message);
       // Não bloqueia o fluxo — continua com os próximos passos
+    } finally {
+      if (tenantConfig.excelPreventivasUrl) {
+        _preventivasCache.delete(tenantConfig.excelPreventivasUrl);
+      }
     }
 
     // =========================================================
@@ -260,6 +314,90 @@ const salvar = async (req, res, next) => {
     }
 
     const { siteId, listId: historicoListId } = await resolveSharePointIds(graphClient, listaHistorico);
+
+    // -------------------------------------------------------------
+    // VALIDAÇÃO DE DUPLICIDADE: Evitar múltiplas execuções no mesmo mês
+    // -------------------------------------------------------------
+    let compMes = new Date().getMonth() + 1;
+    let compAno = new Date().getFullYear();
+    if (formData.dataExecucao) {
+      if (/^\d{4}-\d{2}-\d{2}/.test(formData.dataExecucao.trim())) {
+        const [y, m] = formData.dataExecucao.trim().split('-');
+        compAno = parseInt(y, 10);
+        compMes = parseInt(m, 10);
+      } else if (/^\d{2}\/\d{2}\/\d{4}/.test(formData.dataExecucao.trim())) {
+        const [, m, y] = formData.dataExecucao.trim().split('/');
+        compAno = parseInt(y, 10);
+        compMes = parseInt(m, 10);
+      } else {
+        const d = new Date(formData.dataExecucao);
+        if (!isNaN(d.getTime())) {
+          compMes = d.getMonth() + 1;
+          compAno = d.getFullYear();
+        }
+      }
+    }
+
+    const targetTag = (formData.tag || '').trim().toUpperCase();
+    const targetDesc = (formData.localizacao || formData.descricao || '').trim().toUpperCase();
+
+    console.log(`🔍 [Passo 3] Verificando duplicidade para "${targetTag || targetDesc}" em ${compMes}/${compAno}...`);
+    try {
+      const existingRes = await graphClient
+        .api(`/sites/${siteId}/lists/${historicoListId}/items?$expand=fields&$top=999`)
+        .get();
+
+      const existingItems = existingRes.value || [];
+      const duplicate = existingItems.find((item) => {
+        const f = item.fields || {};
+        const itemTag = (f.Title || f.TAG || '').trim().toUpperCase();
+        const itemDesc = (f.Localizacao || f.Ponto || f.Descricao || '').trim().toUpperCase();
+
+        const rawDateStr = f.Data_Execucao || f.Created;
+        if (!rawDateStr) return false;
+
+        let itemMes = 0;
+        let itemAno = 0;
+        if (typeof rawDateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawDateStr.trim())) {
+          const [y, m] = rawDateStr.trim().split('-');
+          itemAno = parseInt(y, 10);
+          itemMes = parseInt(m, 10);
+        } else {
+          const d = new Date(rawDateStr);
+          if (!isNaN(d.getTime())) {
+            itemMes = d.getMonth() + 1;
+            itemAno = d.getFullYear();
+          }
+        }
+
+        const isSameComp = itemMes === compMes && itemAno === compAno;
+        if (!isSameComp) return false;
+
+        // Bate por TAG ou por Descrição exata
+        const matchTag = targetTag && itemTag && (itemTag === targetTag);
+        const matchDesc = targetDesc && itemDesc && (itemDesc === targetDesc);
+
+        return matchTag || matchDesc;
+      });
+
+      if (duplicate) {
+        console.warn(`⚠️ [Preventivas] Dispositivo "${targetTag || targetDesc}" JÁ POSSUI inspeção registrada na competência ${compMes}/${compAno} (ID: ${duplicate.id}). Bloqueando inserção.`);
+        if (tenantConfig.excelPreventivasUrl) {
+          _preventivasCache.delete(tenantConfig.excelPreventivasUrl);
+        }
+        return res.status(409).json({
+          success: false,
+          code: 'DUPLICATE_INSPECTION',
+          message: `Este dispositivo (${formData.tag || formData.descricao}) já foi inspecionado nesta competência (${compMes}/${compAno}).`,
+          data: {
+            historicoId: duplicate.id,
+            osVinculada: duplicate.fields?.OS_Vinculada || null,
+          },
+        });
+      }
+    } catch (checkErr) {
+      console.warn('⚠️ [Preventivas] Falha ao verificar duplicidade no SharePoint:', checkErr.message);
+    }
 
     const toIsoDate = (dateStr) => {
       const now = new Date();
@@ -485,6 +623,10 @@ const salvar = async (req, res, next) => {
     // RESPOSTA
     // =========================================================
     console.log('\n🎉 [Preventivas] Orquestração concluída com sucesso!');
+
+    if (tenantConfig.excelPreventivasUrl) {
+      _preventivasCache.delete(tenantConfig.excelPreventivasUrl);
+    }
 
     res.status(201).json({
       success: true,

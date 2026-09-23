@@ -287,12 +287,14 @@ class SyncManager {
           message: result.message || 'Operação realizada com sucesso!',
         };
       } else {
-        // Erro do backend (validação, etc.)
+        // Erro do backend (validação, conflito, etc.)
         return {
           success: false,
           offline: false,
           message: result.message || `Erro ${response.status} ao processar a requisição.`,
           data: result,
+          code: result.code,
+          status: response.status,
         };
       }
     } catch (netErr) {

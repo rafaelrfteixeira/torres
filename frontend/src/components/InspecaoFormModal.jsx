@@ -367,10 +367,11 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
 
     setIsLoading(true);
     setSubmitStatus(null);
+    let result = null;
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const result = await syncManager.submitWithOfflineSupport({
+      result = await syncManager.submitWithOfflineSupport({
         url: `${API_URL}/preventivas/salvar`,
         method: 'POST',
         payload,
@@ -395,9 +396,18 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
         }
 
         setTimeout(() => {
-          onSaved?.();
+          onSaved?.(dispositivo);
           onClose();
         }, 1800);
+      } else if (result.code === 'DUPLICATE_INSPECTION' || result.status === 409) {
+        setSubmitStatus({
+          type: 'error',
+          message: `⚠️ ${result.message || 'Este dispositivo já foi inspecionado nesta competência.'}`,
+        });
+        setTimeout(() => {
+          onSaved?.(dispositivo);
+          onClose();
+        }, 2800);
       } else {
         setSubmitStatus({
           type: 'error',
@@ -408,7 +418,9 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
       setSubmitStatus({ type: 'error', message: 'Erro inesperado ao salvar preventiva.' });
       console.error('❌ Erro ao salvar preventiva:', error);
     } finally {
-      setIsLoading(false);
+      if (!result?.success && result?.code !== 'DUPLICATE_INSPECTION' && result?.status !== 409) {
+        setIsLoading(false);
+      }
       setTimeout(() => setSubmitStatus(null), 6000);
     }
   };

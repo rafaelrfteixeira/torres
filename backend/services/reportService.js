@@ -1396,10 +1396,18 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
   const passivoRestante = passivoMesesAnteriores.filter((d) => !d.realizado).length;
 
   // Classificar itens do histórico em 'Rotina do Mês' vs 'Recuperação de Atrasados'
+  // DEDUPLICAÇÃO INTELIGENTE: Se um dispositivo foi executado mais de uma vez no período,
+  // preservamos a execução mais recente para evitar duplicação em KPIs e no dossiê técnico.
   let atrasadosRecuperadosCount = 0;
   let inspecionadosDoMesCount = 0;
 
-  const history = rawHistory.map((dev) => {
+  // Ordenar rawHistory do mais recente para o mais antigo (id decrescente)
+  const sortedRaw = [...rawHistory].sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+
+  const seenDevices = new Set();
+  const deduplicatedHistory = [];
+
+  sortedRaw.forEach((dev) => {
     const devTag = (dev.tag || '').trim().toUpperCase();
     const devDesc = (dev.descricao || '').trim().toUpperCase();
 
@@ -1421,6 +1429,18 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
       });
     }
 
+    // Chave única para o dispositivo físico
+    const deviceUniqueKey = matched
+      ? `MATCHED_${matched.rowIndex}_${(matched.descricao || '').trim().toUpperCase()}`
+      : (devTag ? `TAG_${devTag}` : `DESC_${devDesc}`);
+
+    if (seenDevices.has(deviceUniqueKey)) {
+      console.log(`ℹ️ [ReportService] Ensaio duplicado ignorado para ativo único: "${devDesc || devTag}" (ID: ${dev.id})`);
+      return;
+    }
+
+    seenDevices.add(deviceUniqueKey);
+
     const isAtrasado = Boolean(matched && matched.mesNumero > 0 && matched.mesNumero < mesNum);
     const mesProgramadoNome = matched && matched.mesNumero > 0 ? (NOME_MESES[matched.mesNumero] || `Mês ${matched.mesNumero}`) : '';
 
@@ -1430,14 +1450,15 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
       inspecionadosDoMesCount++;
     }
 
-    return {
+    deduplicatedHistory.push({
       ...dev,
       isAtrasado,
       mesProgramadoNome,
       mesProgramadoNumero: matched?.mesNumero || mesNum,
-    };
+    });
   });
 
+  const history = deduplicatedHistory;
   const totalGeralInspecionados = history.length;
   const inspecionadosDoMes = inspecionadosDoMesCount;
   const atrasadosRecuperados = atrasadosRecuperadosCount;
