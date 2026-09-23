@@ -79,6 +79,8 @@ export default function DashboardBMS({ user, shoppingsMetadata = [] }) {
     logo: '',
   };
 
+  const isAracaju = tenant === 'riomar-aracaju';
+
   // State
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -157,15 +159,26 @@ export default function DashboardBMS({ user, shoppingsMetadata = [] }) {
       else if (item.status_funcionando_normalmente === 'Sim')
         statusItem = 'Normal';
 
-      // Inventário BMS (Quais sensores existem instalados)
+      // Inventário BMS (Quais sensores/sistemas existem instalados)
       const disps = [];
-      if (item.temp_amb_exist === 'Sim') disps.push('Temp. Amb.');
-      if (item.temp_duto_exist === 'Sim') disps.push('Temp. Duto');
-      if (item.panico_exist === 'Sim') disps.push('Pânico');
-      if (item.movimento_exist === 'Sim') disps.push('Presença');
-      if (item.porta_exist === 'Sim') disps.push('Porta');
-      if (item.barreira_exist === 'Sim') disps.push('Barreira');
-      if (item.falta_fase_exist === 'Sim') disps.push('Falta Fase');
+      if (isAracaju) {
+        if (item.fancoil_cmd_exist === 'Sim') disps.push('Cmd Fancoil');
+        if (item.fancoil_status_exist === 'Sim') disps.push('Status Fancoil');
+        if (item.vitrine_cmd_exist === 'Sim') disps.push('Cmd Vitrine');
+        if (item.vitrine_status_exist === 'Sim') disps.push('Status Vitrine');
+        if (item.panico_exist === 'Sim') disps.push('Pânico');
+        if (item.movimento_exist === 'Sim') disps.push('Presença');
+        if (item.medicao_exist === 'Sim') disps.push('Medição Energia');
+        if (item.hidrometro_exist === 'Sim') disps.push('Hidrômetro');
+      } else {
+        if (item.temp_amb_exist === 'Sim') disps.push('Temp. Amb.');
+        if (item.temp_duto_exist === 'Sim') disps.push('Temp. Duto');
+        if (item.panico_exist === 'Sim') disps.push('Pânico');
+        if (item.movimento_exist === 'Sim') disps.push('Presença');
+        if (item.porta_exist === 'Sim') disps.push('Porta');
+        if (item.barreira_exist === 'Sim') disps.push('Barreira');
+        if (item.falta_fase_exist === 'Sim') disps.push('Falta Fase');
+      }
       const resumoInventario =
         disps.length > 0 ? disps.join(' | ') : 'Sem disp. alocados';
 
@@ -537,9 +550,9 @@ export default function DashboardBMS({ user, shoppingsMetadata = [] }) {
                     <tr className="bg-slate-100/90 backdrop-blur-md border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider sticky top-0 z-10">
                       <th className="px-4 sm:px-6 py-3.5 w-10" />
                       <th className="px-4 sm:px-6 py-3.5">Nome da Loja</th>
-                      <th className="px-4 sm:px-6 py-3.5">Nº / Código</th>
-                      <th className="px-4 sm:px-6 py-3.5">Segmento</th>
-                      <th className="px-4 sm:px-6 py-3.5">Últimos Sensores Mapeados</th>
+                      <th className="px-4 sm:px-6 py-3.5 whitespace-nowrap">Nº / Código</th>
+                      <th className="px-4 sm:px-6 py-3.5 whitespace-nowrap">Segmento</th>
+                      <th className="px-4 sm:px-6 py-3.5">{isAracaju ? 'Últimos Sistemas Mapeados' : 'Últimos Sensores Mapeados'}</th>
                       <th className="px-4 sm:px-6 py-3.5">Status Atual</th>
                       <th className="px-4 sm:px-6 py-3.5">Última Inspeção</th>
                     </tr>
@@ -560,6 +573,7 @@ export default function DashboardBMS({ user, shoppingsMetadata = [] }) {
                           isExpanded={expandedRows.has(index)}
                           onToggle={() => toggleHistorico(index)}
                           tenant={tenant}
+                          isAracaju={isAracaju}
                           onToast={setToast}
                         />
                       ))
@@ -610,7 +624,7 @@ export default function DashboardBMS({ user, shoppingsMetadata = [] }) {
 // Sub-components
 // ============================================
 
-function LojaRow({ loja, index, isExpanded, onToggle, tenant, onToast }) {
+function LojaRow({ loja, index, isExpanded, onToggle, tenant, isAracaju, onToast }) {
   const [loadingPdf, setLoadingPdf] = useState(null);
   const [loadingResend, setLoadingResend] = useState(null);
 
@@ -685,8 +699,8 @@ function LojaRow({ loja, index, isExpanded, onToggle, tenant, onToast }) {
         <td className="px-4 sm:px-6 py-4 font-mono text-slate-500 text-xs">
           {loja.numeroLoja}
         </td>
-        <td className="px-4 sm:px-6 py-4 text-xs">
-          <span className="bg-slate-100 px-2 py-1 rounded border border-slate-200 text-slate-700 font-semibold">
+        <td className="px-4 sm:px-6 py-4 text-xs whitespace-nowrap">
+          <span className="inline-block whitespace-nowrap bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 text-slate-700 font-semibold">
             {loja.segmento}
           </span>
         </td>
@@ -721,7 +735,7 @@ function LojaRow({ loja, index, isExpanded, onToggle, tenant, onToast }) {
                 <thead>
                   <tr className="bg-slate-100 border-b-2 border-slate-300 text-[11px] text-slate-400 uppercase tracking-wider font-bold">
                     <th className="py-3.5 px-4 border-r border-slate-200">Data</th>
-                    <th className="py-3.5 px-4 border-r border-slate-200">Sensores Configurados</th>
+                    <th className="py-3.5 px-4 border-r border-slate-200">{isAracaju ? 'Sistemas Configurados' : 'Sensores Configurados'}</th>
                     <th className="py-3.5 px-4 border-r border-slate-200">Diagnóstico</th>
                     <th className="py-3.5 px-4 border-r border-slate-200">Técnico Resp.</th>
                     <th className="py-3.5 px-4 border-r border-slate-200">Observações</th>

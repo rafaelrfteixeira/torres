@@ -41,6 +41,8 @@ function generateHTML(data) {
   const st = data.statusLoja || {};
   const pen = data.pendencias || {};
 
+  const isAracaju = data.tenant === 'riomar-aracaju';
+
   const SISTEMAS_PADRAO = [
     { id: 'sensor_de_temperatura_ambiente', name: 'SENSOR DE TEMPERATURA AMBIENTE' },
     { id: 'sensor_de_duto', name: 'SENSOR DE DUTO' },
@@ -49,12 +51,25 @@ function generateHTML(data) {
     { id: 'sensor_de_porta', name: 'SENSOR DE PORTA' }
   ];
 
-  const SISTEMAS_VALORES = data.tipoLoja === 'Valores' ? [
+  const SISTEMAS_ARACAJU = [
+    { id: 'comando_fancoil', name: 'COMANDO FANCOIL' },
+    { id: 'status_fancoil', name: 'STATUS FANCOIL' },
+    { id: 'comando_vitrine', name: 'COMANDO VITRINE' },
+    { id: 'status_vitrine', name: 'STATUS VITRINE' },
+    { id: 'botão_de_pânico', name: 'BOTÃO DE PÂNICO' },
+    { id: 'sensor_de_movimento', name: 'SENSOR DE MOVIMENTO' },
+    { id: 'medição_de_energia', name: 'MEDIÇÃO DE ENERGIA' },
+    { id: 'hidrômetro', name: 'HIDRÔMETRO' }
+  ];
+
+  const SISTEMAS_VALORES = (!isAracaju && data.tipoLoja === 'Valores') ? [
     { id: 'sensor_de_barreira', name: 'SENSOR DE BARREIRA' },
     { id: 'falta_de_fase', name: 'FALTA DE FASE' }
   ] : [];
 
-  const sistemasParaRenderizar = [...SISTEMAS_PADRAO, ...SISTEMAS_VALORES];
+  const sistemasParaRenderizar = isAracaju
+    ? SISTEMAS_ARACAJU
+    : [...SISTEMAS_PADRAO, ...SISTEMAS_VALORES];
 
   return `
     <!DOCTYPE html>
@@ -288,23 +303,28 @@ function generateHTML(data) {
               <th>EXISTENTE</th>
               <th>FUNCIONANDO</th>
             </tr>
-            ${sistemasParaRenderizar.map(sys => `
+            ${sistemasParaRenderizar.map(sys => {
+              const sysData = s[sys.id] || 
+                (sys.id === 'botão_de_pânico' ? s['botao_de_panico'] : null) || 
+                (sys.id === 'medição_de_energia' ? s['medicao_de_energia'] : null) || 
+                (sys.id === 'hidrômetro' ? s['hidrometro'] : null) || {};
+              return `
             <tr>
               <td class="sys-name">${sys.name}</td>
               <td>
                 <div class="chk-group">
-                  <span>${checkbox(s[sys.id]?.existenteSim)} <span class="chk-label">SIM</span></span>
-                  <span>${checkbox(s[sys.id]?.existenteNao)} <span class="chk-label">NÃO</span></span>
+                  <span>${checkbox(sysData?.existenteSim)} <span class="chk-label">SIM</span></span>
+                  <span>${checkbox(sysData?.existenteNao)} <span class="chk-label">NÃO</span></span>
                 </div>
               </td>
               <td>
                 <div class="chk-group">
-                  <span>${checkbox(s[sys.id]?.funcionandoSim)} <span class="chk-label">SIM</span></span>
-                  <span>${checkbox(s[sys.id]?.funcionandoNao)} <span class="chk-label">NÃO</span></span>
+                  <span>${checkbox(sysData?.funcionandoSim)} <span class="chk-label">SIM</span></span>
+                  <span>${checkbox(sysData?.funcionandoNao)} <span class="chk-label">NÃO</span></span>
                 </div>
               </td>
             </tr>
-            `).join('')}
+            `;}).join('')}
           </table>
         </div>
 

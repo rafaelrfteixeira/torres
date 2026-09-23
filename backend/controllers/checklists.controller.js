@@ -106,7 +106,7 @@ function mapFormToListFields(formData) {
  * Mapeia o JSON do formulário React BMS para o formato
  * de colunas (fields) do Microsoft Lists.
  */
-function mapBMSFormToListFields(formData) {
+function mapBMSFormToListFields(formData, tenantSlug) {
   const boolToSimNao = (sim, nao) => {
     if (sim) return 'Sim';
     if (nao) return 'Não';
@@ -119,8 +119,87 @@ function mapBMSFormToListFields(formData) {
     return digits ? Number(digits) : null;
   };
 
+  const tenant = tenantSlug || formData.tenant;
   const sistemas = formData.sistemas || {};
 
+  // Customização exclusiva para o cliente Shopping RioMar Aracaju
+  if (tenant === 'riomar-aracaju') {
+    const panico = sistemas['botão_de_pânico'] || sistemas['botao_de_panico'] || {};
+    const movimento = sistemas['sensor_de_movimento'] || {};
+    const vitrineCmd = sistemas['comando_vitrine'] || {};
+    const vitrineStatus = sistemas['status_vitrine'] || {};
+    const fancoilCmd = sistemas['comando_fancoil'] || {};
+    const fancoilStatus = sistemas['status_fancoil'] || {};
+    const medicao = sistemas['medição_de_energia'] || sistemas['medicao_de_energia'] || {};
+    const hidrometro = sistemas['hidrômetro'] || sistemas['hidrometro'] || {};
+
+    return {
+      Title: formData.data ? formData.data.split('-').reverse().join('/') : '',
+      field_1: formData.loja || '',
+      field_2: formData.codigoLoja || '',
+      field_3: formData.responsavelShopping?.solicitante || '',
+      field_4: toPhoneNumber(formData.responsavelShopping?.telefone),
+      field_5: formData.responsavelShopping?.email || '',
+      field_6: formData.responsavelLoja?.solicitante || '',
+      field_7: toPhoneNumber(formData.responsavelLoja?.telefone),
+      field_8: formData.responsavelLoja?.email || '',
+      field_9: boolToText(formData.manutencaoCorretiva),
+      field_10: boolToText(formData.manutencaoPreventiva),
+      field_11: formData.tipoLoja || '',
+      
+      // Sistemas Aracaju
+      field_16: boolToSimNao(panico.existenteSim, panico.existenteNao),
+      field_17: boolToSimNao(panico.funcionandoSim, panico.funcionandoNao),
+
+      field_18: boolToSimNao(movimento.existenteSim, movimento.existenteNao),
+      field_19: boolToSimNao(movimento.funcionandoSim, movimento.funcionandoNao),
+
+      field_20: boolToSimNao(vitrineCmd.existenteSim, vitrineCmd.existenteNao),
+      VitrineCMDFuncionando: boolToSimNao(vitrineCmd.funcionandoSim, vitrineCmd.funcionandoNao),
+
+      field_21: boolToSimNao(vitrineStatus.existenteSim, vitrineStatus.existenteNao),
+      VitrineSTATUSFuncionando: boolToSimNao(vitrineStatus.funcionandoSim, vitrineStatus.funcionandoNao),
+
+      field_22: boolToSimNao(fancoilCmd.existenteSim, fancoilCmd.existenteNao),
+      FancoilCMDFuncionando: boolToSimNao(fancoilCmd.funcionandoSim, fancoilCmd.funcionandoNao),
+
+      field_23: boolToSimNao(fancoilStatus.existenteSim, fancoilStatus.existenteNao),
+      FancoilSTATUSFuncionando: boolToSimNao(fancoilStatus.funcionandoSim, fancoilStatus.funcionandoNao),
+
+      field_24: boolToSimNao(medicao.existenteSim, medicao.existenteNao),
+      field_25: boolToSimNao(medicao.funcionandoSim, medicao.funcionandoNao),
+
+      HidrometroExistente: boolToSimNao(hidrometro.existenteSim, hidrometro.existenteNao),
+      HidrometroFuncionando: boolToSimNao(hidrometro.funcionandoSim, hidrometro.funcionandoNao),
+      
+      field_26: formData.observacoes || '',
+      
+      // Status
+      field_27: boolToText(formData.statusLoja?.['Sistema Funcionando Normalmente']),
+      field_28: boolToText(formData.statusLoja?.['Sistema Funcionando Parcialmente']),
+      field_29: boolToText(formData.statusLoja?.['Sistema com Defeito']),
+      field_30: boolToText(formData.statusLoja?.['Não Possui BMS']),
+      field_31: formData.statusOutros || '',
+      
+      // Pendencias
+      field_32: boolToText(formData.pendencias?.['Necessário Abertura do Forro']),
+      field_33: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Alimentação']),
+      field_34: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Sinal']),
+      field_35: boolToText(formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']),
+      field_36: boolToText(formData.pendencias?.['Necessário Verificar o Sistema da Loja']),
+      field_37: boolToText(formData.pendencias?.['Troca de Dispositivo']),
+      field_38: formData.pendenciasOutros || '',
+      
+      // Footer
+      field_39: formData.engTecnico || '',
+      field_40: formData.horarioInicio || '',
+      field_41: formData.horarioTermino || '',
+      field_42: formData.totalHoras || '',
+      field_43: formData.aceitoPor || '',
+    };
+  }
+
+  // Padrão (demais clientes)
   return {
     Title: formData.data ? formData.data.split('-').reverse().join('/') : '',
     field_1: formData.loja || '',
@@ -259,7 +338,73 @@ function mapListFieldsToForm(fields) {
  * Faz o caminho inverso para o BMS: Mapeia as colunas do Microsoft Lists
  * para o JSON que o formulário React BMS (react-hook-form) entende.
  */
-function mapBMSListFieldsToForm(fields) {
+function mapBMSListFieldsToForm(fields, tenantSlug) {
+  const isAracaju = tenantSlug === 'riomar-aracaju';
+
+  const sistemas = isAracaju ? {
+    comando_fancoil: {
+      existenteSim:   fields.field_22 === 'Sim', existenteNao:    fields.field_22 === 'Não',
+      funcionandoSim: fields.FancoilCMDFuncionando === 'Sim', funcionandoNao:  fields.FancoilCMDFuncionando === 'Não',
+    },
+    status_fancoil: {
+      existenteSim:   fields.field_23 === 'Sim', existenteNao:    fields.field_23 === 'Não',
+      funcionandoSim: fields.FancoilSTATUSFuncionando === 'Sim', funcionandoNao:  fields.FancoilSTATUSFuncionando === 'Não',
+    },
+    comando_vitrine: {
+      existenteSim:   fields.field_20 === 'Sim', existenteNao:    fields.field_20 === 'Não',
+      funcionandoSim: fields.VitrineCMDFuncionando === 'Sim', funcionandoNao:  fields.VitrineCMDFuncionando === 'Não',
+    },
+    status_vitrine: {
+      existenteSim:   fields.field_21 === 'Sim', existenteNao:    fields.field_21 === 'Não',
+      funcionandoSim: fields.VitrineSTATUSFuncionando === 'Sim', funcionandoNao:  fields.VitrineSTATUSFuncionando === 'Não',
+    },
+    'botão_de_pânico': {
+      existenteSim:   fields.field_16 === 'Sim', existenteNao:    fields.field_16 === 'Não',
+      funcionandoSim: fields.field_17 === 'Sim', funcionandoNao:  fields.field_17 === 'Não',
+    },
+    sensor_de_movimento: {
+      existenteSim:   fields.field_18 === 'Sim', existenteNao:    fields.field_18 === 'Não',
+      funcionandoSim: fields.field_19 === 'Sim', funcionandoNao:  fields.field_19 === 'Não',
+    },
+    'medição_de_energia': {
+      existenteSim:   fields.field_24 === 'Sim', existenteNao:    fields.field_24 === 'Não',
+      funcionandoSim: fields.field_25 === 'Sim', funcionandoNao:  fields.field_25 === 'Não',
+    },
+    'hidrômetro': {
+      existenteSim:   fields.HidrometroExistente === 'Sim', existenteNao:    fields.HidrometroExistente === 'Não',
+      funcionandoSim: fields.HidrometroFuncionando === 'Sim', funcionandoNao:  fields.HidrometroFuncionando === 'Não',
+    },
+  } : {
+    sensor_de_temperatura_ambiente: {
+      existenteSim:   fields.field_12 === 'Sim', existenteNao:    fields.field_12 === 'Não',
+      funcionandoSim: fields.field_13 === 'Sim', funcionandoNao:  fields.field_13 === 'Não',
+    },
+    sensor_de_duto: {
+      existenteSim:   fields.field_14 === 'Sim', existenteNao:    fields.field_14 === 'Não',
+      funcionandoSim: fields.field_15 === 'Sim', funcionandoNao:  fields.field_15 === 'Não',
+    },
+    'botão_de_pânico': {
+      existenteSim:   fields.field_16 === 'Sim', existenteNao:    fields.field_16 === 'Não',
+      funcionandoSim: fields.field_17 === 'Sim', funcionandoNao:  fields.field_17 === 'Não',
+    },
+    sensor_de_movimento: {
+      existenteSim:   fields.field_18 === 'Sim', existenteNao:    fields.field_18 === 'Não',
+      funcionandoSim: fields.field_19 === 'Sim', funcionandoNao:  fields.field_19 === 'Não',
+    },
+    sensor_de_porta: {
+      existenteSim:   fields.field_20 === 'Sim', existenteNao:    fields.field_20 === 'Não',
+      funcionandoSim: fields.field_21 === 'Sim', funcionandoNao:  fields.field_21 === 'Não',
+    },
+    sensor_de_barreira: {
+      existenteSim:   fields.field_22 === 'Sim', existenteNao:    fields.field_22 === 'Não',
+      funcionandoSim: fields.field_23 === 'Sim', funcionandoNao:  fields.field_23 === 'Não',
+    },
+    falta_de_fase: {
+      existenteSim:   fields.field_24 === 'Sim', existenteNao:    fields.field_24 === 'Não',
+      funcionandoSim: fields.field_25 === 'Sim', funcionandoNao:  fields.field_25 === 'Não',
+    },
+  };
+
   return {
     data: fields.Title ? fields.Title.split('/').reverse().join('-') : '',
     loja:       fields.field_1 || '',
@@ -279,36 +424,7 @@ function mapBMSListFieldsToForm(fields) {
     tipoManutencao: fields.field_9 === 'Sim' ? 'corretiva' : fields.field_10 === 'Sim' ? 'preventiva' : '',
     tipoLoja: fields.field_11 || '',
 
-    sistemas: {
-      sensor_de_temperatura_ambiente: {
-        existenteSim:   fields.field_12 === 'Sim', existenteNao:    fields.field_12 === 'Não',
-        funcionandoSim: fields.field_13 === 'Sim', funcionandoNao:  fields.field_13 === 'Não',
-      },
-      sensor_de_duto: {
-        existenteSim:   fields.field_14 === 'Sim', existenteNao:    fields.field_14 === 'Não',
-        funcionandoSim: fields.field_15 === 'Sim', funcionandoNao:  fields.field_15 === 'Não',
-      },
-      'botão_de_pânico': {
-        existenteSim:   fields.field_16 === 'Sim', existenteNao:    fields.field_16 === 'Não',
-        funcionandoSim: fields.field_17 === 'Sim', funcionandoNao:  fields.field_17 === 'Não',
-      },
-      sensor_de_movimento: {
-        existenteSim:   fields.field_18 === 'Sim', existenteNao:    fields.field_18 === 'Não',
-        funcionandoSim: fields.field_19 === 'Sim', funcionandoNao:  fields.field_19 === 'Não',
-      },
-      sensor_de_porta: {
-        existenteSim:   fields.field_20 === 'Sim', existenteNao:    fields.field_20 === 'Não',
-        funcionandoSim: fields.field_21 === 'Sim', funcionandoNao:  fields.field_21 === 'Não',
-      },
-      sensor_de_barreira: {
-        existenteSim:   fields.field_22 === 'Sim', existenteNao:    fields.field_22 === 'Não',
-        funcionandoSim: fields.field_23 === 'Sim', funcionandoNao:  fields.field_23 === 'Não',
-      },
-      falta_de_fase: {
-        existenteSim:   fields.field_24 === 'Sim', existenteNao:    fields.field_24 === 'Não',
-        funcionandoSim: fields.field_25 === 'Sim', funcionandoNao:  fields.field_25 === 'Não',
-      },
-    },
+    sistemas,
 
     observacoes: fields.field_26 || '',
 
@@ -436,7 +552,7 @@ const create = async (req, res, next) => {
     const { siteId, listId } = await resolveSharePointIds(graphClient, targetListName);
 
     const fields = checklist_type === 'bms' 
-      ? mapBMSFormToListFields(formData) 
+      ? mapBMSFormToListFields(formData, req.tenantSlug) 
       : mapFormToListFields(formData);
 
     console.log('📋 Enviando checklist para Microsoft Lists...');
@@ -456,6 +572,7 @@ const create = async (req, res, next) => {
     
     (async () => {
       try {
+        formData.tenant = req.tenantSlug || formData.tenant;
         fs.appendFileSync(logFile, `[${new Date().toISOString()}] 📄 Gerando PDF...\n`);
         console.log('📄 Gerando PDF...');
         const pdfBase64 = checklist_type === 'bms' 
@@ -651,7 +768,7 @@ const getById = async (req, res, next) => {
       .get();
 
     const formData = checklist_type === 'bms'
-      ? mapBMSListFieldsToForm(result.fields || {})
+      ? mapBMSListFieldsToForm(result.fields || {}, req.tenantSlug)
       : mapListFieldsToForm(result.fields || {});
 
     res.json({ success: true, data: formData });
@@ -725,6 +842,7 @@ const listReport = async (req, res, next) => {
     const inspecoes = allItems.map((item) => {
       const f = item.fields || {};
       if (checklist_type === 'bms') {
+        const isAracaju = req.tenantSlug === 'riomar-aracaju';
         return {
           id: item.id,
           Codigo_loja: f.field_2 || '',
@@ -736,21 +854,35 @@ const listReport = async (req, res, next) => {
           status_funcionando_parcialmente: f.field_28 || 'Não',
           status_com_defeito: f.field_29 || 'Não',
           status_nao_possui_deteccao: f.field_30 || 'Não', // "Não Possui BMS"
-          // Sensores (Inventário BMS)
-          temp_amb_exist: f.field_12 || 'Não',
-          temp_amb_func: f.field_13 || 'Não',
-          temp_duto_exist: f.field_14 || 'Não',
-          temp_duto_func: f.field_15 || 'Não',
+          // Sensores padrão (Inventário BMS) - Apenas se NÃO for Aracaju
+          temp_amb_exist: isAracaju ? 'Não' : (f.field_12 || 'Não'),
+          temp_amb_func: isAracaju ? 'Não' : (f.field_13 || 'Não'),
+          temp_duto_exist: isAracaju ? 'Não' : (f.field_14 || 'Não'),
+          temp_duto_func: isAracaju ? 'Não' : (f.field_15 || 'Não'),
+          porta_exist: isAracaju ? 'Não' : (f.field_20 || 'Não'),
+          porta_func: isAracaju ? 'Não' : (f.field_21 || 'Não'),
+          barreira_exist: isAracaju ? 'Não' : (f.field_22 || 'Não'),
+          barreira_func: isAracaju ? 'Não' : (f.field_23 || 'Não'),
+          falta_fase_exist: isAracaju ? 'Não' : (f.field_24 || 'Não'),
+          falta_fase_func: isAracaju ? 'Não' : (f.field_25 || 'Não'),
+          // Comuns
           panico_exist: f.field_16 || 'Não',
           panico_func: f.field_17 || 'Não',
           movimento_exist: f.field_18 || 'Não',
           movimento_func: f.field_19 || 'Não',
-          porta_exist: f.field_20 || 'Não',
-          porta_func: f.field_21 || 'Não',
-          barreira_exist: f.field_22 || 'Não',
-          barreira_func: f.field_23 || 'Não',
-          falta_fase_exist: f.field_24 || 'Não',
-          falta_fase_func: f.field_25 || 'Não',
+          // Campos específicos Aracaju
+          fancoil_cmd_exist: isAracaju ? (f.field_22 || 'Não') : 'Não',
+          fancoil_cmd_func: isAracaju ? (f.FancoilCMDFuncionando || 'Não') : 'Não',
+          fancoil_status_exist: isAracaju ? (f.field_23 || 'Não') : 'Não',
+          fancoil_status_func: isAracaju ? (f.FancoilSTATUSFuncionando || 'Não') : 'Não',
+          vitrine_cmd_exist: isAracaju ? (f.field_20 || 'Não') : 'Não',
+          vitrine_cmd_func: isAracaju ? (f.VitrineCMDFuncionando || 'Não') : 'Não',
+          vitrine_status_exist: isAracaju ? (f.field_21 || 'Não') : 'Não',
+          vitrine_status_func: isAracaju ? (f.VitrineSTATUSFuncionando || 'Não') : 'Não',
+          medicao_exist: isAracaju ? (f.field_24 || 'Não') : 'Não',
+          medicao_func: isAracaju ? (f.field_25 || 'Não') : 'Não',
+          hidrometro_exist: isAracaju ? (f.HidrometroExistente || 'Não') : 'Não',
+          hidrometro_func: isAracaju ? (f.HidrometroFuncionando || 'Não') : 'Não',
           // Detalhes
           observacoes: f.field_26 || '',
           engenheiro_tecnico: f.field_39 || '',
@@ -871,10 +1003,10 @@ const downloadPdf = async (req, res, next) => {
       .get();
 
     const mapped = checklist_type === 'bms'
-      ? mapBMSListFieldsToForm(result.fields || {})
+      ? mapBMSListFieldsToForm(result.fields || {}, req.tenantSlug)
       : mapListFieldsToForm(result.fields || {});
 
-    const formData = prepareFormDataForPdf(mapped);
+    const formData = prepareFormDataForPdf({ ...mapped, tenant: req.tenantSlug });
 
     // Gerar PDF
     const { generatePDFBuffer } = checklist_type === 'bms'
@@ -931,10 +1063,10 @@ const resendPdf = async (req, res, next) => {
       .get();
 
     const mapped = checklist_type === 'bms'
-      ? mapBMSListFieldsToForm(result.fields || {})
+      ? mapBMSListFieldsToForm(result.fields || {}, req.tenantSlug)
       : mapListFieldsToForm(result.fields || {});
 
-    const formData = prepareFormDataForPdf(mapped);
+    const formData = prepareFormDataForPdf({ ...mapped, tenant: req.tenantSlug });
 
     // Gerar PDF
     const { generatePDFBase64: genPdf } = checklist_type === 'bms'
@@ -970,4 +1102,4 @@ const resendPdf = async (req, res, next) => {
   }
 };
 
-module.exports = { create, listColumns, list, getById, listReport, downloadPdf, resendPdf };
+module.exports = { create, listColumns, list, getById, listReport, downloadPdf, resendPdf, mapBMSFormToListFields, mapBMSListFieldsToForm };

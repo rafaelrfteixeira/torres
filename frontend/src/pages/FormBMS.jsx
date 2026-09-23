@@ -22,6 +22,17 @@ const SISTEMAS_PADRAO = [
   'Sensor de porta'
 ];
 
+const SISTEMAS_ARACAJU = [
+  'Comando Fancoil',
+  'Status Fancoil',
+  'Comando Vitrine',
+  'Status Vitrine',
+  'Botão de Pânico',
+  'Sensor de Movimento',
+  'Medição de Energia',
+  'Hidrômetro'
+];
+
 const SISTEMAS_VALORES = [
   'Sensor de barreira',
   'Falta de fase'
@@ -91,7 +102,7 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
       responsavelLoja: { solicitante: '', telefone: '', email: '' },
       tipoManutencao: '', // 'corretiva' ou 'preventiva'
       tipoLoja: '',
-      sistemas: [...SISTEMAS_PADRAO, ...SISTEMAS_VALORES].reduce((acc, s) => {
+      sistemas: [...SISTEMAS_PADRAO, ...SISTEMAS_VALORES, ...SISTEMAS_ARACAJU].reduce((acc, s) => {
         const key = s.replace(/\s+/g, '_').toLowerCase();
         acc[key] = { existenteSim: false, existenteNao: false, funcionandoSim: false, funcionandoNao: false };
         return acc;
@@ -191,15 +202,18 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
     );
   });
 
-  // Lógica condicional: Limpar estado quando desmarcar Valores
+  const isAracaju = tenant === 'riomar-aracaju';
+  const sistemasList = isAracaju ? SISTEMAS_ARACAJU : SISTEMAS_PADRAO;
+
+  // Lógica condicional: Limpar estado quando desmarcar Valores (apenas não-Aracaju)
   useEffect(() => {
-    if (tipoLojaSelected !== 'Valores') {
+    if (!isAracaju && tipoLojaSelected !== 'Valores') {
       SISTEMAS_VALORES.forEach(s => {
         const key = s.replace(/\s+/g, '_').toLowerCase();
         setValue(`sistemas.${key}`, { existenteSim: false, existenteNao: false, funcionandoSim: false, funcionandoNao: false });
       });
     }
-  }, [tipoLojaSelected, setValue]);
+  }, [isAracaju, tipoLojaSelected, setValue]);
 
   useEffect(() => {
     if (id) {
@@ -248,8 +262,8 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
     }
 
     // 2. Validação da Seção Sistemas
-    let chavesRequeridas = SISTEMAS_PADRAO.map(s => s.replace(/\s+/g, '_').toLowerCase());
-    if (formData.tipoLoja === 'Valores') {
+    let chavesRequeridas = sistemasList.map(s => s.replace(/\s+/g, '_').toLowerCase());
+    if (!isAracaju && formData.tipoLoja === 'Valores') {
       const chavesValores = SISTEMAS_VALORES.map(s => s.replace(/\s+/g, '_').toLowerCase());
       chavesRequeridas = [...chavesRequeridas, ...chavesValores];
     }
@@ -561,8 +575,8 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
                   <div className="px-2 py-1.5 text-center">Não</div>
                 </div>
 
-                {/* Linhas dos sistemas padrão */}
-                {SISTEMAS_PADRAO.map((sistema, index) => {
+                {/* Linhas dos sistemas (Padrão ou Aracaju) */}
+                {sistemasList.map((sistema, index) => {
                   const key = sistema.replace(/\s+/g, '_').toLowerCase();
                   const existenteNaoMarcado = sistemasWatch?.[key]?.existenteNao;
 
@@ -581,8 +595,8 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
                   );
                 })}
 
-                {/* Linhas condicionais (se Valores selecionado) */}
-                {tipoLojaSelected === 'Valores' && SISTEMAS_VALORES.map((sistema, index) => {
+                {/* Linhas condicionais (se Valores selecionado, apenas não-Aracaju) */}
+                {!isAracaju && tipoLojaSelected === 'Valores' && SISTEMAS_VALORES.map((sistema, index) => {
                   const key = sistema.replace(/\s+/g, '_').toLowerCase();
                   const existenteNaoMarcado = sistemasWatch?.[key]?.existenteNao;
 

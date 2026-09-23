@@ -220,7 +220,7 @@ const shoppings = {
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
     // Preventivas Área Comum
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBhbDTws8GzS6kq00qlSb8YAS9lPczI7_VJSGK1wtcSnwQ',
-    listaHistoricoPreventivas: null,
+    listaHistoricoPreventivas: 'PLAZA_SHOPPING_PREVENTIVAS_2026',
     listaCorretivas: 'CC-2026-7-1915-MAN-PLAZA-SHOPPING',
     responsavelShopping: {
       sdai: {

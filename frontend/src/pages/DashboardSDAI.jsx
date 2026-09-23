@@ -542,8 +542,8 @@ export default function DashboardSDAI({ user, shoppingsMetadata = [] }) {
                     <tr className="bg-slate-100/90 backdrop-blur-md border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider sticky top-0 z-10">
                       <th className="px-4 sm:px-6 py-3.5 w-10" />
                       <th className="px-4 sm:px-6 py-3.5">Nome da Loja</th>
-                      <th className="px-4 sm:px-6 py-3.5">Nº / Código</th>
-                      <th className="px-4 sm:px-6 py-3.5">Segmento</th>
+                      <th className="px-4 sm:px-6 py-3.5 whitespace-nowrap">Nº / Código</th>
+                      <th className="px-4 sm:px-6 py-3.5 whitespace-nowrap">Segmento</th>
                       <th className="px-4 sm:px-6 py-3.5">Último Inventário</th>
                       <th className="px-4 sm:px-6 py-3.5">Status Atual</th>
                       <th className="px-4 sm:px-6 py-3.5">Última Inspeção</th>
@@ -697,8 +697,8 @@ function LojaRow({ loja, index, isExpanded, onToggle, tenant, onToast }) {
         <td className="px-4 sm:px-6 py-4 font-mono text-slate-500 text-xs">
           {loja.numeroLoja}
         </td>
-        <td className="px-4 sm:px-6 py-4 text-xs">
-          <span className="bg-slate-100 px-2 py-1 rounded border border-slate-200 text-slate-700 font-semibold">
+        <td className="px-4 sm:px-6 py-4 text-xs whitespace-nowrap">
+          <span className="inline-block whitespace-nowrap bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 text-slate-700 font-semibold">
             {loja.segmento}
           </span>
         </td>
