@@ -9,8 +9,13 @@ const { tenantAuthorization } = require('../middlewares/tenant.middleware');
  *
  * GET /api/reports/monthly-preventive?tenant=<tenant>&mes=<mes>&ano=<ano>
  *   → Gera dinamicamente o HTML do Relatório Técnico de Preventivas
+ *
+ * GET /api/reports/monthly-corretivas?tenant=<tenant>&mes=<mes>&ano=<ano>&sistema=<sistema>
+ *   → Gera dinamicamente o HTML do Relatório Executivo de Corretivas e Ocorrências
  */
 
 router.get('/monthly-preventive', isAuthenticated, tenantAuthorization, reportController.getMonthlyPreventive);
+router.get('/monthly-corretivas', isAuthenticated, tenantAuthorization, reportController.getMonthlyCorretivas);
 
 module.exports = router;
+

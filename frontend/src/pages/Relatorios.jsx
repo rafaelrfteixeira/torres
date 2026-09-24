@@ -1,5 +1,18 @@
 import { useState, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
+import {
+  FileText,
+  AlertTriangle,
+  ClipboardCheck,
+  Printer,
+  Calendar,
+  Layers,
+  Sparkles,
+  Loader2,
+  ChevronRight,
+  ShieldCheck,
+  Activity
+} from 'lucide-react';
 
 const MESES = [
   { value: 1, label: 'Janeiro' },
@@ -32,12 +45,16 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
     name: tenant,
   };
 
+  // Tipo de relatório selecionado: 'preventivas' | 'corretivas'
+  const [activeReportType, setActiveReportType] = useState('corretivas');
+
   const currentDate = new Date();
   const [mes, setMes] = useState(currentDate.getMonth() + 1);
   const [ano, setAno] = useState(currentDate.getFullYear() > 2026 ? currentDate.getFullYear() : 2026);
 
   const [isLoading, setIsLoading] = useState(false);
   const [reportHtml, setReportHtml] = useState(null);
+  const [currentLoadedType, setCurrentLoadedType] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -47,9 +64,17 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
     setIsLoading(true);
     setErrorMsg(null);
     setReportHtml(null);
+    setCurrentLoadedType(activeReportType);
 
     try {
-      const response = await fetch(`${API_URL}/reports/monthly-preventive?tenant=${tenant}&sistema=${sistema}&mes=${mes}&ano=${ano}`, {
+      let endpoint = '';
+      if (activeReportType === 'preventivas') {
+        endpoint = `${API_URL}/reports/monthly-preventive?tenant=${tenant}&sistema=${sistema || 'sdai'}&mes=${mes}&ano=${ano}`;
+      } else {
+        endpoint = `${API_URL}/reports/monthly-corretivas?tenant=${tenant}&mes=${mes}&ano=${ano}&sistema=todos`;
+      }
+
+      const response = await fetch(endpoint, {
         credentials: 'include',
       });
 
@@ -83,26 +108,131 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
   };
 
   return (
-    <div className="min-h-full flex flex-col space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="inline-block px-2.5 py-0.5 bg-brand-50 text-brand-700 rounded-md text-xs font-semibold tracking-wide uppercase">
-            {(sistema || 'Preventivas').toUpperCase()}
-          </span>
+    <div className="min-h-full flex flex-col space-y-6 pb-12">
+      {/* Header da Página */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-md text-xs font-semibold tracking-wide uppercase">
+              <Layers className="w-3.5 h-3.5 text-blue-600" />
+              Central de Relatórios Técnicos
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Emissão de Relatórios Homologados
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Gere relatórios executivos em formato A4 para conferência gerencial e exportação em PDF — <span className="font-semibold text-slate-700">{currentShopping.name}</span>
+          </p>
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
-          Relatórios Técnicos
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Consolidação mensal de preventivas e diagnostico de falhas — {currentShopping.name}
-        </p>
       </div>
 
-      {/* Card Filtros */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 max-w-3xl">
-        <form onSubmit={handleGerarRelatorio} className="flex flex-col sm:flex-row items-end gap-4">
-          <div className="w-full sm:w-48 space-y-1.5">
+      {/* Seletores de Tipo de Relatório (Separados e Identificados) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Card 1: Relatório de Corretivas & Ocorrências */}
+        <button
+          type="button"
+          onClick={() => setActiveReportType('corretivas')}
+          className={`flex items-start gap-4 p-5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+            activeReportType === 'corretivas'
+              ? 'bg-blue-50/60 border-blue-500 ring-2 ring-blue-500/20 shadow-sm'
+              : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60 shadow-xs'
+          }`}
+        >
+          <div
+            className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${
+              activeReportType === 'corretivas'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-amber-100 text-amber-700'
+            }`}
+          >
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded">
+                Novo • Executivo
+              </span>
+              {activeReportType === 'corretivas' && (
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                </span>
+              )}
+            </div>
+
+            <h3 className="text-base font-bold text-slate-900 mt-1">
+              Corretivas & Ocorrências
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Consolidação mensal de ordens de serviço, gráficos de categorias, distribuição de status e evidências fotográficas anexadas.
+            </p>
+          </div>
+        </button>
+
+        {/* Card 2: Relatório Técnico de Preventivas */}
+        <button
+          type="button"
+          onClick={() => setActiveReportType('preventivas')}
+          className={`flex items-start gap-4 p-5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+            activeReportType === 'preventivas'
+              ? 'bg-blue-50/60 border-blue-500 ring-2 ring-blue-500/20 shadow-sm'
+              : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60 shadow-xs'
+          }`}
+        >
+          <div
+            className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${
+              activeReportType === 'preventivas'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-emerald-100 text-emerald-700'
+            }`}
+          >
+            <ClipboardCheck className="w-5 h-5" />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded">
+                Área Comum • NBR
+              </span>
+              {activeReportType === 'preventivas' && (
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                </span>
+              )}
+            </div>
+
+            <h3 className="text-base font-bold text-slate-900 mt-1">
+              Preventivas Técnicas & Dispositivos
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Relatório técnico mensal de rotinas preventivas, checklists normativos de dispositivos testados e rastreabilidade de campo.
+            </p>
+          </div>
+        </button>
+      </div>
+
+      {/* Formulário de Parâmetros e Filtros */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5 sm:p-6">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+          <Calendar className="w-4 h-4 text-slate-500" />
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+            {activeReportType === 'corretivas'
+              ? 'Parâmetros do Relatório de Corretivas & Ocorrências'
+              : 'Parâmetros do Relatório Técnico de Preventivas'}
+          </h2>
+        </div>
+
+        <form
+          onSubmit={handleGerarRelatorio}
+          className={`grid grid-cols-1 sm:grid-cols-2 ${
+            activeReportType === 'corretivas' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
+          } gap-4 items-end`}
+        >
+          {/* Mês de Referência */}
+          <div className="space-y-1.5">
             <label htmlFor="select-mes" className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
               Mês de Referência
             </label>
@@ -110,7 +240,7 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
               id="select-mes"
               value={mes}
               onChange={(e) => setMes(Number(e.target.value))}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               {MESES.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -120,7 +250,8 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
             </select>
           </div>
 
-          <div className="w-full sm:w-36 space-y-1.5">
+          {/* Ano */}
+          <div className="space-y-1.5">
             <label htmlFor="select-ano" className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
               Ano
             </label>
@@ -128,7 +259,7 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
               id="select-ano"
               value={ano}
               onChange={(e) => setAno(Number(e.target.value))}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               {ANOS.map((a) => (
                 <option key={a} value={a}>
@@ -138,22 +269,37 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
             </select>
           </div>
 
+          {/* Filtro específico apenas para Preventivas */}
+          {activeReportType === 'preventivas' && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Sistema Operacional
+              </label>
+              <div className="px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-600 font-medium">
+                {(sistema || 'Preventivas Área Comum').toUpperCase()}
+              </div>
+            </div>
+          )}
+
+          {/* Botão de Ação */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-medium text-sm rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold text-sm rounded-lg transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 h-[42px]"
           >
             {isLoading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Gerando...</span>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Processando...</span>
               </>
             ) : (
               <>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3h7.5M6.75 21h10.5a2.25 2.25 0 002.25-2.25V8.25a2.25 2.25 0 00-.75-1.591l-3.909-3.909A2.25 2.25 0 0013.25 2.25H6.75A2.25 2.25 0 004.5 4.5v14.25A2.25 2.25 0 006.75 21z" />
-                </svg>
-                <span>Gerar Relatório Mensal</span>
+                <FileText className="w-4 h-4" />
+                <span>
+                  {activeReportType === 'corretivas'
+                    ? 'Gerar Relatório Executivo'
+                    : 'Gerar Relatório de Preventivas'}
+                </span>
               </>
             )}
           </button>
@@ -163,35 +309,44 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
       {/* Erro */}
       {errorMsg && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-3">
-          <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-          </svg>
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Visualizador de Relatório */}
+      {/* Visualizador de Relatório & Ações de Exportação */}
       {reportHtml && (
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center justify-between bg-white px-5 py-3 rounded-xl border border-slate-200 shadow-sm">
-            <span className="text-sm font-semibold text-slate-700">
-              Pré-visualização do Relatório Homologado
-            </span>
+        <div className="flex flex-col space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white px-5 py-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-sm font-bold text-slate-800">
+                {currentLoadedType === 'corretivas'
+                  ? 'Pré-visualização: Relatório Executivo de Ocorrências & Chamados'
+                  : 'Pré-visualização: Relatório Técnico de Preventivas'}
+              </span>
+              <span className="text-xs text-slate-500 hidden md:inline">
+                • Orientação A4 Paisagem homologada
+              </span>
+            </div>
+
             <button
               onClick={handleImprimir}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231a1.125 1.125 0 01-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.656" />
-              </svg>
+              <Printer className="w-4 h-4" />
               <span>Imprimir / Exportar PDF</span>
             </button>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden" style={{ height: '800px' }}>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-md overflow-hidden" style={{ height: '820px' }}>
             <iframe
               ref={iframeRef}
-              title="Relatório Técnico de Preventivas"
+              title={
+                currentLoadedType === 'corretivas'
+                  ? 'Relatório Executivo de Ocorrências'
+                  : 'Relatório Técnico de Preventivas'
+              }
               srcDoc={reportHtml}
               className="w-full h-full border-0"
             />

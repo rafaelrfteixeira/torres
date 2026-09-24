@@ -97,7 +97,7 @@ async function getListColumnMapping(graphClient, siteId, listId, listName) {
       .get();
 
     const columns = columnsRes.value || [];
-    
+
     columns.forEach((col) => {
       const disp = (col.displayName || '').toLowerCase().trim();
       const name = col.name;

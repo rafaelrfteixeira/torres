@@ -50,6 +50,12 @@ function ActiveCorretivasRoute({ children }) {
   return TENANTS_WITH_CORRETIVAS.includes(tenant) ? children : <ComingSoon />;
 }
 
+function ActiveReportsRoute({ children }) {
+  const { tenant } = useParams();
+  const hasAccess = TENANTS_WITH_PREVENTIVAS.includes(tenant) || TENANTS_WITH_CORRETIVAS.includes(tenant);
+  return hasAccess ? children : <ComingSoon />;
+}
+
 /**
  * Guard genérico: renderiza ComingSoon para tenants na lista `blocked`.
  * Demais tenants renderizam o conteúdo normalmente.
@@ -260,9 +266,9 @@ function App() {
             </ActiveCorretivasRoute>
           } />
           <Route path="sdai/relatorios" element={
-            <ActivePreventivasRoute>
+            <ActiveReportsRoute>
               <Relatorios shoppingsMetadata={shoppingsMetadata} />
-            </ActivePreventivasRoute>
+            </ActiveReportsRoute>
           } />
           <Route path="sdai/cadastros" element={<Cadastros shoppingsMetadata={shoppingsMetadata} />} />
 
@@ -285,8 +291,13 @@ function App() {
           <Route path="bms/preventivas/dashboard" element={<ComingSoon />} />
           <Route path="bms/preventivas/area-comum" element={<ComingSoon />} />
           <Route path="bms/corretivas" element={<ComingSoon />} />
-          <Route path="bms/relatorios" element={<ComingSoon />} />
+          <Route path="bms/relatorios" element={
+            <ActiveReportsRoute>
+              <Relatorios shoppingsMetadata={shoppingsMetadata} />
+            </ActiveReportsRoute>
+          } />
           <Route path="bms/cadastros" element={
+
             <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
               <Cadastros shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>

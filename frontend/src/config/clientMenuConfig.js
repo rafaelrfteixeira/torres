@@ -73,7 +73,7 @@ function getSDAISubmenus(tenant) {
       label: 'Relatórios',
       route: `/${tenant}/sdai/relatorios`,
       icon: 'file-text',
-      comingSoon: !hasPreventivasActive,
+      comingSoon: !(hasPreventivasActive || hasCorretivasActive),
     },
     {
       id: 'cadastros',
