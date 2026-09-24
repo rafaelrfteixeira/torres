@@ -109,10 +109,11 @@ function parseMatrizMestra(buffer) {
     const row = rows[i];
     if (!row || row.length <= 1) continue;
     const cells = row.map((h) => String(h || '').trim().toLowerCase());
-    const hasPavimento = cells.some((h) => h.includes('pavimento') || h.includes('piso'));
-    const hasDescricao = cells.some((h) => h.includes('descrição') || h.includes('descricao') || h.includes('localizacao'));
-    const hasMes = cells.some((h) => h.includes('mês') || h.includes('mes') || h.includes('manutenção') || h.includes('programacao'));
-    if ([hasPavimento, hasDescricao, hasMes].filter(Boolean).length >= 2) {
+    const hasPavimento = cells.some((h) => h.includes('pavimento') || h.includes('piso') || h.includes('setor') || h.includes('local'));
+    const hasDescricao = cells.some((h) => h.includes('descrição') || h.includes('descricao') || h.includes('localizacao') || h.includes('localização') || h.includes('dispositivo') || h.includes('equipamento') || h.includes('ponto') || h.includes('tag'));
+    const hasMes = cells.some((h) => h.includes('mês') || h.includes('mes') || h.includes('manutenção') || h.includes('manutencao') || h.includes('programacao') || h.includes('programação') || h.includes('planejado'));
+    const hasRealizado = cells.some((h) => h.includes('realizado') || h.includes('status'));
+    if ([hasPavimento, hasDescricao, hasMes, hasRealizado].filter(Boolean).length >= 2) {
       headerRowIdx = i;
       break;
     }
@@ -129,6 +130,9 @@ function parseMatrizMestra(buffer) {
   if (realizadoIdx === -1) {
     realizadoIdx = header.findIndex((h) => h.includes('realizado'));
   }
+  if (realizadoIdx === -1) {
+    realizadoIdx = header.findIndex((h) => h.includes('status') || h.includes('executado'));
+  }
 
   // 2. Procurar especificamente pela coluna "Mês Manutenção" ou "Mês"
   let mesIdx = header.findIndex((h) => h === 'mês manutenção' || h === 'mes manutencao' || h === 'mês' || h === 'mes');
@@ -136,22 +140,54 @@ function parseMatrizMestra(buffer) {
     mesIdx = header.findIndex((h) => (h.includes('mês') || h.includes('mes')) && !h.includes('realizado'));
   }
   if (mesIdx === -1) {
-    mesIdx = header.findIndex((h) => h.includes('manutenção') && !h.includes('realizado'));
+    mesIdx = header.findIndex((h) => (h.includes('manutenção') || h.includes('manutencao') || h.includes('programação') || h.includes('programacao') || h.includes('planejado')) && !h.includes('realizado'));
+  }
+
+  // 3. TAG / Identificação
+  let tagIdx = header.findIndex((h) => h === 'tag' || h.startsWith('tag ') || h === 'id' || h === 'código' || h === 'codigo');
+  if (tagIdx === -1) {
+    tagIdx = header.findIndex((h) => h.includes('tag') && !h.includes('montagem'));
+  }
+
+  // 4. Tipo de equipamento
+  let tipoIdx = header.findIndex((h) => (h.includes('tipo de equipamento') || h.includes('tipo do equipamento') || h.includes('tipo equipamento') || h.includes('equipamento') || h.includes('tipo dispositivo') || h.includes('categoria')));
+  if (tipoIdx === -1) {
+    tipoIdx = header.findIndex((h) => h.includes('tipo') && !h.includes('dispositivo'));
+  }
+  if (tipoIdx === -1) {
+    tipoIdx = header.findIndex((h) => h.includes('tipo'));
+  }
+
+  // 5. Pavimento / Local
+  let pavIdx = header.findIndex((h) => h.includes('pavimento') || h.includes('piso') || h.includes('nível') || h.includes('nivel'));
+  if (pavIdx === -1) {
+    pavIdx = header.findIndex((h) => h.includes('setor') || h.includes('local') || h.includes('área') || h.includes('area'));
+  }
+
+  // 6. Laço / Painel / Circuito
+  let lacoIdx = header.findIndex((h) => h.includes('laço') || h.includes('laco') || h.includes('circuito') || h.includes('painel') || h.includes('quadro'));
+
+  // 7. Descrição / Localização
+  let descIdx = header.findIndex((h) => h === 'descrição' || h === 'descricao' || h === 'localização' || h === 'localizacao' || h === 'ponto' || h === 'dispositivo');
+  if (descIdx === -1) {
+    descIdx = header.findIndex((h) => (h.includes('descrição') || h.includes('descricao') || h.includes('localização') || h.includes('localizacao') || h.includes('ponto')) && h !== header[tipoIdx]);
+  }
+  if (descIdx === -1) {
+    descIdx = header.findIndex((h) => h.includes('dispositivo') || h.includes('nome'));
   }
 
   const colMap = {
-    pavimento: header.findIndex((h) => h.includes('pavimento') || h.includes('piso')),
-    laco: header.findIndex((h) => h.includes('laço') || h.includes('laco')),
-    tipo: header.findIndex((h) => h.includes('tipo') && !h.includes('dispositivo')),
-    descricao: header.findIndex((h) => h.includes('descrição') || h.includes('descricao') || h.includes('localizacao')),
+    pavimento: pavIdx,
+    laco: lacoIdx,
+    tag: tagIdx,
+    tipo: tipoIdx,
+    descricao: descIdx,
     mesMantencao: mesIdx !== -1 ? mesIdx : 4,
     realizado: realizadoIdx !== -1 ? realizadoIdx : 5,
   };
 
   if (colMap.pavimento === -1) colMap.pavimento = 0;
-  if (colMap.laco === -1) colMap.laco = 1;
-  if (colMap.tipo === -1) colMap.tipo = 2;
-  if (colMap.descricao === -1) colMap.descricao = 3;
+  if (colMap.descricao === -1) colMap.descricao = tagIdx !== -1 ? tagIdx : (tipoIdx !== -1 ? tipoIdx : 3);
 
   console.log('🔍 [MatrizMestra] Índices de colunas mapeados:', colMap);
 
@@ -160,12 +196,16 @@ function parseMatrizMestra(buffer) {
   const dispositivos = rows.slice(headerRowIdx + 1)
     .filter((row) => row && row.length > 0)
     .map((row, index) => {
-      const pavimento = row[colMap.pavimento] != null ? String(row[colMap.pavimento]).trim() : '';
-      const laco = row[colMap.laco] != null ? String(row[colMap.laco]).trim() : '';
-      const tipo = row[colMap.tipo] != null ? String(row[colMap.tipo]).trim() : '';
-      const descricao = row[colMap.descricao] != null ? String(row[colMap.descricao]).trim() : '';
+      const pavimento = colMap.pavimento !== -1 && row[colMap.pavimento] != null ? String(row[colMap.pavimento]).trim() : '';
+      const laco = colMap.laco !== -1 && row[colMap.laco] != null ? String(row[colMap.laco]).trim() : '';
+      const rawTag = colMap.tag !== -1 && row[colMap.tag] != null ? String(row[colMap.tag]).trim() : '';
+      const tipo = colMap.tipo !== -1 && row[colMap.tipo] != null ? String(row[colMap.tipo]).trim() : '';
+      const rawDescricao = colMap.descricao !== -1 && row[colMap.descricao] != null ? String(row[colMap.descricao]).trim() : '';
       const mesTexto = row[colMap.mesMantencao] != null ? String(row[colMap.mesMantencao]).trim().toLowerCase() : '';
       const realizadoRaw = row[colMap.realizado] != null ? String(row[colMap.realizado]).trim().toLowerCase() : '';
+
+      const descricao = rawDescricao || rawTag || tipo || (pavimento ? `${pavimento} ${laco}` : 'Dispositivo');
+      const tag = rawTag || (laco ? (pavimento ? `${pavimento} ${laco}` : laco) : (rawDescricao || 'TAG-N/A'));
 
       const mesNumero = parseMesNumero(mesTexto);
       const realizado = realizadoRaw === 'sim' || realizadoRaw === 's' || realizadoRaw === 'yes' || realizadoRaw === 'ok';
@@ -184,7 +224,7 @@ function parseMatrizMestra(buffer) {
       }
 
       if (index < 5) {
-        console.log(`  [Row ${index + 1}] Pavimento: "${pavimento}", Laço: "${laco}", Descrição: "${descricao}", Mês: "${mesTexto}" (${mesNumero}), RealizadoRaw: "${realizadoRaw}" -> Realizado: ${realizado}`);
+        console.log(`  [Row ${index + 1}] Pavimento: "${pavimento}", TAG: "${tag}", Tipo: "${tipo}", Descrição: "${descricao}", Mês: "${mesTexto}" (${mesNumero}), RealizadoRaw: "${realizadoRaw}" -> Realizado: ${realizado}`);
       }
 
       return {
@@ -192,6 +232,8 @@ function parseMatrizMestra(buffer) {
         realizadoColIndex: colMap.realizado,
         pavimento,
         laco,
+        tag,
+        rawTag,
         tipo,
         descricao,
         mesMantencao: mesTexto,
@@ -201,7 +243,7 @@ function parseMatrizMestra(buffer) {
         status,
       };
     })
-    .filter((d) => d.descricao !== '');
+    .filter((d) => d.descricao !== '' || d.tag !== 'TAG-N/A');
 
   const mesResumo = {};
   dispositivos.forEach((d) => {

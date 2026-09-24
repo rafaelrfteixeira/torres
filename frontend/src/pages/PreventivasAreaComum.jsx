@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import {
   Search, AlertTriangle, Clock, ChevronDown, ChevronUp,
-  Loader2, Wrench, MapPin, Hash, Flame, RefreshCw
+  Loader2, Wrench, MapPin, Hash, Flame, Cpu, RefreshCw
 } from 'lucide-react';
 import InspecaoFormModal from '../components/InspecaoFormModal';
 import { syncManager } from '../services/syncManager';
@@ -19,6 +19,7 @@ import { syncManager } from '../services/syncManager';
  *
  * @param {Object} props.user             - Dados do usuário logado
  * @param {Array}  props.shoppingsMetadata - Metadata de todos os shoppings
+ * @param {string} [props.sistema]         - 'bms' ou 'sdai' (padrão auto-detectado pela URL)
  */
 
 const MESES_NOMES = [
@@ -26,8 +27,12 @@ const MESES_NOMES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
+export default function PreventivasAreaComum({ user, shoppingsMetadata = [], sistema: propSistema }) {
   const { tenant } = useParams();
+  const location = useLocation();
+  const sistema = propSistema || (location.pathname.includes('/bms/') ? 'bms' : 'sdai');
+  const isBMS = sistema === 'bms';
+
   const [dispositivos, setDispositivos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,10 +55,11 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
       const refreshQuery = refresh ? '&refresh=true' : '';
+      const sistemaQuery = `&sistema=${sistema}`;
 
       const { data, fromCache, error: fetchErr } = await syncManager.fetchWithCache({
-        key: `preventivas:dispositivos:${tenant}`,
-        url: `${API_URL}/preventivas/dispositivos?tenant=${tenant}${refreshQuery}`,
+        key: `preventivas:dispositivos:${tenant}:${sistema}`,
+        url: `${API_URL}/preventivas/dispositivos?tenant=${tenant}${sistemaQuery}${refreshQuery}`,
         tenant,
         forceRefresh: refresh,
       });
@@ -77,7 +83,7 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
 
   useEffect(() => {
     fetchDispositivos(false);
-  }, [tenant]);
+  }, [tenant, sistema]);
 
   // Filtrar por busca de texto
   const dispositivosFiltrados = useMemo(() => {
@@ -86,6 +92,8 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
     return dispositivos.filter(
       (d) =>
         (d.descricao || '').toLowerCase().includes(term) ||
+        (d.tag || '').toLowerCase().includes(term) ||
+        (d.rawTag || '').toLowerCase().includes(term) ||
         (d.pavimento || '').toLowerCase().includes(term) ||
         (d.tipo || '').toLowerCase().includes(term) ||
         (d.laco || '').toLowerCase().includes(term)
@@ -116,12 +124,15 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
           if (savedDispositivo.rowIndex !== undefined && d.rowIndex !== undefined) {
             return d.rowIndex !== savedDispositivo.rowIndex;
           }
-          const savedTag = (savedDispositivo.tag || '').trim().toLowerCase();
+          const savedTag = (savedDispositivo.rawTag || savedDispositivo.tag || '').trim().toLowerCase();
           const savedDesc = (savedDispositivo.descricao || '').trim().toLowerCase();
-          const dTag = (d.tag || (d.pavimento && d.laco ? `${d.pavimento} ${d.laco}` : '')).trim().toLowerCase();
+          const dTag = (d.rawTag || d.tag || (d.pavimento && d.laco ? `${d.pavimento} ${d.laco}` : '')).trim().toLowerCase();
           const dDesc = (d.descricao || '').trim().toLowerCase();
-          if (savedTag && dTag && savedTag === dTag) return false;
-          if (savedDesc && dDesc && savedDesc === dDesc) return false;
+          if (savedTag && dTag) {
+            if (savedTag === dTag) return false;
+          } else if (savedDesc && dDesc && savedDesc === dDesc) {
+            return false;
+          }
           return true;
         })
       );
@@ -173,8 +184,8 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Wrench size={24} className="text-red-600" />
-            Preventivas Área Comum
+            <Wrench size={24} className={isBMS ? "text-blue-600" : "text-red-600"} />
+            Preventivas Área Comum {isBMS ? '— Automação BMS' : '— SDAI'}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Painel operacional — {mesAtualNome} 2026
@@ -290,6 +301,7 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
                   key={`atr-${index}`}
                   dispositivo={d}
                   variant="atrasado"
+                  isBMS={isBMS}
                   onClick={() => setSelectedDispositivo(d)}
                 />
               ))}
@@ -339,6 +351,7 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
                   key={`pend-${index}`}
                   dispositivo={d}
                   variant="pendente"
+                  isBMS={isBMS}
                   onClick={() => setSelectedDispositivo(d)}
                 />
               ))}
@@ -368,6 +381,7 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [] }) {
           user={user}
           currentShopping={currentShopping}
           tenant={tenant}
+          sistema={sistema}
           onClose={() => setSelectedDispositivo(null)}
           onSaved={handleSaved}
         />
@@ -404,8 +418,24 @@ function KpiCard({ label, value, icon: Icon, color, pulse = false, className = '
 /**
  * DispositivoCard — Card individual de dispositivo na lista
  */
-function DispositivoCard({ dispositivo, variant, onClick }) {
+function DispositivoCard({ dispositivo, variant, isBMS = false, onClick }) {
   const isAtrasado = variant === 'atrasado';
+
+  // Identificação do dispositivo: se for BMS, mostra TAG + Descrição em texto uniforme (ex: "3019 - PICADYLLI" ou "QDF-01 - ILUMINAÇÃO")
+  const getTituloCard = () => {
+    if (isBMS) {
+      const tag = (dispositivo.rawTag || dispositivo.tag || '').trim();
+      const desc = (dispositivo.descricao || '').trim();
+      const hasValidTag = tag && tag !== 'TAG-N/A' && !tag.startsWith('TAG-') && tag.toLowerCase() !== desc.toLowerCase();
+      if (hasValidTag) {
+        return `${tag} - ${desc}`;
+      }
+      return desc || tag || 'Dispositivo';
+    }
+    return dispositivo.descricao || 'Sem descrição';
+  };
+
+  const tituloCard = getTituloCard();
 
   return (
     <button
@@ -427,8 +457,8 @@ function DispositivoCard({ dispositivo, variant, onClick }) {
                 ATRASADO
               </span>
             )}
-            <h3 className={`text-sm font-semibold truncate ${isAtrasado ? 'text-red-800' : 'text-slate-800'}`}>
-              {dispositivo.descricao || 'Sem descrição'}
+            <h3 className={`text-sm font-semibold truncate ${isAtrasado ? 'text-red-800' : 'text-slate-800'}`} title={tituloCard}>
+              {tituloCard}
             </h3>
           </div>
 
@@ -448,7 +478,7 @@ function DispositivoCard({ dispositivo, variant, onClick }) {
             )}
             {dispositivo.tipo && (
               <span className="flex items-center gap-1">
-                <Flame size={12} className="text-slate-400" />
+                {isBMS ? <Cpu size={12} className="text-slate-400" /> : <Flame size={12} className="text-slate-400" />}
                 {dispositivo.tipo}
               </span>
             )}

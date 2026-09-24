@@ -94,8 +94,10 @@ function getSDAISubmenus(tenant) {
 function getBMSSubmenus(tenant) {
   const allComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias' || tenant === 'jcpm-trade-center';
   const isRioMarAracaju = tenant === 'riomar-aracaju';
-  const hasCorretivasActive = isRioMarAracaju;
-  const hasRelatoriosActive = isRioMarAracaju;
+  const isRioMarKennedy = tenant === 'riomar-kennedy';
+  const hasPreventivasBMSActive = isRioMarKennedy;
+  const hasCorretivasActive = isRioMarAracaju || isRioMarKennedy;
+  const hasRelatoriosActive = isRioMarAracaju || isRioMarKennedy;
 
   return [
     {
@@ -110,7 +112,7 @@ function getBMSSubmenus(tenant) {
       label: 'Dashboard Preventivas',
       route: `/${tenant}/bms/preventivas/dashboard`,
       icon: 'activity',
-      comingSoon: true,
+      comingSoon: !hasPreventivasBMSActive,
     },
     {
       id: 'inspecao-lojas',
@@ -124,7 +126,7 @@ function getBMSSubmenus(tenant) {
       label: 'Preventivas Área Comum',
       route: `/${tenant}/bms/preventivas/area-comum`,
       icon: 'wrench',
-      comingSoon: true,
+      comingSoon: !hasPreventivasBMSActive,
     },
     {
       id: 'corretivas',

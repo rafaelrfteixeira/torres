@@ -15,11 +15,18 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
   const pathParts = location.pathname.split('/');
   const tenantIndex = pathParts.indexOf(tenant);
   const sistema = tenantIndex >= 0 ? pathParts[tenantIndex + 1] : '';
+  const isBMS = sistema === 'bms';
 
   const currentShopping = shoppingsMetadata.find((s) => s.id === tenant) || {
     id: tenant,
     name: tenant,
     excelLojasUrl: '',
+    excelPreventivasUrl: '',
+    excelPreventivasBmsUrl: '',
+    listaHistoricoPreventivas: null,
+    listaHistoricoPreventivasBms: null,
+    listaCorretivas: null,
+    listaCorretivasBms: null,
   };
 
   const sistemaLabel = (sistema || '').toUpperCase();
@@ -45,13 +52,19 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
       });
     }
 
-    // Link da Matriz Mestra de Preventivas (Apenas SDAI)
-    if (sistema === 'sdai' && currentShopping.excelPreventivasUrl) {
+    // Link da Matriz Mestra de Preventivas (SDAI e BMS)
+    const matrizMestraUrl = isBMS
+      ? (currentShopping.excelPreventivasBmsUrl || currentShopping.excelPreventivasUrl)
+      : currentShopping.excelPreventivasUrl;
+
+    if (matrizMestraUrl) {
       links.push({
         id: 'excel-preventivas',
         title: 'Matriz Mestra de Preventivas',
-        subtitle: 'Planilha de cronograma e matriz de manutenção preventiva',
-        url: currentShopping.excelPreventivasUrl,
+        subtitle: isBMS
+          ? 'Planilha de cronograma e matriz de preventiva BMS'
+          : 'Planilha de cronograma e matriz de manutenção preventiva',
+        url: matrizMestraUrl,
         icon: (
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -96,13 +109,18 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
     }
 
     // Lista de Corretivas no SharePoint
-    if (currentShopping.listaCorretivas) {
+    const corretivasList = isBMS
+      ? (currentShopping.listaCorretivasBms || currentShopping.listaCorretivas)
+      : currentShopping.listaCorretivas;
+
+    if (corretivasList) {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const corretivasParam = isBMS && currentShopping.listaCorretivasBms ? 'listaCorretivasBms' : 'listaCorretivas';
       links.push({
         id: 'sharepoint-corretivas',
         title: 'Lista de Corretivas / Ocorrências',
         subtitle: 'Base de chamados e ocorrências no SharePoint',
-        url: `${API_URL}/preventivas/go-to-list?list=listaCorretivas&tenant=${tenant}`,
+        url: `${API_URL}/preventivas/go-to-list?list=${corretivasParam}&tenant=${tenant}${isBMS ? '&sistema=bms' : ''}`,
         icon: (
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -113,13 +131,22 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
     }
 
     // Lista de Histórico de Preventivas no SharePoint
-    if (currentShopping.listaHistoricoPreventivas) {
+    const historicoList = isBMS
+      ? (currentShopping.listaHistoricoPreventivasBms || currentShopping.listaHistoricoPreventivas)
+      : currentShopping.listaHistoricoPreventivas;
+
+    if (historicoList) {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const historicoParam = isBMS && currentShopping.listaHistoricoPreventivasBms
+        ? 'listaHistoricoPreventivasBms'
+        : 'listaHistoricoPreventivas';
       links.push({
         id: 'sharepoint-preventivas',
         title: 'Histórico de Preventivas Realizadas',
-        subtitle: 'Registro e banco de vistorias no SharePoint',
-        url: `${API_URL}/preventivas/go-to-list?list=listaHistoricoPreventivas&tenant=${tenant}`,
+        subtitle: isBMS
+          ? 'Registro e banco de vistorias BMS no SharePoint'
+          : 'Registro e banco de vistorias no SharePoint',
+        url: `${API_URL}/preventivas/go-to-list?list=${historicoParam}&tenant=${tenant}${isBMS ? '&sistema=bms' : ''}`,
         icon: (
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />

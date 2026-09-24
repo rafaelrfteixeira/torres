@@ -96,12 +96,19 @@ const getDispositivos = async (req, res, next) => {
     }
 
     const tenantConfig = req.tenantConfig;
-    const excelUrl = tenantConfig.excelPreventivasUrl;
+    const sistema = (req.query.sistema || req.body?.sistema || 'sdai').toLowerCase();
+    const isBMS = sistema === 'bms';
+    const excelUrl = isBMS
+      ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+      : tenantConfig.excelPreventivasUrl;
+    const listaHistorico = isBMS
+      ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+      : tenantConfig.listaHistoricoPreventivas;
 
     if (!excelUrl) {
       return res.status(400).json({
         success: false,
-        message: `Planilha de preventivas não configurada para o tenant "${req.tenantSlug}".`,
+        message: `Planilha de preventivas (${sistema.toUpperCase()}) não configurada para o tenant "${req.tenantSlug}".`,
       });
     }
 
@@ -131,20 +138,22 @@ const getDispositivos = async (req, res, next) => {
     const { dispositivos } = parseMatrizMestra(buffer);
 
     // Cruzar com a lista de Histórico do SharePoint (garante sincronização mesmo se a escrita no Excel falhar)
-    if (tenantConfig.listaHistoricoPreventivas) {
+    if (listaHistorico) {
       try {
         const graphClient = getGraphClient(accessToken);
-        const { siteId, listId } = await resolveSharePointIds(graphClient, tenantConfig.listaHistoricoPreventivas);
+        const { siteId, listId } = await resolveSharePointIds(graphClient, listaHistorico);
         const resList = await graphClient
           .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=999`)
           .get();
 
         const anoAtual = new Date().getFullYear();
         const realizadosPorDesc = new Set();
+        const realizadosPorTag = new Set();
 
         (resList.value || []).forEach((item) => {
           const f = item.fields || {};
           const descField = (f.Localizacao || f.Ponto || f.Descricao || '').trim().toUpperCase();
+          const tagField = (f.Title || f.TAG || '').trim().toUpperCase();
 
           let anoLog = 0;
           const rawDateStr = f.Data_Execucao || f.Created;
@@ -159,15 +168,22 @@ const getDispositivos = async (req, res, next) => {
 
           if (!anoLog || anoLog === anoAtual) {
             if (descField) realizadosPorDesc.add(descField);
+            if (tagField) realizadosPorTag.add(tagField);
           }
         });
 
-        // Marca como realizado apenas se a descrição única do ativo constar no histórico
+        // Marca como realizado: para BMS confere preferencialmente pela TAG única; para SDAI pela descrição
         dispositivos.forEach((d) => {
           if (d.realizado) return;
+          const tagKey = (d.rawTag || (isBMS ? d.tag : '') || '').trim().toUpperCase();
           const descKey = (d.descricao || '').trim().toUpperCase();
 
-          if (descKey && realizadosPorDesc.has(descKey)) {
+          if (isBMS && tagKey) {
+            if (realizadosPorTag.has(tagKey)) {
+              d.realizado = true;
+              d.status = 'realizado';
+            }
+          } else if (descKey && realizadosPorDesc.has(descKey)) {
             d.realizado = true;
             d.status = 'realizado';
           }
@@ -207,8 +223,20 @@ const salvar = async (req, res, next) => {
     const formData = req.body;
     const graphClient = getGraphClient(accessToken);
 
+    const sistema = (formData.sistema || req.query.sistema || 'sdai').toLowerCase();
+    const isBMS = sistema === 'bms';
+    const excelUrl = isBMS
+      ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+      : tenantConfig.excelPreventivasUrl;
+    const listaHistorico = isBMS
+      ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+      : tenantConfig.listaHistoricoPreventivas;
+    const listaCorretivas = isBMS
+      ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
+      : tenantConfig.listaCorretivas;
+
     console.log('\n🚀 [Preventivas] Iniciando orquestração de salvamento...');
-    console.log(`   Tenant: ${tenantSlug}`);
+    console.log(`   Tenant: ${tenantSlug} | Sistema: ${sistema.toUpperCase()}`);
     console.log(`   Dispositivo: ${formData.descricao} (TAG: ${formData.tag})`);
     console.log(`   Status: ${formData.statusInspecao}`);
 
@@ -217,7 +245,6 @@ const salvar = async (req, res, next) => {
     // =========================================================
     console.log('\n📝 [Passo 1] Atualizando Excel — Realizado 2026...');
     try {
-      const excelUrl = tenantConfig.excelPreventivasUrl;
       if (excelUrl) {
         const sharingToken = encodeSharingUrl(excelUrl);
         const baseUrl = 'https://graph.microsoft.com/v1.0';
@@ -297,8 +324,8 @@ const salvar = async (req, res, next) => {
       console.warn('   ⚠️  Erro no Passo 1 (Excel):', excelErr.message);
       // Não bloqueia o fluxo — continua com os próximos passos
     } finally {
-      if (tenantConfig.excelPreventivasUrl) {
-        _preventivasCache.delete(tenantConfig.excelPreventivasUrl);
+      if (excelUrl) {
+        _preventivasCache.delete(excelUrl);
       }
     }
 
@@ -313,9 +340,8 @@ const salvar = async (req, res, next) => {
     // PASSO 3: Salvar registro no List de Histórico de Preventivas
     // =========================================================
     console.log('\n📝 [Passo 3] Salvando registro no List de Histórico...');
-    const listaHistorico = tenantConfig.listaHistoricoPreventivas;
     if (!listaHistorico) {
-      throw new Error(`Lista de Histórico de Preventivas não configurada para o tenant "${tenantSlug}".`);
+      throw new Error(`Lista de Histórico de Preventivas (${sistema.toUpperCase()}) não configurada para o tenant "${tenantSlug}".`);
     }
 
     const { siteId, listId: historicoListId } = await resolveSharePointIds(graphClient, listaHistorico);
@@ -378,15 +404,17 @@ const salvar = async (req, res, next) => {
         const isSameComp = itemMes === compMes && itemAno === compAno;
         if (!isSameComp) return false;
 
-        // Duplicidade estrita pela descrição única do dispositivo
-        // (evita que laço compartilhado bloqueie outros detectores independentes)
+        // Duplicidade: para BMS confere preferencialmente por TAG única; para SDAI por descrição única
+        if (isBMS && targetTag && itemTag) {
+          return targetTag === itemTag;
+        }
         return targetDesc && itemDesc && (itemDesc === targetDesc);
       });
 
       if (duplicate) {
         console.warn(`⚠️ [Preventivas] Dispositivo "${targetTag || targetDesc}" JÁ POSSUI inspeção registrada na competência ${compMes}/${compAno} (ID: ${duplicate.id}). Bloqueando inserção.`);
-        if (tenantConfig.excelPreventivasUrl) {
-          _preventivasCache.delete(tenantConfig.excelPreventivasUrl);
+        if (excelUrl) {
+          _preventivasCache.delete(excelUrl);
         }
         return res.status(409).json({
           success: false,
@@ -444,7 +472,7 @@ const salvar = async (req, res, next) => {
       Title: formData.tag || '',
       Localizacao: formData.localizacao || formData.descricao || '',
       Data_Execucao: toIsoDate(formData.dataExecucao),
-      Tipo_Dispositivo: formData.tipoDispositivo || 'Detector de Fumaça',
+      Tipo_Dispositivo: formData.tipoDispositivo || (isBMS ? 'Painel de Automação de Iluminação' : 'Detector de Fumaça'),
       Status_Inspecao: formData.statusInspecao || 'Funcionando',
       Log_Checklist: checklistLog || '[]',
       OS_Vinculada: '',
@@ -519,17 +547,16 @@ const salvar = async (req, res, next) => {
     if (temFalha || semAcesso || checklistTemNao) {
       console.log('\n⚠️  [Passo 4] Falha/Sem Acesso detectado — Abrindo OS Corretiva...');
 
-      const listaCorretivas = tenantConfig.listaCorretivas;
       if (listaCorretivas) {
         try {
           const { listId: corretivaListId } = await resolveSharePointIds(graphClient, listaCorretivas);
 
-          // Definir título da OS
+          const sistemaNome = isBMS ? 'BMS' : 'SDAI';
           let osTitulo = '';
           if (semAcesso) {
-            osTitulo = `Preventiva Sem Acesso - Dispositivo: ${formData.descricao || formData.tag}`;
+            osTitulo = `[${sistemaNome}] Preventiva Sem Acesso - Dispositivo: ${formData.descricao || formData.tag}`;
           } else {
-            osTitulo = `Falha na Preventiva - Dispositivo: ${formData.descricao || formData.tag}`;
+            osTitulo = `[${sistemaNome}] Falha na Preventiva - Dispositivo: ${formData.descricao || formData.tag}`;
           }
 
           // Mapear gravidade para prioridade
@@ -543,12 +570,30 @@ const salvar = async (req, res, next) => {
           };
           const prioridade = prioridadeMap[(formData.gravidadeFalha || '').toLowerCase()] || 'Normal';
 
+          let categoriaOS = isBMS ? 'BMS - Sistema de Automação Predial' : 'SDAI - Sistema Detecção Alarme Incêndio';
+          try {
+            const cols = await graphClient.api(`/sites/${siteId}/lists/${corretivaListId}/columns`).get();
+            const catCol = (cols.value || []).find(c => c.name === 'field_3' || (c.displayName || '').toLowerCase() === 'categoria');
+            if (catCol?.choice?.choices?.length) {
+              const choices = catCol.choice.choices;
+              if (isBMS) {
+                const bmsChoice = choices.find(c => c.toUpperCase().includes('BMS') || c.toUpperCase().includes('AUTOMAÇÃO') || c.toUpperCase().includes('AUTOMACAO'));
+                if (bmsChoice) categoriaOS = bmsChoice;
+              } else {
+                const sdaiChoice = choices.find(c => c.toUpperCase().includes('SDAI') || c.toUpperCase().includes('INCÊNDIO') || c.toUpperCase().includes('INCENDIO'));
+                if (sdaiChoice) categoriaOS = sdaiChoice;
+              }
+            }
+          } catch (colErr) {
+            // mantém categoriaOS padrão
+          }
+
           const corretivaFields = {
             Title: osTitulo,
             field_7: toIsoDate(formData.dataExecucao),                                 // Data relatada (dateTime ISO)
             field_2: 'Preventiva Mensal',                                             // Solicitante (choice)
             field_4: formData.descricaoDefeito || `Falha detectada durante preventiva do dispositivo ${formData.descricao}`, // Descrição do problema
-            field_3: 'SDAI - Sistema Detecção Alarme Incêndio',                       // Categoria (choice)
+            field_3: categoriaOS,                                                     // Categoria (choice)
             field_5: prioridade,                                                      // Prioridade (choice)
             field_6: 'Pendente',                                                      // Status (choice)
           };
@@ -627,6 +672,9 @@ const salvar = async (req, res, next) => {
     // =========================================================
     console.log('\n🎉 [Preventivas] Orquestração concluída com sucesso!');
 
+    if (excelUrl) {
+      _preventivasCache.delete(excelUrl);
+    }
     if (tenantConfig.excelPreventivasUrl) {
       _preventivasCache.delete(tenantConfig.excelPreventivasUrl);
     }
@@ -808,12 +856,22 @@ const getDashboardStatus = async (req, res, next) => {
     }
 
     const tenantConfig = req.tenantConfig;
-    const excelUrl = tenantConfig.excelPreventivasUrl;
+    const sistema = (req.query.sistema || 'sdai').toLowerCase();
+    const isBMS = sistema === 'bms';
+    const excelUrl = isBMS
+      ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+      : tenantConfig.excelPreventivasUrl;
+    const listaHistorico = isBMS
+      ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+      : tenantConfig.listaHistoricoPreventivas;
+    const listaCorretivas = isBMS
+      ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
+      : tenantConfig.listaCorretivas;
 
     if (!excelUrl) {
       return res.status(400).json({
         success: false,
-        message: `Planilha de preventivas não configurada para o tenant "${req.tenantSlug}".`,
+        message: `Planilha de preventivas (${sistema.toUpperCase()}) não configurada para o tenant "${req.tenantSlug}".`,
       });
     }
 
@@ -827,20 +885,20 @@ const getDashboardStatus = async (req, res, next) => {
     const { dispositivos: todosDispositivos } = parseMatrizMestra(buffer);
 
     // DEPURAÇÃO DE URLS DO SHAREPOINT LIST
-    if (tenantConfig.listaHistoricoPreventivas) {
+    if (listaHistorico) {
       try {
         const graphClient = getGraphClient(accessToken);
-        const { siteId, listId } = await resolveSharePointIds(graphClient, tenantConfig.listaHistoricoPreventivas);
+        const { siteId, listId } = await resolveSharePointIds(graphClient, listaHistorico);
         const listMeta = await graphClient.api(`/sites/${siteId}/lists/${listId}`).select('webUrl').get();
-        console.log(`📎 [SharePointDebug] webUrl de Preventivas: "${listMeta.webUrl}"`);
+        console.log(`📎 [SharePointDebug] webUrl de Preventivas (${sistema.toUpperCase()}): "${listMeta.webUrl}"`);
       } catch (err) {
         console.error(`📎 [SharePointDebug] Erro ao obter webUrl de Preventivas:`, err.message);
       }
     }
-    if (tenantConfig.listaCorretivas) {
+    if (listaCorretivas) {
       try {
         const graphClient = getGraphClient(accessToken);
-        const { siteId, listId } = await resolveSharePointIds(graphClient, tenantConfig.listaCorretivas);
+        const { siteId, listId } = await resolveSharePointIds(graphClient, listaCorretivas);
         const listMeta = await graphClient.api(`/sites/${siteId}/lists/${listId}`).select('webUrl').get();
         console.log(`📎 [SharePointDebug] webUrl de Corretivas: "${listMeta.webUrl}"`);
       } catch (err) {
@@ -853,10 +911,10 @@ const getDashboardStatus = async (req, res, next) => {
     let logsPorDesc = new Map();
     let logsPorTag = new Map();
 
-    if (tenantConfig.listaHistoricoPreventivas) {
+    if (listaHistorico) {
       try {
         const graphClient = getGraphClient(accessToken);
-        const { siteId, listId } = await resolveSharePointIds(graphClient, tenantConfig.listaHistoricoPreventivas);
+        const { siteId, listId } = await resolveSharePointIds(graphClient, listaHistorico);
         const resList = await graphClient
           .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=999`)
           .get();
@@ -973,22 +1031,29 @@ const getDashboardStatus = async (req, res, next) => {
     const mesAtualReal = new Date().getMonth() + 1;
 
     const dispositivosProcessados = todosDispositivos.map((d, index) => {
-      const tag = (d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`);
+      const tag = isBMS
+        ? (d.rawTag || d.tag || ((d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`)))
+        : ((d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`));
       const tagKey = tag.trim().toUpperCase();
       const descKey = (d.descricao || '').trim().toUpperCase();
 
-      // Busca prioritária por Descrição Exata > Descrição Parcial > Tag
-      let logsDoAtivo = logsPorDesc.get(descKey) || [];
+      // Busca prioritária: para BMS busca primeiro por Tag única; para SDAI por Descrição
+      let logsDoAtivo = [];
+      if (isBMS && tagKey) {
+        logsDoAtivo = logsPorTag.get(tagKey) || [];
+      }
       if (logsDoAtivo.length === 0 && descKey) {
-        // Tenta achar chave em logsPorDesc que contenha a descrição ou código do módulo
-        for (const [k, arr] of logsPorDesc.entries()) {
-          if (k.includes(descKey) || descKey.includes(k)) {
-            logsDoAtivo = arr;
-            break;
+        logsDoAtivo = logsPorDesc.get(descKey) || [];
+        if (logsDoAtivo.length === 0) {
+          for (const [k, arr] of logsPorDesc.entries()) {
+            if (k.includes(descKey) || descKey.includes(k)) {
+              logsDoAtivo = arr;
+              break;
+            }
           }
         }
       }
-      if (logsDoAtivo.length === 0) {
+      if (logsDoAtivo.length === 0 && !isBMS) {
         logsDoAtivo = logsPorTag.get(tagKey) || [];
       }
 
@@ -1019,9 +1084,10 @@ const getDashboardStatus = async (req, res, next) => {
         id: index + 1,
         rowIndex: d.rowIndex,
         tag,
+        rawTag: d.rawTag || d.tag,
         descricao: d.descricao,
-        tipo: d.tipo || 'Dispositivo de Incêndio',
-        laco: d.laco || 'LAÇO 01',
+        tipo: d.tipo || (isBMS ? 'Medição' : 'Dispositivo de Incêndio'),
+        laco: isBMS ? (d.laco || '') : (d.laco || 'LAÇO 01'),
         pavimento: d.pavimento || 'Área Comum',
         mesMantencao: d.mesMantencao || '-',
         mesNumero: d.mesNumero,
@@ -1242,15 +1308,46 @@ const goToList = async (req, res, next) => {
       return res.status(401).send('Usuário não autenticado no TorresCx. Por favor, realize o login novamente.');
     }
     const tenantConfig = req.tenantConfig;
-    const listKey = req.query.list; // e.g. 'listaCorretivas' ou 'listaHistoricoPreventivas'
-    const listName = tenantConfig[listKey];
+    const listKey = req.query.list; // e.g. 'listaCorretivas', 'listaHistoricoPreventivas', 'listaHistoricoPreventivasBms'
+    const sistema = (req.query.sistema || '').toLowerCase();
+    const isBMS = sistema === 'bms';
+
+    let listName = tenantConfig[listKey];
+    if (isBMS) {
+      if (listKey === 'listaHistoricoPreventivas' || listKey === 'listaHistoricoPreventivasBms') {
+        listName = tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas;
+      } else if (listKey === 'listaCorretivas' || listKey === 'listaCorretivasBms') {
+        listName = tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas;
+      }
+    } else {
+      if (!listName && listKey === 'listaHistoricoPreventivasBms') {
+        listName = tenantConfig.listaHistoricoPreventivas;
+      }
+    }
 
     if (!listName) {
       return res.status(400).send(`Lista "${listKey}" não configurada para este cliente.`);
     }
 
     const graphClient = getGraphClient(accessToken);
-    const { siteId, listId } = await resolveSharePointIds(graphClient, listName);
+    let resolved;
+    try {
+      resolved = await resolveSharePointIds(graphClient, listName);
+    } catch (err) {
+      // Se for BMS e a lista tiver ou não _BMS_, tenta a variante alternativa
+      const altName = listName.includes('_BMS_')
+        ? listName.replace('_BMS_', '_')
+        : (tenantConfig.listaHistoricoPreventivas || listName);
+
+      if (altName && altName !== listName) {
+        console.warn(`⚠️ [goToList] Tentando lista alternativa "${altName}" após erro em "${listName}"`);
+        resolved = await resolveSharePointIds(graphClient, altName);
+      } else {
+        throw err;
+      }
+    }
+
+    const { siteId, listId } = resolved;
     const listMeta = await graphClient.api(`/sites/${siteId}/lists/${listId}`).select('webUrl').get();
     
     if (listMeta && listMeta.webUrl) {

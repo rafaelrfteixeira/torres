@@ -90,7 +90,7 @@ A configuração central reside no arquivo [`backend/config/tenants.js`](file://
 | Slug (`tenant`) | Nome do Empreendimento | Sistemas Ativos | Lista SharePoint SDAI / BMS | Matriz Mestra Preventiva |
 |---|---|---|---|---|
 | `riomar-recife` | Shopping RioMar Recife | SDAI, BMS, SCA | `2024-6-1361-SDAI...` / `2024-6-1361-BMS...` | Em configuração |
-| `riomar-kennedy` | Shopping RioMar Kennedy | SDAI, BMS | `2021-5-491-SDAI...` / `2021-5-491-BMS...` | `RIOMAR_KENNEDY_PREVENTIVAS_2026` |
+| `riomar-kennedy` | Shopping RioMar Kennedy | SDAI, BMS *(Área Comum ativa)* | `2021-5-491-SDAI...` / `RIOMAR_KENNEDY_PREVENTIVAS_2026` | `RIOMAR_KENNEDY_PREVENTIVAS_2026` (SDAI & BMS) |
 | `shopping-recife` | Shopping Recife | SDAI | `2026-3-180-SDAI...` / `2026-3-180-BMS...` | `SHOPPING_RECIFE_PREVENTIVAS_2026` |
 | `shopping-guararapes` | Shopping Guararapes | SDAI, BMS | `2026-1-1765-SDAI...` / `2026-1-1765-BMS...` | `SHOPPING_GUARARAPES_PREVENTIVAS_2026` |
 | `riomar-aracaju` | Shopping RioMar Aracaju | BMS *(Customizado)* | `2018-6-26-BMS...` / `CC-2018-6-26-MAN...` | Em configuração |

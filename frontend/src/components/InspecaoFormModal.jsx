@@ -25,6 +25,7 @@ import { syncManager } from '../services/syncManager';
 // Banco de Atividades por Tipo de Dispositivo
 // ============================================
 const CHECKLISTS = {
+  // SDAI (Sistema de Detecção e Alarme de Incêndio)
   'Detector de Fumaça': [
     'Inspeção visual',
     'Verificação de LEDs de funcionamento do detector',
@@ -53,6 +54,43 @@ const CHECKLISTS = {
     'Reaperto de parafusos',
     'Teste de acionamento do dispositivo',
     'Conferência de label do painel de Incêndio',
+  ],
+  // BMS (Building Management System)
+  'Medidor MEI-PRO (Automação)': [
+    'Inspeção visual e integridade física do medidor MEI-PRO',
+    'Verificação dos LEDs de status e operação (RUN / Status / Alarme)',
+    'Verificação dos LEDs de tráfego de comunicação (TX / RX / Link)',
+    'Verificação de encaixe firme dos conectores dos TCs e régua de alimentação',
+    'Verificação física do cabo de comunicação (RS-485 / Ethernet) e conexões',
+    'Confirmação de status "Online" e envio de dados para o supervisório',
+    'Validação de coerência das leituras de tensão no display / supervisório',
+    'Validação de potência ativa positiva nas lojas ativas (sem inversão de TC)',
+    'Validação de coerência entre o consumo medido e a atividade real da loja',
+    'Verificação das portas I/O',
+  ],
+  'Painel de Automação de Iluminação': [
+    'Inspeção visual geral e limpeza interna do painel e canaletas',
+    'Medição da tensão de saída da(s) fonte(s) DC (ex.: 24Vcc estável)',
+    'Verificação dos LEDs de status e diagnóstico dos controladores (PWR / RUN / ERR)',
+    'Verificação dos LEDs de tráfego de rede e comunicação (TX / RX / Link)',
+    'Confirmação de status "Online" dos controladores no sistema supervisório',
+    'Verificação do estado físico, encaixe e fixação dos relés auxiliares nas bases',
+    'Inspeção e reaperto das conexões em bornes e réguas de comando',
+    'Verificação da posição das chaves seletoras (Manual / Automático / Remoto)',
+    'Teste funcional de comando (Ligar / Desligar setores) via supervisório',
+    'Validação da resposta de status/feedback da iluminação no supervisório',
+  ],
+  'Painel de Automação de Ar Condicionado (HVAC / Fancoils)': [
+    'Inspeção visual geral, conservação e limpeza interna do painel e canaletas',
+    'Medição e validação da tensão de alimentação auxiliar (24Vca / 24Vcc estável)',
+    'Verificação dos LEDs de diagnóstico dos controladores DDC (PWR / RUN / ERR)',
+    'Verificação dos LEDs de tráfego de rede (BACnet / Modbus / Ethernet)',
+    'Confirmação de status "Online" dos controladores no supervisório (BMS)',
+    'Validação de coerência das leituras de sensores (temperatura de insuflamento/retorno)',
+    'Teste funcional do comando de acionamento do ventilador do fancoil e retorno de status',
+    'Teste de abertura e fechamento dos atuadores das válvulas de água gelada (0-10V)',
+    'Verificação do status dos alarmes digitais (pressostato de filtro sujo / fluxo de ar)',
+    'Inspeção e reaperto das conexões em bornes e réguas de comando e sensores',
   ],
 };
 
@@ -117,17 +155,60 @@ function compressImage(file, maxWidth = 800, quality = 0.5) {
   });
 }
 
-// Detecta tipo de checklist com base no campo "Tipo" da Matriz Mestra
-function resolveChecklist(tipo) {
-  const tipoLower = (tipo || '').toLowerCase();
-  if (tipoLower.includes('detector') || tipoLower.includes('fumaça') || tipoLower.includes('fumaca') || tipoLower === 'df' || tipoLower === 'dt') {
-    return { label: 'Detector de Fumaça', items: CHECKLISTS['Detector de Fumaça'] };
+// Detecta tipo de checklist com base no campo "Tipo", "Descrição" e "Sistema"
+function resolveChecklist(tipo, descricao, sistema) {
+  const isBMS = String(sistema || '').toLowerCase() === 'bms';
+  const t = String(tipo || '').toLowerCase();
+  const d = String(descricao || '').toLowerCase();
+
+  if (isBMS) {
+    if (
+      t.includes('medi') || t.includes('medidor') || t.includes('mei') || t.includes('consumo') || t.includes('energia') ||
+      t.includes('tc') || d.includes('mei') || d.includes('medidor') || d.includes('tc')
+    ) {
+      return {
+        label: tipo || 'Medição',
+        items: CHECKLISTS['Medidor MEI-PRO (Automação)'],
+      };
+    }
+
+    if (
+      t.includes('ar') || t.includes('hvac') || t.includes('fancoil') || t.includes('fan-coil') ||
+      t.includes('clima') || t.includes('cag') || t.includes('chiller') || d.includes('fancoil') ||
+      d.includes('fan coil') || d.includes('ar condicionado') || d.includes('hvac') ||
+      d.includes('climatizacao') || d.includes('climatização')
+    ) {
+      return {
+        label: tipo || 'Fancoil',
+        items: CHECKLISTS['Painel de Automação de Ar Condicionado (HVAC / Fancoils)'],
+      };
+    }
+
+    if (
+      t.includes('ilumina') || t.includes('ilum') || t.includes('luz') || d.includes('ilumina') ||
+      d.includes('ilum') || d.includes('luz') || d.includes('qtai') || d.includes('qti')
+    ) {
+      return {
+        label: tipo || 'Iluminação',
+        items: CHECKLISTS['Painel de Automação de Iluminação'],
+      };
+    }
+
+    return {
+      label: tipo || 'Painel de Automação',
+      items: CHECKLISTS['Painel de Automação de Iluminação'],
+    };
   }
-  if (tipoLower.includes('acionador') || tipoLower.includes('manual') || tipoLower === 'am') {
-    return { label: 'Acionador Manual', items: CHECKLISTS['Acionador Manual'] };
+
+  // SDAI
+  if (t.includes('detector') || t.includes('fumaça') || t.includes('fumaca') || t.includes('termico') || t.includes('térmico') || t === 'df' || t === 'dt') {
+    return { label: tipo || 'Detector de Fumaça', items: CHECKLISTS['Detector de Fumaça'] };
   }
-  if (tipoLower.includes('módulo') || tipoLower.includes('modulo') || tipoLower.includes('monitoramento') || tipoLower === 'mod') {
-    return { label: 'Módulo de Monitoramento', items: CHECKLISTS['Módulo de Monitoramento'] };
+  if (t.includes('acionador') || t.includes('manual') || t === 'am') {
+    return { label: tipo || 'Acionador Manual', items: CHECKLISTS['Acionador Manual'] };
+  }
+  if (t.includes('módulo') || t.includes('modulo') || t.includes('monitoramento') || t === 'mod') {
+    return { label: tipo || 'Módulo de Monitoramento', items: CHECKLISTS['Módulo de Monitoramento'] };
   }
   return { label: tipo || 'Dispositivo', items: CHECKLIST_GENERICO };
 }
@@ -146,10 +227,11 @@ function getTodayDateString() {
   return `${y}-${m}-${d}`;
 }
 
-export default function InspecaoFormModal({ dispositivo, user, currentShopping, tenant, onClose, onSaved }) {
+export default function InspecaoFormModal({ dispositivo, user, currentShopping, tenant, sistema = 'sdai', onClose, onSaved }) {
   const modalRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+  const isBMS = String(sistema || '').toLowerCase() === 'bms';
 
   // Form state
   const [dataExecucao, setDataExecucao] = useState(getTodayDateString());
@@ -174,16 +256,19 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
   const [photoSourceModalSlot, setPhotoSourceModalSlot] = useState(null); // null, 1 ou 2
   const [selectedZoomImage, setSelectedZoomImage] = useState(null); // null ou string base64
 
-  // Checklist dinâmico
-  const { label: tipoLabel, items: checklistItems } = resolveChecklist(dispositivo?.tipo);
+  // Checklist dinâmico com base no tipo fixo da matriz mestra
+  const initialResolved = resolveChecklist(dispositivo?.tipo, dispositivo?.descricao, sistema);
+  const [tipoLabel, setTipoLabel] = useState(initialResolved.label);
   const [checklistRespostas, setChecklistRespostas] = useState(() =>
-    checklistItems.map((atividade) => ({ atividade, status: '' })) // Começa vazio
+    initialResolved.items.map((atividade) => ({ atividade, status: '' }))
   );
 
   // Resetar checklist se o dispositivo mudar
   useEffect(() => {
+    const res = resolveChecklist(dispositivo?.tipo, dispositivo?.descricao, sistema);
+    setTipoLabel(res.label);
     setChecklistRespostas(
-      checklistItems.map((atividade) => ({ atividade, status: '' }))
+      res.items.map((atividade) => ({ atividade, status: '' }))
     );
     setDataExecucao(getTodayDateString());
     setAcessivel(null);
@@ -195,7 +280,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
     setPreview2(null);
     setPhotoSourceModalSlot(null);
     setSelectedZoomImage(null);
-  }, [dispositivo?.descricao]);
+  }, [dispositivo?.rowIndex, dispositivo?.tag, dispositivo?.tipo, dispositivo?.descricao, sistema]);
 
   // Fechar com ESC
   useEffect(() => {
@@ -338,8 +423,10 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
       ? 'Sem Acesso'
       : (temFalhaChecklist ? 'Com Defeito' : 'Funcionando');
 
-    // Extrai o endereço específico do detector (ex: L7D31, L8D267, L3M168) da descrição
+    // Extrai o endereço específico do detector (ex: L7D31, L8D267, L3M168) ou TAG BMS
     const resolveTag = (disp) => {
+      if (disp?.rawTag) return disp.rawTag;
+      if (disp?.tag && disp.tag !== 'TAG-N/A') return disp.tag;
       const desc = (disp?.descricao || '').trim();
       const match = desc.match(/(L\d+[A-Z]+\d+)/i) || desc.match(/([A-Z]\d+[-_]?[A-Z0-9]+)/i);
       if (match) {
@@ -354,6 +441,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
     // Payload
     const payload = {
       tenant,
+      sistema: isBMS ? 'bms' : 'sdai',
       tag: resolveTag(dispositivo),
       localizacao: dispositivo?.descricao || '',
       descricao: dispositivo?.descricao || '',
@@ -388,7 +476,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
         url: `${API_URL}/preventivas/salvar`,
         method: 'POST',
         payload,
-        description: `Preventiva: ${dispositivo.tipoDispositivo || 'Dispositivo'} ${dispositivo.tagId || ''} (${dispositivo.localizacao || ''})`,
+        description: `Preventiva [${(sistema || 'sdai').toUpperCase()}]: ${tipoLabel} ${resolveTag(dispositivo)} (${dispositivo.descricao || ''})`,
         tenant,
         type: 'preventiva',
       });
@@ -449,7 +537,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
         {/* ============================================ */}
         {/* CABEÇALHO VERMELHO                           */}
         {/* ============================================ */}
-        <div className="bg-gradient-to-r from-red-800 to-red-600 px-4 sm:px-6 py-4 text-white">
+        <div className={`bg-gradient-to-r ${isBMS ? 'from-slate-900 via-blue-900 to-indigo-900' : 'from-red-800 to-red-600'} px-4 sm:px-6 py-4 text-white`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 px-2.5 py-1 bg-black/10 rounded-md border border-white/10 text-xs sm:text-sm">
               {currentShopping?.logo && (
@@ -457,8 +545,8 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                   <img src={currentShopping.logo} alt={currentShopping.name} className="h-3 sm:h-4 object-contain" />
                 </div>
               )}
-              <span className="font-medium text-red-50">
-                {currentShopping?.name} <span className="text-red-200 mx-1">&gt;</span> Preventiva SDAI
+              <span className={`font-medium ${isBMS ? 'text-blue-100' : 'text-red-50'}`}>
+                {currentShopping?.name} <span className={isBMS ? 'text-blue-300 mx-1' : 'text-red-200 mx-1'}>&gt;</span> {isBMS ? 'Preventiva BMS (Automação)' : 'Preventiva SDAI'}
               </span>
             </div>
             <button
@@ -477,7 +565,9 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
               </div>
             </div>
             <h2 className="text-base sm:text-lg font-bold tracking-wide uppercase">Relatório Operacional</h2>
-            <p className="text-red-200 text-xs sm:text-sm mt-0.5">Checklist — Manutenção Preventiva (Áreas Comuns)</p>
+            <p className={`${isBMS ? 'text-blue-200' : 'text-red-200'} text-xs sm:text-sm mt-0.5`}>
+              Checklist — Manutenção Preventiva ({isBMS ? 'Áreas Comuns BMS' : 'Áreas Comuns SDAI'})
+            </p>
           </div>
         </div>
 
@@ -498,23 +588,23 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                   type="date"
                   value={dataExecucao}
                   onChange={(e) => setDataExecucao(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Tipo de Dispositivo</label>
                 <input
                   type="text"
-                  value={tipoLabel}
+                  value={dispositivo?.tipo || tipoLabel || ''}
                   readOnly
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-100 text-slate-600"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-100 text-slate-600 font-medium"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">TAG / ID</label>
                 <input
                   type="text"
-                  value={dispositivo.laco ? `${dispositivo.pavimento} ${dispositivo.laco}` : dispositivo.descricao}
+                  value={dispositivo.rawTag || dispositivo.tag || (dispositivo.laco ? `${dispositivo.pavimento} ${dispositivo.laco}` : dispositivo.descricao)}
                   readOnly
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-100 text-slate-600 font-mono"
                 />
@@ -586,16 +676,19 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
           {/* ---- CHECKLIST DINÂMICO (Somente se Tem Acesso) ---- */}
           {acessivel === 'sim' && (
             <section className="border border-slate-200 rounded-xl overflow-hidden animate-fade-in">
-              <div className="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Atividades de Preventiva
+              <div className="px-4 py-2.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                  Atividades de Preventiva — {tipoLabel.toUpperCase()}
                 </h3>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded ${isBMS ? 'bg-cyan-100 text-cyan-800' : 'bg-red-100 text-red-800'}`}>
+                  {checklistRespostas.filter(r => r.status).length}/{checklistRespostas.length} respondidos
+                </span>
               </div>
               {/* Header da tabela */}
-              <div className="grid grid-cols-[1fr_60px_60px] bg-red-800 text-white text-xs font-semibold uppercase tracking-wider">
+              <div className={`grid grid-cols-[1fr_60px_60px] ${isBMS ? 'bg-cyan-800' : 'bg-red-800'} text-white text-xs font-semibold uppercase tracking-wider`}>
                 <div className="px-4 py-2.5">Atividade Executada</div>
-                <div className="py-2.5 text-center border-l border-red-700">Sim</div>
-                <div className="py-2.5 text-center border-l border-red-700">Não</div>
+                <div className={`py-2.5 text-center border-l ${isBMS ? 'border-cyan-700' : 'border-red-700'}`}>Sim</div>
+                <div className={`py-2.5 text-center border-l ${isBMS ? 'border-cyan-700' : 'border-red-700'}`}>Não</div>
               </div>
               {/* Linhas */}
               {checklistRespostas.map((item, index) => (
@@ -606,7 +699,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                   } ${item.status === 'nao' ? 'bg-red-50' : ''}`}
                 >
                   <div className="px-4 py-3 text-xs sm:text-sm text-slate-700">
-                    <span className="text-red-400 mr-1.5">•</span>
+                    <span className={`${isBMS ? 'text-cyan-600' : 'text-red-400'} mr-1.5`}>•</span>
                     {item.atividade}
                   </div>
                   <div className="flex justify-center py-3 border-l border-slate-200">
@@ -616,7 +709,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                       value="sim"
                       checked={item.status === 'sim'}
                       onChange={() => handleChecklistChange(index, 'sim')}
-                      className="w-[18px] h-[18px] cursor-pointer accent-red-600"
+                      className={`w-[18px] h-[18px] cursor-pointer ${isBMS ? 'accent-cyan-600' : 'accent-red-600'}`}
                     />
                   </div>
                   <div className="flex justify-center py-3 border-l border-slate-200">
@@ -626,7 +719,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                       value="nao"
                       checked={item.status === 'nao'}
                       onChange={() => handleChecklistChange(index, 'nao')}
-                      className="w-[18px] h-[18px] cursor-pointer accent-red-600"
+                      className={`w-[18px] h-[18px] cursor-pointer ${isBMS ? 'accent-cyan-600' : 'accent-red-600'}`}
                     />
                   </div>
                 </div>
@@ -894,8 +987,9 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
 
           {/* ---- NOTA LEGAL ---- */}
           <p className="text-[10px] text-slate-400 leading-relaxed px-1">
-            * Conforme NBR 17240 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio
-            esteja em pleno funcionamento, visando registrar em relatório suas restrições ou falhas.
+            {isBMS
+              ? '* A manutenção preventiva deve assegurar a operacionalidade contínua dos sistemas de automação predial, medição de energia e utilidades, registrando em relatório quaisquer desvios operacionais.'
+              : '* Conforme NBR 17240 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio esteja em pleno funcionamento, visando registrar em relatório suas restrições ou falhas.'}
           </p>
 
           {/* ---- BOTÃO DE AÇÃO ---- */}
@@ -907,7 +1001,9 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                 ? 'bg-slate-400 cursor-not-allowed shadow-none'
                 : deveAbrirOS
                   ? 'bg-gradient-to-r from-red-900 to-red-700 shadow-red-900/30 hover:from-red-800 hover:to-red-600 active:scale-[0.98]'
-                  : 'bg-gradient-to-r from-red-600 to-red-800 shadow-red-500/30 hover:from-red-500 hover:to-red-700 active:scale-[0.98]'
+                  : isBMS
+                    ? 'bg-gradient-to-r from-cyan-600 to-sky-700 shadow-cyan-600/30 hover:from-cyan-500 hover:to-sky-600 active:scale-[0.98]'
+                    : 'bg-gradient-to-r from-red-600 to-red-800 shadow-red-500/30 hover:from-red-500 hover:to-red-700 active:scale-[0.98]'
             }`}
           >
             {isLoading ? (

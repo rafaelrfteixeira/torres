@@ -123,8 +123,11 @@ async function resolveSharePointIds(graphClient, targetListName) {
 /**
  * Busca histórico de preventivas da lista Microsoft Lists
  */
-async function fetchPreventiveHistory(graphClient, tenantConfig, mes, ano) {
-  const listName = tenantConfig.listaHistoricoPreventivas;
+async function fetchPreventiveHistory(graphClient, tenantConfig, mes, ano, sistema = 'sdai') {
+  const isBMS = String(sistema).toLowerCase() === 'bms';
+  const listName = isBMS
+    ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+    : tenantConfig.listaHistoricoPreventivas;
   if (!listName) return [];
 
   const { siteId, listId } = await resolveSharePointIds(graphClient, listName);
@@ -180,7 +183,7 @@ async function fetchPreventiveHistory(graphClient, tenantConfig, mes, ano) {
     return {
       id: item.id,
       tag: f.Title || f.TAG || 'TAG-N/A',
-      descricao: f.Localizacao || f.Descricao || f.Tipo_Dispositivo || 'Dispositivo de Incêndio',
+      descricao: f.Localizacao || f.Descricao || f.Tipo_Dispositivo || (isBMS ? 'Dispositivo BMS' : 'Dispositivo de Incêndio'),
       statusPonto,
       dataExecucao,
       horaInicio,
@@ -341,8 +344,11 @@ async function getListColumnMapping(graphClient, siteId, listId, listName) {
 /**
  * Busca ordens corretivas vinculadas
  */
-async function fetchCorretivas(graphClient, tenantConfig) {
-  const listName = tenantConfig.listaCorretivas;
+async function fetchCorretivas(graphClient, tenantConfig, sistema = 'sdai') {
+  const isBMS = String(sistema).toLowerCase() === 'bms';
+  const listName = isBMS
+    ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
+    : tenantConfig.listaCorretivas;
   if (!listName) return new Map();
 
   try {
@@ -399,13 +405,18 @@ async function fetchCorretivas(graphClient, tenantConfig) {
 /**
  * Busca Matriz Mestra completa do tenant para conciliação de rotinas e passivos
  */
-async function fetchMatrizMestra(accessToken, tenantConfig) {
-  if (!tenantConfig.excelPreventivasUrl) {
+async function fetchMatrizMestra(accessToken, tenantConfig, sistema = 'sdai') {
+  const isBMS = String(sistema).toLowerCase() === 'bms';
+  const excelUrl = isBMS
+    ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+    : tenantConfig.excelPreventivasUrl;
+
+  if (!excelUrl) {
     return [];
   }
 
   try {
-    const { buffer } = await downloadExcelViaGraph(accessToken, tenantConfig.excelPreventivasUrl);
+    const { buffer } = await downloadExcelViaGraph(accessToken, excelUrl);
     const { dispositivos } = parseMatrizMestra(buffer);
     return dispositivos || [];
   } catch (err) {
@@ -420,6 +431,7 @@ async function fetchMatrizMestra(accessToken, tenantConfig) {
 function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sdai', kpis, history, corretivasMap }) {
   const nomeMesStr = NOME_MESES[Number(mes)] || mes;
   const sistemaUpper = String(sistema || 'sdai').toUpperCase();
+  const isBMS = sistemaUpper === 'BMS';
   const dataEmissaoStr = new Date().toLocaleDateString('pt-BR');
 
   const SISTEMAS_MAP = {
@@ -1364,10 +1376,16 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
 
         <!-- Rodapé -->
         <footer class="norm-footer">
+            ${isBMS ? `
+            * Este documento emite o parecer de conformidade situacional técnica com base nos ensaios executados por
+            amostragem programada. As pendências críticas listadas acima demandam acompanhamento cronológico através das Ordens de Serviço
+            supracitadas.
+            ` : `
             * Este documento emite o parecer de conformidade situacional técnica com base nos ensaios executados por
             amostragem programada em conformidade com as exigências da norma regulamentadora <strong>NBR 17240</strong>. As
             pendências críticas listadas acima demandam acompanhamento cronológico através das Ordens de Serviço
             supracitadas.
+            `}
         </footer>
 
     </div>
@@ -1381,18 +1399,18 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
  * Função principal para gerar o relatório mensal de preventivas em HTML
  */
 async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantConfig, mes, ano, sistema = 'sdai') {
-  console.log(`📊 [ReportService] Gerando relatório para ${tenantConfig.name} - ${mes}/${ano}...`);
+  console.log(`📊 [ReportService] Gerando relatório para ${tenantConfig.name} - ${mes}/${ano} (${sistema})...`);
 
   // 1. Obter histórico de inspeções no período (mês/ano)
-  const rawHistory = await fetchPreventiveHistory(graphClient, tenantConfig, mes, ano);
+  const rawHistory = await fetchPreventiveHistory(graphClient, tenantConfig, mes, ano, sistema);
   console.log(`📋 [ReportService] ${rawHistory.length} inspeções encontradas no período`);
 
   // 2. Obter mapa de ordens corretivas
-  const corretivasMap = await fetchCorretivas(graphClient, tenantConfig);
+  const corretivasMap = await fetchCorretivas(graphClient, tenantConfig, sistema);
   console.log(`⚙️ [ReportService] ${corretivasMap.size} ordens corretivas mapeadas`);
 
   // 3. Obter Matriz Mestra (Excel) completa
-  const todosDispositivos = await fetchMatrizMestra(accessToken, tenantConfig);
+  const todosDispositivos = await fetchMatrizMestra(accessToken, tenantConfig, sistema);
   const mesNum = Number(mes);
 
   // Planejados para o mês selecionado

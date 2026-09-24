@@ -13,6 +13,7 @@ import PreventivasAreaComum from './pages/PreventivasAreaComum';
 import CorretivasOcorrencias from './pages/CorretivasOcorrencias';
 import Relatorios from './pages/Relatorios';
 import DashboardPreventivas from './pages/DashboardPreventivas';
+import DashboardPreventivasBMS from './pages/DashboardPreventivasBMS';
 import OfflineBanner from './components/OfflineBanner';
 import InstallPWA from './components/InstallPWA';
 import { db } from './services/db';
@@ -44,6 +45,12 @@ function ActivePreventivasRoute({ children }) {
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
 }
 
+const TENANTS_WITH_PREVENTIVAS_BMS = ['riomar-kennedy'];
+function ActivePreventivasBMSRoute({ children }) {
+  const { tenant } = useParams();
+  return TENANTS_WITH_PREVENTIVAS_BMS.includes(tenant) ? children : <ComingSoon />;
+}
+
 const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center', 'beach-class', 'riomar-aracaju'];
 function ActiveCorretivasRoute({ children }) {
   const { tenant } = useParams();
@@ -52,7 +59,7 @@ function ActiveCorretivasRoute({ children }) {
 
 function ActiveReportsRoute({ children }) {
   const { tenant } = useParams();
-  const hasAccess = TENANTS_WITH_PREVENTIVAS.includes(tenant) || TENANTS_WITH_CORRETIVAS.includes(tenant);
+  const hasAccess = TENANTS_WITH_PREVENTIVAS.includes(tenant) || TENANTS_WITH_CORRETIVAS.includes(tenant) || TENANTS_WITH_PREVENTIVAS_BMS.includes(tenant);
   return hasAccess ? children : <ComingSoon />;
 }
 
@@ -288,8 +295,16 @@ function App() {
               <DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
-          <Route path="bms/preventivas/dashboard" element={<ComingSoon />} />
-          <Route path="bms/preventivas/area-comum" element={<ComingSoon />} />
+          <Route path="bms/preventivas/dashboard" element={
+            <ActivePreventivasBMSRoute>
+              <DashboardPreventivasBMS user={user} shoppingsMetadata={shoppingsMetadata} />
+            </ActivePreventivasBMSRoute>
+          } />
+          <Route path="bms/preventivas/area-comum" element={
+            <ActivePreventivasBMSRoute>
+              <PreventivasAreaComum user={user} shoppingsMetadata={shoppingsMetadata} sistema="bms" />
+            </ActivePreventivasBMSRoute>
+          } />
           <Route path="bms/corretivas" element={
             <ActiveCorretivasRoute>
               <CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />

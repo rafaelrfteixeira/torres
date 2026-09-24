@@ -45,10 +45,14 @@ const shoppings = {
     listaBMS: '2021-5-491-BMS-Shopping Riomar Kennedy',
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCd4pgWXkNERZTurFywc0WfAWsywZVNZDcVOdXxszKxUQA',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
-    // Preventivas Área Comum
+    // Preventivas Área Comum (SDAI)
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQB_IKmy7-TIQZmRry4ps9i7AeW0i99QFF8sQKRZBr9-yek',
     listaHistoricoPreventivas: 'RIOMAR_KENNEDY_PREVENTIVAS_2026',
+    // Preventivas Área Comum (BMS)
+    excelPreventivasBmsUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBm6crJuC7QTJm1rkby-L2hAeDV1JCDOiC-xjvujygWwao',
+    listaHistoricoPreventivasBms: 'RIOMAR_KENNEDY_PREVENTIVAS_BMS_2026',
     listaCorretivas: 'CC-2021-5-491-Riomar Kennedy',
+    listaCorretivasBms: 'CC-2021-5-491-Riomar Kennedy',
     responsavelShopping: {
       sdai: {
         solicitante: 'Maria Eugenia',
