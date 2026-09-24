@@ -674,33 +674,92 @@ function getSharePointSiteGuid(siteId) {
 }
 
 /**
- * Resolve a URL final ou Base64 para exibição de imagens em anexos do Lists
+ * Resolve a URL final ou Base64 para exibição de imagens das OSs
+ * Para Imagem_3, suporta as duas formas:
+ *  1. Diretamente no List (Reserved_ImageAttachment_... ou anexo de item)
+ *  2. Carregada pelo APP (salva na biblioteca /PreventivasImages/ do SharePoint)
  */
-async function resolvePhotoUrl(val, itemId, siteGuid, listId, accessToken) {
-  if (!val) return null;
-  const fileName = extractAttachmentFileName(val);
-  const hostname = process.env.SHAREPOINT_HOSTNAME || 'torrescx.sharepoint.com';
-  const sitePath = process.env.SHAREPOINT_SITE_PATH || '/sites/Manutencao';
+/**
+ * Busca imagem na biblioteca de documentos do Drive (/PreventivasImages/...) usada pelo APP
+ */
+async function fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId) {
+  if (!candidateFileName) return null;
 
+  // 1. Tentar Graph API do Drive
+  if (graphClient && siteId) {
+    try {
+      const driveItem = await graphClient
+        .api(`/sites/${siteId}/drive/root:/PreventivasImages/${encodeURIComponent(candidateFileName)}`)
+        .select('id,@microsoft.graph.downloadUrl')
+        .get();
+
+      const downloadUrl = driveItem && driveItem['@microsoft.graph.downloadUrl'];
+      if (downloadUrl) {
+        const fetchRes = await fetch(downloadUrl);
+        if (fetchRes.ok) {
+          const buffer = await fetchRes.arrayBuffer();
+          const contentType = fetchRes.headers.get('content-type') || 'image/jpeg';
+          return `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
+        }
+      }
+    } catch (err) {
+      // Tentar obter conteúdo binário direto via Graph
+      try {
+        const bin = await graphClient
+          .api(`/sites/${siteId}/drive/root:/PreventivasImages/${encodeURIComponent(candidateFileName)}:/content`)
+          .responseType('arraybuffer')
+          .get();
+        if (bin && bin.byteLength > 0) {
+          return `data:image/jpeg;base64,${Buffer.from(bin).toString('base64')}`;
+        }
+      } catch (err2) {}
+    }
+  }
+
+  // 2. Tentar baixar via URLs diretas do SharePoint com Bearer token
+  const candidateUrls = [
+    `https://${hostname}${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(candidateFileName)}`,
+    `https://${hostname}${sitePath}/Shared%20Documents/PreventivasImages/${encodeURIComponent(candidateFileName)}`,
+    serverRelativeUrl ? (serverRelativeUrl.startsWith('http') ? serverRelativeUrl : `https://${hostname}${serverRelativeUrl.startsWith('/') ? '' : '/'}${serverRelativeUrl}`) : null,
+    `https://${hostname}${sitePath}/_api/web/GetFileByServerRelativeUrl('${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(candidateFileName)}')/$value`,
+    `https://${hostname}${sitePath}/_api/web/GetFileByServerRelativeUrl('${sitePath}/Shared%20Documents/PreventivasImages/${encodeURIComponent(candidateFileName)}')/$value`,
+  ].filter(Boolean);
+
+  if (accessToken) {
+    for (const url of candidateUrls) {
+      try {
+        const cleanUrl = encodeURI(decodeURI(url));
+        const fetchRes = await fetch(cleanUrl, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (fetchRes.ok) {
+          const buffer = await fetchRes.arrayBuffer();
+          const contentType = fetchRes.headers.get('content-type') || 'image/jpeg';
+          return `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
+        }
+      } catch (err) {}
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Busca imagem nos anexos diretos do SharePoint Lists (Reserved_ImageAttachment_... ou anexo de item)
+ */
+async function fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken) {
+  const attachmentFileName = extractAttachmentFileName(val) || candidateFileName;
   let directUrl = null;
-  if (fileName) {
-    directUrl = `https://${hostname}${sitePath}/_api/v2.1/sites('${siteGuid}')/lists('${listId}')/items('${itemId}')/attachments('${encodeURIComponent(fileName)}')/thumbnails/0/c600x600/content?prefer=noredirect,closestavailablesize`;
-  } else if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:image'))) {
+
+  if (attachmentFileName) {
+    directUrl = `https://${hostname}${sitePath}/_api/v2.1/sites('${siteGuid}')/lists('${listId}')/items('${itemId}')/attachments('${encodeURIComponent(attachmentFileName)}')/thumbnails/0/c600x600/content?prefer=noredirect,closestavailablesize`;
+  } else if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'))) {
     directUrl = val;
-  } else if (typeof val === 'object' && (val.serverRelativeUrl || val.url)) {
-    const rel = val.serverRelativeUrl || val.url;
-    directUrl = rel.startsWith('http') ? rel : `https://${hostname}${rel.startsWith('/') ? '' : '/'}${rel}`;
+  } else if (serverRelativeUrl) {
+    directUrl = serverRelativeUrl.startsWith('http') ? serverRelativeUrl : `https://${hostname}${serverRelativeUrl.startsWith('/') ? '' : '/'}${serverRelativeUrl}`;
   }
 
-  if (!directUrl) return null;
-
-  // Se já for data URL
-  if (directUrl.startsWith('data:image')) {
-    return directUrl;
-  }
-
-  // Tentar baixar via backend com o accessToken para transformar em Base64
-  if (accessToken && directUrl.includes('sharepoint.com')) {
+  if (directUrl && accessToken && directUrl.includes('sharepoint.com')) {
     try {
       const fetchRes = await fetch(directUrl, {
         headers: {
@@ -719,6 +778,107 @@ async function resolvePhotoUrl(val, itemId, siteGuid, listId, accessToken) {
   }
 
   return directUrl;
+}
+
+/**
+ * Resolve a URL final ou Base64 para exibição de imagens das OSs
+ * Para Imagem_3, suporta as duas formas:
+ *  1. Diretamente no List (Reserved_ImageAttachment_... ou anexo de item)
+ *  2. Carregada pelo APP (salva na biblioteca /PreventivasImages/ do SharePoint)
+ */
+async function resolvePhotoUrl(val, itemId, siteGuid, listId, accessToken, fieldName = '', graphClient = null, siteId = '') {
+  if (!val) return null;
+  const hostname = process.env.SHAREPOINT_HOSTNAME || 'torrescx.sharepoint.com';
+  const sitePath = process.env.SHAREPOINT_SITE_PATH || '/sites/Manutencao';
+
+  // Identifica se é o campo Imagem_3 (somente ele deve ter as 2 vias de busca)
+  const isImagem3 = fieldName === 'Imagem_3' || fieldName === 'imagem3' || (typeof fieldName === 'string' && fieldName.toLowerCase().includes('imagem_3'));
+
+  // Se já for data URL
+  if (typeof val === 'string' && val.startsWith('data:image')) {
+    return val;
+  }
+
+  // 1. Extração do objeto ou string
+  let parsedObj = null;
+  let rawStr = '';
+
+  if (typeof val === 'object' && val !== null) {
+    parsedObj = val;
+  } else if (typeof val === 'string') {
+    rawStr = val.trim();
+    if (rawStr.startsWith('{') && rawStr.endsWith('}')) {
+      try {
+        parsedObj = JSON.parse(rawStr);
+      } catch (e) {
+        parsedObj = null;
+      }
+    }
+  }
+
+  if (parsedObj && typeof parsedObj.url === 'string' && parsedObj.url.startsWith('data:image')) {
+    return parsedObj.url;
+  }
+
+  // 2. Extração de nomes de arquivos candidatos e caminhos
+  let candidateFileName = null;
+  let serverRelativeUrl = null;
+
+  if (parsedObj) {
+    candidateFileName = parsedObj.fileName || parsedObj.name || null;
+    serverRelativeUrl = parsedObj.serverRelativeUrl || parsedObj.url || null;
+  } else if (rawStr) {
+    if (rawStr.includes('Reserved_ImageAttachment_')) {
+      const m = rawStr.match(/Reserved_ImageAttachment_[^"'\s\)]+/);
+      candidateFileName = m ? m[0] : null;
+    } else if (rawStr.includes('/') || rawStr.includes('\\')) {
+      const parts = rawStr.split(/[/\\]/);
+      candidateFileName = decodeURIComponent(parts[parts.length - 1].split('?')[0]);
+      serverRelativeUrl = rawStr;
+    } else {
+      candidateFileName = rawStr;
+    }
+  }
+
+  // Identificar se a origem parece ser do APP (/PreventivasImages/ ou nome customizado sem prefixo Reserved)
+  const isAppUpload = isImagem3 && (
+    (serverRelativeUrl && serverRelativeUrl.includes('PreventivasImages')) ||
+    (rawStr && rawStr.includes('PreventivasImages')) ||
+    (candidateFileName && !candidateFileName.startsWith('Reserved_ImageAttachment_'))
+  );
+
+  // =========================================================================
+  // CASO EXCLUSIVO: Imagem_3 (Suporte às 2 formas com fallback recíproco)
+  // =========================================================================
+  if (isImagem3) {
+    if (isAppUpload) {
+      // Forma A (APP): Busca na pasta PreventivasImages do SharePoint Drive
+      const driveImg = await fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId);
+      if (driveImg) return driveImg;
+
+      // Fallback para Forma B (Direto no List)
+      const listImg = await fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken);
+      if (listImg && listImg.startsWith('data:image')) return listImg;
+
+      // Fallback de URL direta do APP caso Base64 não tenha sido obtido
+      return `https://${hostname}${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(candidateFileName)}`;
+    } else {
+      // Forma B (Direto no List): Busca nos anexos do item da lista
+      const listImg = await fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken);
+      if (listImg && listImg.startsWith('data:image')) return listImg;
+
+      // Fallback para Forma A (APP / PreventivasImages)
+      const driveImg = await fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId);
+      if (driveImg) return driveImg;
+
+      return listImg;
+    }
+  }
+
+  // =========================================================================
+  // DEMAIS CAMPOS (Imagem_1, Imagem_2, Imagem_4): Mantêm exclusivamente Forma B (List)
+  // =========================================================================
+  return await fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken);
 }
 
 /**
@@ -1110,15 +1270,24 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
     const f = item.rawFields || {};
 
     const colPairs = [
-      { val: f[colMap.imagem1] || f.Imagem_1, label: 'Antes / Diagnóstico' },
-      { val: f[colMap.imagem2] || f.Imagem_2, label: 'Em Atendimento' },
-      { val: f[colMap.imagem3] || f.Imagem_3, label: 'Resolução / Final' },
-      { val: f[colMap.imagem4] || f.Imagem_4, label: 'Evidência Adicional' },
+      { val: f[colMap.imagem1] || f.Imagem_1, label: 'Antes / Diagnóstico', fieldName: 'Imagem_1' },
+      { val: f[colMap.imagem2] || f.Imagem_2, label: 'Em Atendimento', fieldName: 'Imagem_2' },
+      { val: f[colMap.imagem3] || f.Imagem_3, label: 'Resolução / Final', fieldName: 'Imagem_3' },
+      { val: f[colMap.imagem4] || f.Imagem_4, label: 'Evidência Adicional', fieldName: 'Imagem_4' },
     ];
 
     for (const pair of colPairs) {
       if (pair.val) {
-        const photoUrl = await resolvePhotoUrl(pair.val, item.id, siteGuid, listId, accessToken);
+        const photoUrl = await resolvePhotoUrl(
+          pair.val,
+          item.id,
+          siteGuid,
+          listId,
+          accessToken,
+          pair.fieldName,
+          graphClient,
+          siteId
+        );
         if (photoUrl) {
           photos.push({ url: photoUrl, label: pair.label });
         }
