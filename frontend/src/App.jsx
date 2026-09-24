@@ -44,7 +44,7 @@ function ActivePreventivasRoute({ children }) {
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
 }
 
-const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center', 'beach-class'];
+const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center', 'beach-class', 'riomar-aracaju'];
 function ActiveCorretivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_CORRETIVAS.includes(tenant) ? children : <ComingSoon />;
@@ -290,7 +290,11 @@ function App() {
           } />
           <Route path="bms/preventivas/dashboard" element={<ComingSoon />} />
           <Route path="bms/preventivas/area-comum" element={<ComingSoon />} />
-          <Route path="bms/corretivas" element={<ComingSoon />} />
+          <Route path="bms/corretivas" element={
+            <ActiveCorretivasRoute>
+              <CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />
+            </ActiveCorretivasRoute>
+          } />
           <Route path="bms/relatorios" element={
             <ActiveReportsRoute>
               <Relatorios shoppingsMetadata={shoppingsMetadata} />

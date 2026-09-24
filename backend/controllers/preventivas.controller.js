@@ -57,9 +57,17 @@ async function resolveSharePointIds(graphClient, targetListName) {
       .api(`/sites/${_cachedSiteId}/lists`)
       .get();
 
-    const found = (allLists.value || []).find(
-      (l) => l.displayName === targetListName || l.name === targetListName
-    );
+    const targetClean = targetListName.trim().toLowerCase();
+    const found = (allLists.value || []).find((l) => {
+      const disp = (l.displayName || '').trim().toLowerCase();
+      const nm = (l.name || '').trim().toLowerCase();
+      return (
+        disp === targetClean ||
+        nm === targetClean ||
+        disp === `cc-${targetClean}` ||
+        `cc-${disp}` === targetClean
+      );
+    });
 
     if (!found) {
       const available = (allLists.value || [])

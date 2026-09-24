@@ -26,10 +26,11 @@ function getSDAISubmenus(tenant) {
   const isRioMarRecife = tenant === 'riomar-recife';
   const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
   const isBeachClass = tenant === 'beach-class';
+  const isRioMarAracaju = tenant === 'riomar-aracaju';
   // Tenants com funcionalidades de preventivas ativas
   const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife;
   // Tenants com funcionalidades de corretivas ativas
-  const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife;
+  const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife || isRioMarAracaju;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
   const hasInspecaoComingSoon = isSalvadorNorte || isJcpmTradeCenter || isBeachClass;
   return [
@@ -92,6 +93,10 @@ function getSDAISubmenus(tenant) {
  */
 function getBMSSubmenus(tenant) {
   const allComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias' || tenant === 'jcpm-trade-center';
+  const isRioMarAracaju = tenant === 'riomar-aracaju';
+  const hasCorretivasActive = isRioMarAracaju;
+  const hasRelatoriosActive = isRioMarAracaju;
+
   return [
     {
       id: 'dashboard-inspecao',
@@ -126,14 +131,14 @@ function getBMSSubmenus(tenant) {
       label: 'Corretivas/Ocorrências',
       route: `/${tenant}/bms/corretivas`,
       icon: 'alert-triangle',
-      comingSoon: true,
+      comingSoon: !hasCorretivasActive,
     },
     {
       id: 'relatorios',
       label: 'Relatórios',
       route: `/${tenant}/bms/relatorios`,
       icon: 'file-text',
-      comingSoon: true,
+      comingSoon: !hasRelatoriosActive,
     },
     {
       id: 'cadastros',

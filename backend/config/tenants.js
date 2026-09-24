@@ -120,7 +120,7 @@ const shoppings = {
     // Preventivas Área Comum
     excelPreventivasUrl: null, // TODO: Configurar
     listaHistoricoPreventivas: null,
-    listaCorretivas: null,
+    listaCorretivas: 'CC-2018-6-26-MAN-RIOMAR-AJU-BMS',
     responsavelShopping: {
       sdai: null,
       bms: {

@@ -93,7 +93,7 @@ A configuração central reside no arquivo [`backend/config/tenants.js`](file://
 | `riomar-kennedy` | Shopping RioMar Kennedy | SDAI, BMS | `2021-5-491-SDAI...` / `2021-5-491-BMS...` | `RIOMAR_KENNEDY_PREVENTIVAS_2026` |
 | `shopping-recife` | Shopping Recife | SDAI | `2026-3-180-SDAI...` / `2026-3-180-BMS...` | `SHOPPING_RECIFE_PREVENTIVAS_2026` |
 | `shopping-guararapes` | Shopping Guararapes | SDAI, BMS | `2026-1-1765-SDAI...` / `2026-1-1765-BMS...` | `SHOPPING_GUARARAPES_PREVENTIVAS_2026` |
-| `riomar-aracaju` | Shopping RioMar Aracaju | BMS *(Customizado)* | Lista BMS específica Aracaju | Em configuração |
+| `riomar-aracaju` | Shopping RioMar Aracaju | BMS *(Customizado)* | `2018-6-26-BMS...` / `CC-2018-6-26-MAN...` | Em configuração |
 | `salvador-norte` | Salvador Norte Shopping | SDAI, BMS | Em configuração | `SALVADOR_NORTE_SHOPPING_PREVENTIVAS_2026` |
 | `empresarial-rui-barbosa` | Empresarial Rui Barbosa | SDAI | `2024-3-1308-MAN...` | `EMPRESARIAL_RUI_BARBOSA_PREVENTIVAS_2026` |
 | `empresarial-cicero-dias` | Empresarial Cicero Dias | SDAI, BMS, SCA, CFTV | `2021-11-656-SDAI...` | `EMPRESARIAL_CICERO_DIAS_PREVENTIVAS_2026` |
