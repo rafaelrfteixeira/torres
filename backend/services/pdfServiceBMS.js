@@ -278,9 +278,9 @@ function generateHTML(data) {
             <div class="info-cell"><span class="info-label">CÓDIGO LOJA:</span> ${field(data.codigoLoja)}</div>
           </div>
 
-          <!-- Responsável Shopping -->
+          <!-- Responsável Empreendimento -->
           <div class="info-grid" style="border-top: none;">
-            <div class="info-cell" style="grid-column: 1 / -1; background: #f0f0f0; font-weight: bold; font-size: 8pt; text-transform: uppercase; letter-spacing: 1px;">Responsável Shopping</div>
+            <div class="info-cell" style="grid-column: 1 / -1; background: #f0f0f0; font-weight: bold; font-size: 8pt; text-transform: uppercase; letter-spacing: 1px;">Responsável Empreendimento</div>
             <div class="info-cell"><span class="info-label">SOLICITANTE:</span> ${field(data.responsavelShopping?.solicitante)}</div>
             <div class="info-cell"><span class="info-label">TELEFONE:</span> ${field(data.responsavelShopping?.telefone)}</div>
             <div class="info-cell" style="grid-column: 1 / -1; border-bottom: none;"><span class="info-label">E-MAIL:</span> ${field(data.responsavelShopping?.email)}</div>

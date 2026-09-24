@@ -503,10 +503,10 @@ export default function FormBMS({ user, shoppingsMetadata = [] }) {
             {/* CONTATOS — RESPONSÁVEIS                      */}
             {/* ============================================ */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Responsável Shopping */}
+              {/* Responsável Empreendimento */}
               <div className="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-100">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável Shopping</h3>
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável Empreendimento</h3>
                 </div>
                 <div className="p-4 space-y-3">
                   <InputField label="Solicitante" register={register('responsavelShopping.solicitante')} placeholder="Nome do responsável" readOnly={true} />
