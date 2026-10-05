@@ -290,26 +290,29 @@ function generateHTML(data) {
                 <th>FUNCIONANDO</th>
               </tr>
               ${[
-                { id: 'alarme_do_shopping', name: 'ALARME DO SHOPPING' },
+                { id: 'alarme_do_empreendimento', altId: 'alarme_do_shopping', name: 'ALARME DO EMPREENDIMENTO' },
                 { id: 'alarme_da_loja', name: 'ALARME DA LOJA' },
-                { id: 'comando_de_gás', name: 'COMANDO DE GÁS' },
-              ].map(sys => `
+                { id: 'detecção_de_gás', altId: 'comando_de_gás', name: 'DETECÇÃO DE GÁS' },
+              ].map(sys => {
+                const sItem = s[sys.id] || (sys.altId ? s[sys.altId] : null) || {};
+                return `
               <tr>
                 <td class="sys-name">${sys.name}</td>
                 <td>
                   <div class="chk-group">
-                    <span>${checkbox(s[sys.id]?.existenteSim)} <span class="chk-label">SIM</span></span>
-                    <span>${checkbox(s[sys.id]?.existenteNao)} <span class="chk-label">NÃO</span></span>
+                    <span>${checkbox(sItem.existenteSim)} <span class="chk-label">SIM</span></span>
+                    <span>${checkbox(sItem.existenteNao)} <span class="chk-label">NÃO</span></span>
                   </div>
                 </td>
                 <td>
                   <div class="chk-group">
-                    <span>${checkbox(s[sys.id]?.funcionandoSim)} <span class="chk-label">SIM</span></span>
-                    <span>${checkbox(s[sys.id]?.funcionandoNao)} <span class="chk-label">NÃO</span></span>
+                    <span>${checkbox(sItem.funcionandoSim)} <span class="chk-label">SIM</span></span>
+                    <span>${checkbox(sItem.funcionandoNao)} <span class="chk-label">NÃO</span></span>
                   </div>
                 </td>
               </tr>
-              `).join('')}
+              `;
+              }).join('')}
             </table>
           </div>
 
@@ -351,7 +354,7 @@ function generateHTML(data) {
             <div class="status-item">${checkbox(pen['Necessário Abertura do Forro'])} NECESSÁRIO ABERTURA DO FORRO</div>
             <div class="status-item">${checkbox(pen['Verificar Integridade do Cabo de Alimentação'])} VERIFICAR INTEGRIDADE DO CABO DE ALIMENTAÇÃO</div>
             <div class="status-item">${checkbox(pen['Verificar Integridade do Cabo de Sinal'])} VERIFICAR INTEGRIDADE DO CABO DE SINAL</div>
-            <div class="status-item">${checkbox(pen['Interligar o Sistema da Loja com do Shopping'])} INTERLIGAR O SISTEMA DA LOJA COM DO SHOPPING</div>
+            <div class="status-item">${checkbox(pen['Interligar o Sistema da Loja com do Empreendimento'] || pen['Interligar o Sistema da Loja com o do Empreendimento'] || pen['Interligar o Sistema da Loja com do Shopping'])} INTERLIGAR O SISTEMA DA LOJA COM DO EMPREENDIMENTO</div>
             <div class="status-item">${checkbox(pen['Necessário Verificar o Sistema da Loja'])} NECESSÁRIO VERIFICAR O SISTEMA DA LOJA</div>
             <div class="status-item">${checkbox(pen['Troca de Dispositivo'])} TROCA DE DISPOSITIVO <div class="status-item-text"></div></div>
             <div class="status-item">${checkbox(!!data.pendenciasOutros)} OUTROS <div class="status-item-text">${field(data.pendenciasOutros)}</div></div>
@@ -359,9 +362,9 @@ function generateHTML(data) {
         </div>
 
         <div style="font-size: 5pt; text-align: justify; margin-bottom: 2mm; text-transform: uppercase;">
-          * ESSE CHECK LIST É REALIZADO COM APROVAÇÃO DA ADMINISTRAÇÃO DO SHOPPING, SE O SISTEMA DE DETECÇÃO DE INCÊNDIO
-          DA LOJA NÃO ESTIVER FUNCIONANDO CORRETAMENTE OU DE ACORDO COM AS NORMAS IMPOSTAS PELO SHOPPING, É DE RESPONSABILIDADE
-          DO LOJISTA ADEQUAR SEU SISTEMA DE DETECÇÃO E ALARME DE INCÊNDIO NOS PADRÕES DO SHOPPING.
+          * ESSE CHECK LIST É REALIZADO COM APROVAÇÃO DA ADMINISTRAÇÃO DO EMPREENDIMENTO, SE O SISTEMA DE DETECÇÃO DE INCÊNDIO
+          DA LOJA NÃO ESTIVER FUNCIONANDO CORRETAMENTE OU DE ACORDO COM AS NORMAS IMPOSTAS PELO EMPREENDIMENTO, É DE RESPONSABILIDADE
+          DO LOJISTA ADEQUAR SEU SISTEMA DE DETECÇÃO E ALARME DE INCÊNDIO NOS PADRÕES DO EMPREENDIMENTO.
         </div>
 
         <!-- Rodapé / Assinaturas -->

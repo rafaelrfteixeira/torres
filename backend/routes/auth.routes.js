@@ -131,13 +131,17 @@ router.get('/profile', (req, res) => {
     excelLojasUrl: shoppings[key]?.excelLojasUrl || '',
     excelPreventivasUrl: shoppings[key]?.excelPreventivasUrl || '',
     excelPreventivasBmsUrl: shoppings[key]?.excelPreventivasBmsUrl || '',
+    excelPreventivasScaUrl: shoppings[key]?.excelPreventivasScaUrl || '',
     responsavelShopping: shoppings[key]?.responsavelShopping || {},
     listaSDAI: shoppings[key]?.listaSDAI || null,
     listaBMS: shoppings[key]?.listaBMS || null,
+    listaSCA: shoppings[key]?.listaSCA || null,
     listaHistoricoPreventivas: shoppings[key]?.listaHistoricoPreventivas || null,
     listaHistoricoPreventivasBms: shoppings[key]?.listaHistoricoPreventivasBms || null,
+    listaHistoricoPreventivasSca: shoppings[key]?.listaHistoricoPreventivasSca || null,
     listaCorretivas: shoppings[key]?.listaCorretivas || null,
     listaCorretivasBms: shoppings[key]?.listaCorretivasBms || null,
+    listaCorretivasSca: shoppings[key]?.listaCorretivasSca || null,
   }));
 
   res.json({

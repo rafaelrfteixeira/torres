@@ -98,12 +98,17 @@ const getDispositivos = async (req, res, next) => {
     const tenantConfig = req.tenantConfig;
     const sistema = (req.query.sistema || req.body?.sistema || 'sdai').toLowerCase();
     const isBMS = sistema === 'bms';
-    const excelUrl = isBMS
-      ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
-      : tenantConfig.excelPreventivasUrl;
-    const listaHistorico = isBMS
-      ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
-      : tenantConfig.listaHistoricoPreventivas;
+    const isSCA = sistema === 'sca';
+    const excelUrl = isSCA
+      ? tenantConfig.excelPreventivasScaUrl
+      : (isBMS
+        ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+        : tenantConfig.excelPreventivasUrl);
+    const listaHistorico = isSCA
+      ? tenantConfig.listaHistoricoPreventivasSca
+      : (isBMS
+        ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+        : tenantConfig.listaHistoricoPreventivas);
 
     if (!excelUrl) {
       return res.status(400).json({
@@ -225,15 +230,22 @@ const salvar = async (req, res, next) => {
 
     const sistema = (formData.sistema || req.query.sistema || 'sdai').toLowerCase();
     const isBMS = sistema === 'bms';
-    const excelUrl = isBMS
-      ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
-      : tenantConfig.excelPreventivasUrl;
-    const listaHistorico = isBMS
-      ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
-      : tenantConfig.listaHistoricoPreventivas;
-    const listaCorretivas = isBMS
-      ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
-      : tenantConfig.listaCorretivas;
+    const isSCA = sistema === 'sca';
+    const excelUrl = isSCA
+      ? tenantConfig.excelPreventivasScaUrl
+      : (isBMS
+        ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+        : tenantConfig.excelPreventivasUrl);
+    const listaHistorico = isSCA
+      ? tenantConfig.listaHistoricoPreventivasSca
+      : (isBMS
+        ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+        : tenantConfig.listaHistoricoPreventivas);
+    const listaCorretivas = isSCA
+      ? (tenantConfig.listaCorretivasSca || tenantConfig.listaCorretivas)
+      : (isBMS
+        ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
+        : tenantConfig.listaCorretivas);
 
     console.log('\n🚀 [Preventivas] Iniciando orquestração de salvamento...');
     console.log(`   Tenant: ${tenantSlug} | Sistema: ${sistema.toUpperCase()}`);
@@ -551,7 +563,7 @@ const salvar = async (req, res, next) => {
         try {
           const { listId: corretivaListId } = await resolveSharePointIds(graphClient, listaCorretivas);
 
-          const sistemaNome = isBMS ? 'BMS' : 'SDAI';
+          const sistemaNome = isSCA ? 'SCA' : (isBMS ? 'BMS' : 'SDAI');
           let osTitulo = '';
           if (semAcesso) {
             osTitulo = `[${sistemaNome}] Preventiva Sem Acesso - Dispositivo: ${formData.descricao || formData.tag}`;
@@ -858,15 +870,22 @@ const getDashboardStatus = async (req, res, next) => {
     const tenantConfig = req.tenantConfig;
     const sistema = (req.query.sistema || 'sdai').toLowerCase();
     const isBMS = sistema === 'bms';
-    const excelUrl = isBMS
-      ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
-      : tenantConfig.excelPreventivasUrl;
-    const listaHistorico = isBMS
-      ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
-      : tenantConfig.listaHistoricoPreventivas;
-    const listaCorretivas = isBMS
-      ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
-      : tenantConfig.listaCorretivas;
+    const isSCA = sistema === 'sca';
+    const excelUrl = isSCA
+      ? tenantConfig.excelPreventivasScaUrl
+      : (isBMS
+        ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+        : tenantConfig.excelPreventivasUrl);
+    const listaHistorico = isSCA
+      ? tenantConfig.listaHistoricoPreventivasSca
+      : (isBMS
+        ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+        : tenantConfig.listaHistoricoPreventivas);
+    const listaCorretivas = isSCA
+      ? (tenantConfig.listaCorretivasSca || tenantConfig.listaCorretivas)
+      : (isBMS
+        ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
+        : tenantConfig.listaCorretivas);
 
     if (!excelUrl) {
       return res.status(400).json({
@@ -1031,15 +1050,15 @@ const getDashboardStatus = async (req, res, next) => {
     const mesAtualReal = new Date().getMonth() + 1;
 
     const dispositivosProcessados = todosDispositivos.map((d, index) => {
-      const tag = isBMS
+      const tag = (isBMS || isSCA)
         ? (d.rawTag || d.tag || ((d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`)))
         : ((d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`));
       const tagKey = tag.trim().toUpperCase();
       const descKey = (d.descricao || '').trim().toUpperCase();
 
-      // Busca prioritária: para BMS busca primeiro por Tag única; para SDAI por Descrição
+      // Busca prioritária: para BMS e SCA busca primeiro por Tag única; para SDAI por Descrição
       let logsDoAtivo = [];
-      if (isBMS && tagKey) {
+      if ((isBMS || isSCA) && tagKey) {
         logsDoAtivo = logsPorTag.get(tagKey) || [];
       }
       if (logsDoAtivo.length === 0 && descKey) {
@@ -1053,7 +1072,7 @@ const getDashboardStatus = async (req, res, next) => {
           }
         }
       }
-      if (logsDoAtivo.length === 0 && !isBMS) {
+      if (logsDoAtivo.length === 0 && !isBMS && !isSCA) {
         logsDoAtivo = logsPorTag.get(tagKey) || [];
       }
 
@@ -1086,8 +1105,9 @@ const getDashboardStatus = async (req, res, next) => {
         tag,
         rawTag: d.rawTag || d.tag,
         descricao: d.descricao,
-        tipo: d.tipo || (isBMS ? 'Medição' : 'Dispositivo de Incêndio'),
-        laco: isBMS ? (d.laco || '') : (d.laco || 'LAÇO 01'),
+        localizacao: d.descricao || d.pavimento || '',
+        tipo: d.tipo || (isBMS ? 'Medição' : (isSCA ? 'Controle de Acesso' : 'Dispositivo de Incêndio')),
+        laco: (isBMS || isSCA) ? (d.laco || '') : (d.laco || 'LAÇO 01'),
         pavimento: d.pavimento || 'Área Comum',
         mesMantencao: d.mesMantencao || '-',
         mesNumero: d.mesNumero,
@@ -1308,12 +1328,19 @@ const goToList = async (req, res, next) => {
       return res.status(401).send('Usuário não autenticado no TorresCx. Por favor, realize o login novamente.');
     }
     const tenantConfig = req.tenantConfig;
-    const listKey = req.query.list; // e.g. 'listaCorretivas', 'listaHistoricoPreventivas', 'listaHistoricoPreventivasBms'
+    const listKey = req.query.list; // e.g. 'listaCorretivas', 'listaHistoricoPreventivas', 'listaHistoricoPreventivasBms', 'listaHistoricoPreventivasSca'
     const sistema = (req.query.sistema || '').toLowerCase();
     const isBMS = sistema === 'bms';
+    const isSCA = sistema === 'sca';
 
     let listName = tenantConfig[listKey];
-    if (isBMS) {
+    if (isSCA) {
+      if (listKey === 'listaHistoricoPreventivas' || listKey === 'listaHistoricoPreventivasSca') {
+        listName = tenantConfig.listaHistoricoPreventivasSca || tenantConfig.listaHistoricoPreventivas;
+      } else if (listKey === 'listaCorretivas' || listKey === 'listaCorretivasSca') {
+        listName = tenantConfig.listaCorretivasSca || tenantConfig.listaCorretivas;
+      }
+    } else if (isBMS) {
       if (listKey === 'listaHistoricoPreventivas' || listKey === 'listaHistoricoPreventivasBms') {
         listName = tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas;
       } else if (listKey === 'listaCorretivas' || listKey === 'listaCorretivasBms') {
@@ -1321,6 +1348,8 @@ const goToList = async (req, res, next) => {
       }
     } else {
       if (!listName && listKey === 'listaHistoricoPreventivasBms') {
+        listName = tenantConfig.listaHistoricoPreventivas;
+      } else if (!listName && listKey === 'listaHistoricoPreventivasSca') {
         listName = tenantConfig.listaHistoricoPreventivas;
       }
     }

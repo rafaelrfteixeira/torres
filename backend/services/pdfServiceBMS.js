@@ -349,7 +349,7 @@ function generateHTML(data) {
             <div class="status-item">${checkbox(pen['Necessário Abertura do Forro'])} NECESSÁRIO ABERTURA DO FORRO</div>
             <div class="status-item">${checkbox(pen['Verificar Integridade do Cabo de Alimentação'])} VERIFICAR INTEGRIDADE DO CABO DE ALIMENTAÇÃO</div>
             <div class="status-item">${checkbox(pen['Verificar Integridade do Cabo de Sinal'])} VERIFICAR INTEGRIDADE DO CABO DE SINAL</div>
-            <div class="status-item">${checkbox(pen['Interligar o Sistema da Loja com do Shopping'])} INTERLIGAR O SISTEMA DA LOJA COM DO SHOPPING</div>
+            <div class="status-item">${checkbox(pen['Interligar o Sistema da Loja com do Empreendimento'] || pen['Interligar o Sistema da Loja com o do Empreendimento'] || pen['Interligar o Sistema da Loja com do Shopping'])} INTERLIGAR O SISTEMA DA LOJA COM DO EMPREENDIMENTO</div>
             <div class="status-item">${checkbox(pen['Necessário Verificar o Sistema da Loja'])} NECESSÁRIO VERIFICAR O SISTEMA DA LOJA</div>
             <div class="status-item">${checkbox(pen['Troca de Dispositivo'])} TROCA DE DISPOSITIVO <div class="status-item-text"></div></div>
             <div class="status-item">${checkbox(!!data.pendenciasOutros)} OUTROS <div class="status-item-text">${field(data.pendenciasOutros)}</div></div>
@@ -357,9 +357,9 @@ function generateHTML(data) {
         </div>
 
         <div style="font-size: 5pt; text-align: justify; margin-bottom: 2mm; text-transform: uppercase;">
-          * ESSE CHECK LIST É REALIZADO COM APROVAÇÃO DA ADMINISTRAÇÃO DO SHOPPING, SE O SISTEMA BMS DA LOJA NÃO ESTIVER
-          FUNCIONANDO CORRETAMENTE OU DE ACORDO COM AS NORMAS IMPOSTAS PELO SHOPPING, É DE RESPONSABILIDADE DO LOJISTA
-          ADEQUAR O SEU SISTEMA NOS PADRÕES DO SHOPPING.
+          * ESSE CHECK LIST É REALIZADO COM APROVAÇÃO DA ADMINISTRAÇÃO DO EMPREENDIMENTO, SE O SISTEMA BMS DA LOJA NÃO ESTIVER
+          FUNCIONANDO CORRETAMENTE OU DE ACORDO COM AS NORMAS IMPOSTAS PELO EMPREENDIMENTO, É DE RESPONSABILIDADE DO LOJISTA
+          ADEQUAR O SEU SISTEMA NOS PADRÕES DO EMPREENDIMENTO.
         </div>
 
         <!-- Rodapé / Assinaturas -->

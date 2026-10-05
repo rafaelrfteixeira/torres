@@ -92,6 +92,45 @@ const CHECKLISTS = {
     'Verificação do status dos alarmes digitais (pressostato de filtro sujo / fluxo de ar)',
     'Inspeção e reaperto das conexões em bornes e réguas de comando e sensores',
   ],
+  // BMS RioMar Recife e RioMar Aracaju (Controladores e Painéis)
+  'Painel de Automação / Controlador BMS': [
+    'Inspeção visual dos equipamentos',
+    'Limpeza interna e externa dos equipamentos',
+    'Verificação da tensão de alimentação do painel 220Vac',
+    'Verificação da tensão de alimentação do controlador 24Vac',
+    'Inspeção dos fusíveis',
+    'Reaperto de terminais',
+    'Inspeção visual da comunicação do controlador',
+    'Verificação dos dispositivos Dry Contact',
+    'Verificação dos dispositivos Thermistor',
+    'Verificação dos dispositivos 0 – 10V',
+    'Verificação dos dispositivos 4 – 20mA',
+  ],
+  'Painel de Automação / Controlador BMS (RioMar Recife)': [
+    'Inspeção visual dos equipamentos',
+    'Limpeza interna e externa dos equipamentos',
+    'Verificação da tensão de alimentação do painel 220Vac',
+    'Verificação da tensão de alimentação do controlador 24Vac',
+    'Inspeção dos fusíveis',
+    'Reaperto de terminais',
+    'Inspeção visual da comunicação do controlador',
+    'Verificação dos dispositivos Dry Contact',
+    'Verificação dos dispositivos Thermistor',
+    'Verificação dos dispositivos 0 – 10V',
+    'Verificação dos dispositivos 4 – 20mA',
+  ],
+  // SCA (Sistema de Controle de Acesso)
+  'Dispositivo de Controle de Acesso (SCA)': [
+    'Inspeção visual dos equipamentos',
+    'Inspeção visual da fixação dos equipamentos',
+    'Inspeção do fusível de alimentação 12vcc',
+    'Reaperto de terminais',
+    'Limpeza interna e externa dos equipamentos',
+    'Inspeção da comunicação do Terminal IP',
+    'Inspeção da porta de comunicação Switch',
+    'Inspeção do eletroímã',
+    'Inspeção do botão de requisição de saída',
+  ],
 };
 
 // Fallback genérico
@@ -155,13 +194,32 @@ function compressImage(file, maxWidth = 800, quality = 0.5) {
   });
 }
 
-// Detecta tipo de checklist com base no campo "Tipo", "Descrição" e "Sistema"
-function resolveChecklist(tipo, descricao, sistema) {
+// Detecta tipo de checklist com base no campo "Tipo", "Descrição", "Sistema" e "Tenant"
+function resolveChecklist(tipo, descricao, sistema, tenant) {
   const isBMS = String(sistema || '').toLowerCase() === 'bms';
+  const isSCA = String(sistema || '').toLowerCase() === 'sca';
   const t = String(tipo || '').toLowerCase();
   const d = String(descricao || '').toLowerCase();
+  const isRioMarRecife = tenant === 'riomar-recife';
+  const isRioMarAracaju = tenant === 'riomar-aracaju';
+  const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
+  const isShoppingGuararapes = tenant === 'shopping-guararapes';
+
+  if (isSCA) {
+    return {
+      label: tipo || 'Dispositivo SCA',
+      items: CHECKLISTS['Dispositivo de Controle de Acesso (SCA)'],
+    };
+  }
 
   if (isBMS) {
+    if (isRioMarRecife || isRioMarAracaju || isJcpmTradeCenter || isShoppingGuararapes) {
+      return {
+        label: tipo || 'Controlador / Painel BMS',
+        items: CHECKLISTS['Painel de Automação / Controlador BMS'],
+      };
+    }
+
     if (
       t.includes('medi') || t.includes('medidor') || t.includes('mei') || t.includes('consumo') || t.includes('energia') ||
       t.includes('tc') || d.includes('mei') || d.includes('medidor') || d.includes('tc')
@@ -232,6 +290,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
   const [isLoading, setIsLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
   const isBMS = String(sistema || '').toLowerCase() === 'bms';
+  const isSCA = String(sistema || '').toLowerCase() === 'sca';
 
   // Form state
   const [dataExecucao, setDataExecucao] = useState(getTodayDateString());
@@ -257,7 +316,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
   const [selectedZoomImage, setSelectedZoomImage] = useState(null); // null ou string base64
 
   // Checklist dinâmico com base no tipo fixo da matriz mestra
-  const initialResolved = resolveChecklist(dispositivo?.tipo, dispositivo?.descricao, sistema);
+  const initialResolved = resolveChecklist(dispositivo?.tipo, dispositivo?.descricao, sistema, tenant);
   const [tipoLabel, setTipoLabel] = useState(initialResolved.label);
   const [checklistRespostas, setChecklistRespostas] = useState(() =>
     initialResolved.items.map((atividade) => ({ atividade, status: '' }))
@@ -265,7 +324,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
 
   // Resetar checklist se o dispositivo mudar
   useEffect(() => {
-    const res = resolveChecklist(dispositivo?.tipo, dispositivo?.descricao, sistema);
+    const res = resolveChecklist(dispositivo?.tipo, dispositivo?.descricao, sistema, tenant);
     setTipoLabel(res.label);
     setChecklistRespostas(
       res.items.map((atividade) => ({ atividade, status: '' }))
@@ -280,7 +339,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
     setPreview2(null);
     setPhotoSourceModalSlot(null);
     setSelectedZoomImage(null);
-  }, [dispositivo?.rowIndex, dispositivo?.tag, dispositivo?.tipo, dispositivo?.descricao, sistema]);
+  }, [dispositivo?.rowIndex, dispositivo?.tag, dispositivo?.tipo, dispositivo?.descricao, sistema, tenant]);
 
   // Fechar com ESC
   useEffect(() => {
@@ -441,7 +500,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
     // Payload
     const payload = {
       tenant,
-      sistema: isBMS ? 'bms' : 'sdai',
+      sistema: isSCA ? 'sca' : (isBMS ? 'bms' : 'sdai'),
       tag: resolveTag(dispositivo),
       localizacao: dispositivo?.descricao || '',
       descricao: dispositivo?.descricao || '',
@@ -535,9 +594,15 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
         className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden my-4 animate-slide-in"
       >
         {/* ============================================ */}
-        {/* CABEÇALHO VERMELHO                           */}
+        {/* CABEÇALHO DO MODAL                          */}
         {/* ============================================ */}
-        <div className={`bg-gradient-to-r ${isBMS ? 'from-slate-900 via-blue-900 to-indigo-900' : 'from-red-800 to-red-600'} px-4 sm:px-6 py-4 text-white`}>
+        <div className={`bg-gradient-to-r ${
+          isSCA
+            ? 'from-emerald-800 via-green-800 to-teal-800'
+            : isBMS
+              ? 'from-slate-900 via-blue-900 to-indigo-900'
+              : 'from-red-800 to-red-600'
+        } px-4 sm:px-6 py-4 text-white`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 px-2.5 py-1 bg-black/10 rounded-md border border-white/10 text-xs sm:text-sm">
               {currentShopping?.logo && (
@@ -545,8 +610,14 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                   <img src={currentShopping.logo} alt={currentShopping.name} className="h-3 sm:h-4 object-contain" />
                 </div>
               )}
-              <span className={`font-medium ${isBMS ? 'text-blue-100' : 'text-red-50'}`}>
-                {currentShopping?.name} <span className={isBMS ? 'text-blue-300 mx-1' : 'text-red-200 mx-1'}>&gt;</span> {isBMS ? 'Preventiva BMS (Automação)' : 'Preventiva SDAI'}
+              <span className={`font-medium ${isSCA ? 'text-emerald-100' : (isBMS ? 'text-blue-100' : 'text-red-50')}`}>
+                {currentShopping?.name} <span className={isSCA ? 'text-emerald-300 mx-1' : (isBMS ? 'text-blue-300 mx-1' : 'text-red-200 mx-1')}>&gt;</span> {
+                  isSCA
+                    ? 'Preventiva SCA (Controle de Acesso)'
+                    : isBMS
+                      ? 'Preventiva BMS (Automação)'
+                      : 'Preventiva SDAI'
+                }
               </span>
             </div>
             <button
@@ -565,8 +636,14 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
               </div>
             </div>
             <h2 className="text-base sm:text-lg font-bold tracking-wide uppercase">Relatório Operacional</h2>
-            <p className={`${isBMS ? 'text-blue-200' : 'text-red-200'} text-xs sm:text-sm mt-0.5`}>
-              Checklist — Manutenção Preventiva ({isBMS ? 'Áreas Comuns BMS' : 'Áreas Comuns SDAI'})
+            <p className={`${isSCA ? 'text-emerald-200' : (isBMS ? 'text-blue-200' : 'text-red-200')} text-xs sm:text-sm mt-0.5`}>
+              Checklist — Manutenção Preventiva ({
+                isSCA
+                  ? 'Áreas Comuns SCA'
+                  : isBMS
+                    ? 'Áreas Comuns BMS'
+                    : 'Áreas Comuns SDAI'
+              })
             </p>
           </div>
         </div>
@@ -680,15 +757,15 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                 <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   Atividades de Preventiva — {tipoLabel.toUpperCase()}
                 </h3>
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded ${isBMS ? 'bg-cyan-100 text-cyan-800' : 'bg-red-100 text-red-800'}`}>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded ${isSCA ? 'bg-emerald-100 text-emerald-800' : (isBMS ? 'bg-cyan-100 text-cyan-800' : 'bg-red-100 text-red-800')}`}>
                   {checklistRespostas.filter(r => r.status).length}/{checklistRespostas.length} respondidos
                 </span>
               </div>
               {/* Header da tabela */}
-              <div className={`grid grid-cols-[1fr_60px_60px] ${isBMS ? 'bg-cyan-800' : 'bg-red-800'} text-white text-xs font-semibold uppercase tracking-wider`}>
+              <div className={`grid grid-cols-[1fr_60px_60px] ${isSCA ? 'bg-emerald-800' : (isBMS ? 'bg-cyan-800' : 'bg-red-800')} text-white text-xs font-semibold uppercase tracking-wider`}>
                 <div className="px-4 py-2.5">Atividade Executada</div>
-                <div className={`py-2.5 text-center border-l ${isBMS ? 'border-cyan-700' : 'border-red-700'}`}>Sim</div>
-                <div className={`py-2.5 text-center border-l ${isBMS ? 'border-cyan-700' : 'border-red-700'}`}>Não</div>
+                <div className={`py-2.5 text-center border-l ${isSCA ? 'border-emerald-700' : (isBMS ? 'border-cyan-700' : 'border-red-700')}`}>Sim</div>
+                <div className={`py-2.5 text-center border-l ${isSCA ? 'border-emerald-700' : (isBMS ? 'border-cyan-700' : 'border-red-700')}`}>Não</div>
               </div>
               {/* Linhas */}
               {checklistRespostas.map((item, index) => (
@@ -699,7 +776,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                   } ${item.status === 'nao' ? 'bg-red-50' : ''}`}
                 >
                   <div className="px-4 py-3 text-xs sm:text-sm text-slate-700">
-                    <span className={`${isBMS ? 'text-cyan-600' : 'text-red-400'} mr-1.5`}>•</span>
+                    <span className={`${isSCA ? 'text-emerald-600' : (isBMS ? 'text-cyan-600' : 'text-red-400')} mr-1.5`}>•</span>
                     {item.atividade}
                   </div>
                   <div className="flex justify-center py-3 border-l border-slate-200">
@@ -709,7 +786,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                       value="sim"
                       checked={item.status === 'sim'}
                       onChange={() => handleChecklistChange(index, 'sim')}
-                      className={`w-[18px] h-[18px] cursor-pointer ${isBMS ? 'accent-cyan-600' : 'accent-red-600'}`}
+                      className={`w-[18px] h-[18px] cursor-pointer ${isSCA ? 'accent-emerald-600' : (isBMS ? 'accent-cyan-600' : 'accent-red-600')}`}
                     />
                   </div>
                   <div className="flex justify-center py-3 border-l border-slate-200">
@@ -719,7 +796,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                       value="nao"
                       checked={item.status === 'nao'}
                       onChange={() => handleChecklistChange(index, 'nao')}
-                      className={`w-[18px] h-[18px] cursor-pointer ${isBMS ? 'accent-cyan-600' : 'accent-red-600'}`}
+                      className={`w-[18px] h-[18px] cursor-pointer ${isSCA ? 'accent-emerald-600' : (isBMS ? 'accent-cyan-600' : 'accent-red-600')}`}
                     />
                   </div>
                 </div>
@@ -836,13 +913,23 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                 <button
                   type="button"
                   onClick={() => openPhotoSourceModal(1)}
-                  className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-xl p-4 bg-white hover:bg-red-50/20 transition-all h-36 cursor-pointer text-center group"
+                  className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl p-4 bg-white transition-all h-36 cursor-pointer text-center group ${
+                    isSCA
+                      ? 'hover:border-emerald-500 hover:bg-emerald-50/20'
+                      : 'hover:border-red-500 hover:bg-red-50/20'
+                  }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-red-100 flex items-center justify-center text-slate-500 group-hover:text-red-600 transition-colors">
+                  <div className={`w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 transition-colors ${
+                    isSCA
+                      ? 'group-hover:bg-emerald-100 group-hover:text-emerald-600'
+                      : 'group-hover:bg-red-100 group-hover:text-red-600'
+                  }`}>
                     <Camera size={20} />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-700 group-hover:text-red-700 block">
+                    <span className={`text-xs font-bold text-slate-700 block ${
+                      isSCA ? 'group-hover:text-emerald-700' : 'group-hover:text-red-700'
+                    }`}>
                       📷 Foto 01 (Geral)
                     </span>
                     <span className="text-[11px] text-slate-400 block mt-0.5">
@@ -901,13 +988,23 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                 <button
                   type="button"
                   onClick={() => openPhotoSourceModal(2)}
-                  className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-red-500 rounded-xl p-4 bg-white hover:bg-red-50/20 transition-all h-36 cursor-pointer text-center group"
+                  className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl p-4 bg-white transition-all h-36 cursor-pointer text-center group ${
+                    isSCA
+                      ? 'hover:border-emerald-500 hover:bg-emerald-50/20'
+                      : 'hover:border-red-500 hover:bg-red-50/20'
+                  }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-red-100 flex items-center justify-center text-slate-500 group-hover:text-red-600 transition-colors">
+                  <div className={`w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 transition-colors ${
+                    isSCA
+                      ? 'group-hover:bg-emerald-100 group-hover:text-emerald-600'
+                      : 'group-hover:bg-red-100 group-hover:text-red-600'
+                  }`}>
                     <Camera size={20} />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-700 group-hover:text-red-700 block">
+                    <span className={`text-xs font-bold text-slate-700 block ${
+                      isSCA ? 'group-hover:text-emerald-700' : 'group-hover:text-red-700'
+                    }`}>
                       📷 Foto 02 (Teste/Detalhe)
                     </span>
                     <span className="text-[11px] text-slate-400 block mt-0.5">
@@ -987,9 +1084,11 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
 
           {/* ---- NOTA LEGAL ---- */}
           <p className="text-[10px] text-slate-400 leading-relaxed px-1">
-            {isBMS
-              ? '* A manutenção preventiva deve assegurar a operacionalidade contínua dos sistemas de automação predial, medição de energia e utilidades, registrando em relatório quaisquer desvios operacionais.'
-              : '* Conforme NBR 17240 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio esteja em pleno funcionamento, visando registrar em relatório suas restrições ou falhas.'}
+            {isSCA
+              ? '* A manutenção preventiva de Controle de Acesso (SCA) visa assegurar o correto funcionamento de leitoras, eletroímãs, botoeiras, fontes e controladoras, mantendo a integridade da segurança física patrimonial.'
+              : isBMS
+                ? '* A manutenção preventiva deve assegurar a operacionalidade contínua dos sistemas de automação predial, medição de energia e utilidades, registrando em relatório quaisquer desvios operacionais.'
+                : '* Conforme NBR 17240 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio esteja em pleno funcionamento, visando registrar em relatório suas restrições ou falhas.'}
           </p>
 
           {/* ---- BOTÃO DE AÇÃO ---- */}
@@ -1001,9 +1100,11 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                 ? 'bg-slate-400 cursor-not-allowed shadow-none'
                 : deveAbrirOS
                   ? 'bg-gradient-to-r from-red-900 to-red-700 shadow-red-900/30 hover:from-red-800 hover:to-red-600 active:scale-[0.98]'
-                  : isBMS
-                    ? 'bg-gradient-to-r from-cyan-600 to-sky-700 shadow-cyan-600/30 hover:from-cyan-500 hover:to-sky-600 active:scale-[0.98]'
-                    : 'bg-gradient-to-r from-red-600 to-red-800 shadow-red-500/30 hover:from-red-500 hover:to-red-700 active:scale-[0.98]'
+                  : isSCA
+                    ? 'bg-gradient-to-r from-emerald-600 to-green-700 shadow-emerald-600/30 hover:from-emerald-500 hover:to-green-600 active:scale-[0.98]'
+                    : isBMS
+                      ? 'bg-gradient-to-r from-cyan-600 to-sky-700 shadow-cyan-600/30 hover:from-cyan-500 hover:to-sky-600 active:scale-[0.98]'
+                      : 'bg-gradient-to-r from-red-600 to-red-800 shadow-red-500/30 hover:from-red-500 hover:to-red-700 active:scale-[0.98]'
             }`}
           >
             {isLoading ? (

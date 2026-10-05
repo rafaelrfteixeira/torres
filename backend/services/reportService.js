@@ -125,9 +125,12 @@ async function resolveSharePointIds(graphClient, targetListName) {
  */
 async function fetchPreventiveHistory(graphClient, tenantConfig, mes, ano, sistema = 'sdai') {
   const isBMS = String(sistema).toLowerCase() === 'bms';
-  const listName = isBMS
-    ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
-    : tenantConfig.listaHistoricoPreventivas;
+  const isSCA = String(sistema).toLowerCase() === 'sca';
+  const listName = isSCA
+    ? tenantConfig.listaHistoricoPreventivasSca
+    : (isBMS
+      ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+      : tenantConfig.listaHistoricoPreventivas);
   if (!listName) return [];
 
   const { siteId, listId } = await resolveSharePointIds(graphClient, listName);
@@ -407,9 +410,12 @@ async function fetchCorretivas(graphClient, tenantConfig, sistema = 'sdai') {
  */
 async function fetchMatrizMestra(accessToken, tenantConfig, sistema = 'sdai') {
   const isBMS = String(sistema).toLowerCase() === 'bms';
-  const excelUrl = isBMS
-    ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
-    : tenantConfig.excelPreventivasUrl;
+  const isSCA = String(sistema).toLowerCase() === 'sca';
+  const excelUrl = isSCA
+    ? tenantConfig.excelPreventivasScaUrl
+    : (isBMS
+      ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+      : tenantConfig.excelPreventivasUrl);
 
   if (!excelUrl) {
     return [];
@@ -432,6 +438,7 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
   const nomeMesStr = NOME_MESES[Number(mes)] || mes;
   const sistemaUpper = String(sistema || 'sdai').toUpperCase();
   const isBMS = sistemaUpper === 'BMS';
+  const isSCA = sistemaUpper === 'SCA';
   const dataEmissaoStr = new Date().toLocaleDateString('pt-BR');
 
   const SISTEMAS_MAP = {
@@ -1376,7 +1383,7 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
 
         <!-- Rodapé -->
         <footer class="norm-footer">
-            ${isBMS ? `
+            ${isBMS || isSCA ? `
             * Este documento emite o parecer de conformidade situacional técnica com base nos ensaios executados por
             amostragem programada. As pendências críticas listadas acima demandam acompanhamento cronológico através das Ordens de Serviço
             supracitadas.

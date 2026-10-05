@@ -51,7 +51,7 @@ const PENDENCIAS = [
   'Necessário Abertura do Forro',
   'Verificar Integridade do Cabo de Alimentação',
   'Verificar Integridade do Cabo de Sinal',
-  'Interligar o Sistema da Loja com do Shopping',
+  'Interligar o Sistema da Loja com do Empreendimento',
   'Necessário Verificar o Sistema da Loja',
   'Troca de Dispositivo',
 ];

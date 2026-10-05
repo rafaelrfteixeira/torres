@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import {
   Search, AlertTriangle, Clock, ChevronDown, ChevronUp,
-  Loader2, Wrench, MapPin, Hash, Flame, Cpu, RefreshCw
+  Loader2, Wrench, MapPin, Hash, Flame, Cpu, RefreshCw, Shield
 } from 'lucide-react';
 import InspecaoFormModal from '../components/InspecaoFormModal';
 import { syncManager } from '../services/syncManager';
@@ -30,8 +30,9 @@ const MESES_NOMES = [
 export default function PreventivasAreaComum({ user, shoppingsMetadata = [], sistema: propSistema }) {
   const { tenant } = useParams();
   const location = useLocation();
-  const sistema = propSistema || (location.pathname.includes('/bms/') ? 'bms' : 'sdai');
+  const sistema = propSistema || (location.pathname.includes('/bms/') ? 'bms' : (location.pathname.includes('/sca/') ? 'sca' : 'sdai'));
   const isBMS = sistema === 'bms';
+  const isSCA = sistema === 'sca';
 
   const [dispositivos, setDispositivos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -184,8 +185,8 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [], sis
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Wrench size={24} className={isBMS ? "text-blue-600" : "text-red-600"} />
-            Preventivas Área Comum {isBMS ? '— Automação BMS' : '— SDAI'}
+            <Wrench size={24} className={isSCA ? "text-emerald-600" : (isBMS ? "text-blue-600" : "text-red-600")} />
+            Preventivas Área Comum {isSCA ? '— Controle de Acesso (SCA)' : (isBMS ? '— Automação BMS' : '— SDAI')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Painel operacional — {mesAtualNome} 2026
@@ -221,7 +222,7 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [], sis
           label={`Mês Atual (${mesAtualNome.substring(0, 3)})`}
           value={totalPendentes}
           icon={Wrench}
-          color="from-emerald-600 to-emerald-800"
+          color={isSCA ? "from-emerald-700 to-teal-800" : (isBMS ? "from-blue-600 to-indigo-800" : "from-emerald-600 to-emerald-800")}
           className="col-span-2 sm:col-span-1"
         />
       </div>
@@ -235,8 +236,14 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [], sis
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar por descrição, pavimento, tipo ou laço..."
-          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none placeholder:text-slate-400 shadow-sm transition-all"
+          placeholder={isSCA ? "Buscar por TAG, localização, pavimento ou tipo..." : (isBMS ? "Buscar por TAG, painel, pavimento ou tipo..." : "Buscar por descrição, pavimento, tipo ou laço...")}
+          className={`w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm outline-none placeholder:text-slate-400 shadow-sm transition-all ${
+            isSCA
+              ? 'focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+              : isBMS
+                ? 'focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                : 'focus:border-red-500 focus:ring-1 focus:ring-red-500'
+          }`}
         />
         {searchTerm && (
           <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
@@ -302,6 +309,7 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [], sis
                   dispositivo={d}
                   variant="atrasado"
                   isBMS={isBMS}
+                  isSCA={isSCA}
                   onClick={() => setSelectedDispositivo(d)}
                 />
               ))}
@@ -352,6 +360,7 @@ export default function PreventivasAreaComum({ user, shoppingsMetadata = [], sis
                   dispositivo={d}
                   variant="pendente"
                   isBMS={isBMS}
+                  isSCA={isSCA}
                   onClick={() => setSelectedDispositivo(d)}
                 />
               ))}
@@ -418,12 +427,12 @@ function KpiCard({ label, value, icon: Icon, color, pulse = false, className = '
 /**
  * DispositivoCard — Card individual de dispositivo na lista
  */
-function DispositivoCard({ dispositivo, variant, isBMS = false, onClick }) {
+function DispositivoCard({ dispositivo, variant, isBMS = false, isSCA = false, onClick }) {
   const isAtrasado = variant === 'atrasado';
 
-  // Identificação do dispositivo: se for BMS, mostra TAG + Descrição em texto uniforme (ex: "3019 - PICADYLLI" ou "QDF-01 - ILUMINAÇÃO")
+  // Identificação do dispositivo: se for BMS ou SCA, mostra TAG + Descrição em texto uniforme
   const getTituloCard = () => {
-    if (isBMS) {
+    if (isBMS || isSCA) {
       const tag = (dispositivo.rawTag || dispositivo.tag || '').trim();
       const desc = (dispositivo.descricao || '').trim();
       const hasValidTag = tag && tag !== 'TAG-N/A' && !tag.startsWith('TAG-') && tag.toLowerCase() !== desc.toLowerCase();
@@ -478,7 +487,7 @@ function DispositivoCard({ dispositivo, variant, isBMS = false, onClick }) {
             )}
             {dispositivo.tipo && (
               <span className="flex items-center gap-1">
-                {isBMS ? <Cpu size={12} className="text-slate-400" /> : <Flame size={12} className="text-slate-400" />}
+                {isSCA ? <Shield size={12} className="text-slate-400" /> : (isBMS ? <Cpu size={12} className="text-slate-400" /> : <Flame size={12} className="text-slate-400" />)}
                 {dispositivo.tipo}
               </span>
             )}

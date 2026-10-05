@@ -15,9 +15,9 @@ import { syncManager } from '../services/syncManager';
  */
 
 const SISTEMAS = [
-  'Alarme do Shopping',
+  'Alarme do Empreendimento',
   'Alarme da Loja',
-  'Comando de Gás',
+  'Detecção de Gás',
 ];
 
 const TIPOS_LOJA = ['Âncora', 'Megaloja', 'Satélite', 'Fast Food', 'Restaurante', 'Clínica'];
@@ -33,7 +33,7 @@ const PENDENCIAS = [
   'Necessário Abertura do Forro',
   'Verificar Integridade do Cabo de Alimentação',
   'Verificar Integridade do Cabo de Sinal',
-  'Interligar o Sistema da Loja com do Shopping',
+  'Interligar o Sistema da Loja com do Empreendimento',
   'Necessário Verificar o Sistema da Loja',
   'Troca de Dispositivo',
 ];

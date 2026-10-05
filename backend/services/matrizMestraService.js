@@ -144,9 +144,12 @@ function parseMatrizMestra(buffer) {
   }
 
   // 3. TAG / Identificação
-  let tagIdx = header.findIndex((h) => h === 'tag' || h.startsWith('tag ') || h === 'id' || h === 'código' || h === 'codigo');
+  let tagIdx = header.findIndex((h) => h === 'tag' || h.startsWith('tag ') || h === 'id' || h === 'código' || h === 'codigo' || h === 'identificação' || h === 'identificacao' || h === 'ativo');
   if (tagIdx === -1) {
-    tagIdx = header.findIndex((h) => h.includes('tag') && !h.includes('montagem'));
+    tagIdx = header.findIndex((h) => (h.includes('tag') || h.includes('identifica') || h.includes('código') || h.includes('codigo') || h.includes('ativo')) && !h.includes('montagem'));
+  }
+  if (tagIdx === -1) {
+    tagIdx = header.findIndex((h) => h === 'item' || h === 'nº' || h === 'no.' || h === 'número' || h === 'numero');
   }
 
   // 4. Tipo de equipamento

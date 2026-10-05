@@ -28,12 +28,12 @@ function getSDAISubmenus(tenant) {
   const isBeachClass = tenant === 'beach-class';
   const isRioMarAracaju = tenant === 'riomar-aracaju';
   // Tenants com funcionalidades de preventivas ativas
-  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife;
+  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
   // Tenants com funcionalidades de corretivas ativas
   const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife || isRioMarAracaju;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
-  const hasInspecaoComingSoon = isSalvadorNorte || isJcpmTradeCenter || isBeachClass;
-  return [
+  const hasInspecaoComingSoon = isSalvadorNorte;
+  const submenus = [
     {
       id: 'dashboard-inspecao',
       label: 'Dashboard Inspeção Lojas',
@@ -84,6 +84,12 @@ function getSDAISubmenus(tenant) {
       isCadastros: true,
     },
   ];
+
+  if (isJcpmTradeCenter || isBeachClass) {
+    return submenus.filter((s) => s.id !== 'dashboard-inspecao' && s.id !== 'inspecao-lojas');
+  }
+
+  return submenus;
 }
 
 /**
@@ -92,20 +98,25 @@ function getSDAISubmenus(tenant) {
  * @returns {Array} Lista de submenus
  */
 function getBMSSubmenus(tenant) {
-  const allComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias' || tenant === 'jcpm-trade-center';
   const isRioMarAracaju = tenant === 'riomar-aracaju';
   const isRioMarKennedy = tenant === 'riomar-kennedy';
-  const hasPreventivasBMSActive = isRioMarKennedy;
-  const hasCorretivasActive = isRioMarAracaju || isRioMarKennedy;
-  const hasRelatoriosActive = isRioMarAracaju || isRioMarKennedy;
+  const isRioMarRecife = tenant === 'riomar-recife';
+  const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
+  const isBeachClass = tenant === 'beach-class';
+  const isShoppingGuararapes = tenant === 'shopping-guararapes';
+  const hasPreventivasBMSActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes;
+  const hasCorretivasActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes;
+  const hasRelatoriosActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes;
+  const hasInspecaoComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias';
+  const isCadastrosComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias';
 
-  return [
+  const submenus = [
     {
       id: 'dashboard-inspecao',
       label: 'Dashboard Inspeção Lojas',
       route: `/${tenant}/bms/dashboard`,
       icon: 'bar-chart',
-      comingSoon: allComingSoon,
+      comingSoon: hasInspecaoComingSoon,
     },
     {
       id: 'dashboard-preventivas',
@@ -119,7 +130,7 @@ function getBMSSubmenus(tenant) {
       label: 'Inspeção Lojas',
       route: `/${tenant}/bms/inspecao-lojas`,
       icon: 'clipboard-check',
-      comingSoon: allComingSoon,
+      comingSoon: hasInspecaoComingSoon,
     },
     {
       id: 'preventivas-area-comum',
@@ -148,9 +159,15 @@ function getBMSSubmenus(tenant) {
       route: `/${tenant}/bms/cadastros`,
       icon: 'database',
       isCadastros: true,
-      comingSoon: allComingSoon,
+      comingSoon: isCadastrosComingSoon,
     },
   ];
+
+  if (isJcpmTradeCenter || isBeachClass) {
+    return submenus.filter((s) => s.id !== 'dashboard-inspecao' && s.id !== 'inspecao-lojas');
+  }
+
+  return submenus;
 }
 
 /**
@@ -159,35 +176,40 @@ function getBMSSubmenus(tenant) {
  * @returns {Array} Lista de submenus
  */
 function getSCASubmenus(tenant) {
+  const isRioMarRecife = tenant === 'riomar-recife';
+  const hasPreventivasSCAActive = isRioMarRecife;
+  const hasCorretivasActive = isRioMarRecife;
+  const hasRelatoriosActive = isRioMarRecife;
   const allComingSoon = tenant === 'empresarial-cicero-dias';
+
   return [
     {
       id: 'dashboard-preventivas',
       label: 'Dashboard Preventivas',
       route: `/${tenant}/sca/preventivas/dashboard`,
       icon: 'activity',
-      comingSoon: true,
+      comingSoon: !hasPreventivasSCAActive,
     },
     {
-      id: 'preventivas',
-      label: 'Preventivas',
-      route: `/${tenant}/sca/preventivas`,
+      id: 'preventivas-area-comum',
+      label: 'Preventivas Área Comum',
+      route: `/${tenant}/sca/preventivas/area-comum`,
       icon: 'wrench',
-      comingSoon: true,
+      comingSoon: !hasPreventivasSCAActive,
     },
     {
       id: 'corretivas',
       label: 'Corretivas/Ocorrências',
       route: `/${tenant}/sca/corretivas`,
       icon: 'alert-triangle',
-      comingSoon: true,
+      comingSoon: !hasCorretivasActive,
     },
     {
       id: 'relatorios',
       label: 'Relatórios',
       route: `/${tenant}/sca/relatorios`,
       icon: 'file-text',
-      comingSoon: true,
+      comingSoon: !hasRelatoriosActive,
     },
     {
       id: 'cadastros',

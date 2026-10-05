@@ -16,6 +16,7 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
   const tenantIndex = pathParts.indexOf(tenant);
   const sistema = tenantIndex >= 0 ? pathParts[tenantIndex + 1] : '';
   const isBMS = sistema === 'bms';
+  const isSCA = sistema === 'sca';
 
   const currentShopping = shoppingsMetadata.find((s) => s.id === tenant) || {
     id: tenant,
@@ -23,10 +24,13 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
     excelLojasUrl: '',
     excelPreventivasUrl: '',
     excelPreventivasBmsUrl: '',
+    excelPreventivasScaUrl: '',
     listaHistoricoPreventivas: null,
     listaHistoricoPreventivasBms: null,
+    listaHistoricoPreventivasSca: null,
     listaCorretivas: null,
     listaCorretivasBms: null,
+    listaCorretivasSca: null,
   };
 
   const sistemaLabel = (sistema || '').toUpperCase();
@@ -52,18 +56,22 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
       });
     }
 
-    // Link da Matriz Mestra de Preventivas (SDAI e BMS)
-    const matrizMestraUrl = isBMS
-      ? (currentShopping.excelPreventivasBmsUrl || currentShopping.excelPreventivasUrl)
-      : currentShopping.excelPreventivasUrl;
+    // Link da Matriz Mestra de Preventivas (SDAI, BMS e SCA)
+    const matrizMestraUrl = isSCA
+      ? currentShopping.excelPreventivasScaUrl
+      : (isBMS
+        ? (currentShopping.excelPreventivasBmsUrl || currentShopping.excelPreventivasUrl)
+        : currentShopping.excelPreventivasUrl);
 
     if (matrizMestraUrl) {
       links.push({
         id: 'excel-preventivas',
         title: 'Matriz Mestra de Preventivas',
-        subtitle: isBMS
-          ? 'Planilha de cronograma e matriz de preventiva BMS'
-          : 'Planilha de cronograma e matriz de manutenção preventiva',
+        subtitle: isSCA
+          ? 'Planilha de cronograma e matriz de preventiva SCA'
+          : (isBMS
+            ? 'Planilha de cronograma e matriz de preventiva BMS'
+            : 'Planilha de cronograma e matriz de manutenção preventiva'),
         url: matrizMestraUrl,
         icon: (
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -131,22 +139,29 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
     }
 
     // Lista de Histórico de Preventivas no SharePoint
-    const historicoList = isBMS
-      ? (currentShopping.listaHistoricoPreventivasBms || currentShopping.listaHistoricoPreventivas)
-      : currentShopping.listaHistoricoPreventivas;
+    const historicoList = isSCA
+      ? currentShopping.listaHistoricoPreventivasSca
+      : (isBMS
+        ? (currentShopping.listaHistoricoPreventivasBms || currentShopping.listaHistoricoPreventivas)
+        : currentShopping.listaHistoricoPreventivas);
 
     if (historicoList) {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const historicoParam = isBMS && currentShopping.listaHistoricoPreventivasBms
-        ? 'listaHistoricoPreventivasBms'
-        : 'listaHistoricoPreventivas';
+      const historicoParam = isSCA && currentShopping.listaHistoricoPreventivasSca
+        ? 'listaHistoricoPreventivasSca'
+        : (isBMS && currentShopping.listaHistoricoPreventivasBms
+          ? 'listaHistoricoPreventivasBms'
+          : 'listaHistoricoPreventivas');
+      const sistemaQuery = isSCA ? '&sistema=sca' : (isBMS ? '&sistema=bms' : '');
       links.push({
         id: 'sharepoint-preventivas',
         title: 'Histórico de Preventivas Realizadas',
-        subtitle: isBMS
-          ? 'Registro e banco de vistorias BMS no SharePoint'
-          : 'Registro e banco de vistorias no SharePoint',
-        url: `${API_URL}/preventivas/go-to-list?list=${historicoParam}&tenant=${tenant}${isBMS ? '&sistema=bms' : ''}`,
+        subtitle: isSCA
+          ? 'Registro e banco de vistorias SCA no SharePoint'
+          : (isBMS
+            ? 'Registro e banco de vistorias BMS no SharePoint'
+            : 'Registro e banco de vistorias no SharePoint'),
+        url: `${API_URL}/preventivas/go-to-list?list=${historicoParam}&tenant=${tenant}${sistemaQuery}`,
         icon: (
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />

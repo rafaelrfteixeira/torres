@@ -20,10 +20,18 @@ const shoppings = {
     listaBMS: '2024-6-1361-BMS-Shopping Riomar Recife',
     excelLojasUrl: 'https://torrescx-my.sharepoint.com/:x:/g/personal/msantos_torrescx_com_br/IQBfN8g4jixWQZEVBdGxBqpOAdzKmnnqf37pdxWv8UftGLM',
     ccEmails: ['msantos@torrescx.com.br'],
-    // Preventivas Área Comum
-    excelPreventivasUrl: null, // TODO: Configurar URL da Matriz Mestra para RioMar Recife
-    listaHistoricoPreventivas: null,
+    // Preventivas Área Comum (SDAI)
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBlgDpkL1BhSYMsWsEGiYA8AVaej4mTPeNeQIjIGngv-_k',
+    listaHistoricoPreventivas: 'SHOPPING_RIOMAR_RECIFE_PREVENTIVAS_SDAI_2026',
+    // Preventivas Área Comum (BMS)
+    excelPreventivasBmsUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQAQgCldgpX-SoKeKX6pMqpuAdw8G95651DaO0CelOVtm8w',
+    listaHistoricoPreventivasBms: 'SHOPPING_RIOMAR_RECIFE_PREVENTIVAS_BMS_2026',
+    // Preventivas Área Comum (SCA)
+    excelPreventivasScaUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCav1rTYpkpR40BF4zsTEMHAeuhAXjhUP1zn4SQ44uNIWU',
+    listaHistoricoPreventivasSca: 'SHOPPING_RIOMAR_RECIFE_PREVENTIVAS_SCA_2026',
     listaCorretivas: 'CC-2024-6-1361-MAN-SHOP_RIOMAR_RECIFE',
+    listaCorretivasBms: 'CC-2024-6-1361-MAN-SHOP_RIOMAR_RECIFE',
+    listaCorretivasSca: 'CC-2024-6-1361-MAN-SHOP_RIOMAR_RECIFE',
     // Responsável Shopping padrão (usado como default nos formulários)
     responsavelShopping: {
       sdai: {
@@ -35,6 +43,11 @@ const shoppings = {
         solicitante: 'José Gabriel',
         telefone: '81992643095',
         email: 'jose.gabriel@riomarrecife.com.br',
+      },
+      sca: {
+        solicitante: 'Flávia Barbosa',
+        telefone: '81992643095',
+        email: 'flavia.barbosa@riomarrecife.com.br',
       },
     },
   },
@@ -97,10 +110,14 @@ const shoppings = {
     listaBMS: '2026-1-1765-BMS-GUARARAPES SHOPPING',
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBHpqCvw4i8RJHroFbfTUOGAdLR3yvlO-9xv0cb_Sk8_sw',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
-    // Preventivas Área Comum
+    // Preventivas Área Comum (SDAI)
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQA5YLv6hEgeSpDMuoDO2Fb9ARwv4Jg64Mu9jCbrwBTPRoM',
     listaHistoricoPreventivas: 'SHOPPING_GUARARAPES_PREVENTIVAS_2026',
+    // Preventivas Área Comum (BMS)
+    excelPreventivasBmsUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQD9ZqwTvoOPQrSoZq9-tNjjATFpy7SH4MdYZa5buqm4A0o',
+    listaHistoricoPreventivasBms: 'SHOPPING_GUARARAPES_PREVENTIVAS_BMS_2026',
     listaCorretivas: 'CC-2026-1-1765-MAN-SH-GUARARAPES',
+    listaCorretivasBms: 'CC-2026-1-1765-MAN-SH-GUARARAPES',
     responsavelShopping: {
       sdai: {
         solicitante: 'Edielison Santos',
@@ -121,10 +138,11 @@ const shoppings = {
     listaBMS: '2018-6-26-BMS-Shopping Aracaju BMS',
     excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQDq52YdifuhT4uSJjYlkAVhAe9BOkesEAGjPzZjsaqFxBI',
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
-    // Preventivas Área Comum
-    excelPreventivasUrl: null, // TODO: Configurar
-    listaHistoricoPreventivas: null,
+    // Preventivas Área Comum (BMS)
+    excelPreventivasBmsUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQDJqR5h3bx1SZ4nfyu70gL-AYnDvq9KFYV3hm9oPMHGxSs',
+    listaHistoricoPreventivasBms: 'RIOMAR_ARACAJU_PREVENTIVAS_BMS_2026',
     listaCorretivas: 'CC-2018-6-26-MAN-RIOMAR-AJU-BMS',
+    listaCorretivasBms: 'CC-2018-6-26-MAN-RIOMAR-AJU-BMS',
     responsavelShopping: {
       sdai: null,
       bms: {
@@ -242,10 +260,14 @@ const shoppings = {
     listaBMS: null,
     excelLojasUrl: null,
     ccEmails: ['carlos.gueiros@torrescx.com.br'],
-    // Preventivas Área Comum
+    // Preventivas Área Comum (SDAI)
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQAvYiycwgZVS7YMOqqwDyZiAUAxZoU1suQ65QmbFO5DwZg',
     listaHistoricoPreventivas: 'JCPM_TRADE_CENTER_PREVENTIVAS_2026',
+    // Preventivas Área Comum (BMS)
+    excelPreventivasBmsUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQD2iQ3vMcpWQYfnMaFb3v4UATyR_KqRmM8Cqiea8h4hrq0',
+    listaHistoricoPreventivasBms: 'JCPM_TRADE_CENTER_PREVENTIVAS_BMS_2026',
     listaCorretivas: 'CC-2021-10-634-MAN-JCPM-TRADE-BMS-SDAI',
+    listaCorretivasBms: 'CC-2021-10-634-MAN-JCPM-TRADE-BMS-SDAI',
     responsavelShopping: {
       sdai: null,
       bms: null,
@@ -279,7 +301,7 @@ const permissions = {
   'pedro.ricardolima@torrescx.com.br': ['shopping-recife'],
   'msantos@torrescx.com.br': ['*'],
   'antonio.cezar@torrescx.com.br': ['riomar-recife'],
-  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class'],
+  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class', 'riomar-recife'],
   'david.teixeira@torrescx.com.br': ['riomar-kennedy'],
   'ruan.lima@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center'],
   'leandro.araujo@torrescx.com.br': ['riomar-kennedy'],

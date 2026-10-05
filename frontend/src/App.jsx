@@ -14,6 +14,7 @@ import CorretivasOcorrencias from './pages/CorretivasOcorrencias';
 import Relatorios from './pages/Relatorios';
 import DashboardPreventivas from './pages/DashboardPreventivas';
 import DashboardPreventivasBMS from './pages/DashboardPreventivasBMS';
+import DashboardPreventivasSCA from './pages/DashboardPreventivasSCA';
 import OfflineBanner from './components/OfflineBanner';
 import InstallPWA from './components/InstallPWA';
 import { db } from './services/db';
@@ -39,16 +40,22 @@ function TenantRedirect() {
  * Componente que garante que a funcionalidade só está ativa para tenants habilitados.
  * Caso contrário, renderiza a tela "Em Breve".
  */
-const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy', 'jcpm-trade-center', 'beach-class', 'shopping-recife', 'plaza-shopping-recife'];
+const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy', 'jcpm-trade-center', 'beach-class', 'shopping-recife', 'plaza-shopping-recife', 'riomar-recife'];
 function ActivePreventivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
 }
 
-const TENANTS_WITH_PREVENTIVAS_BMS = ['riomar-kennedy'];
+const TENANTS_WITH_PREVENTIVAS_BMS = ['riomar-kennedy', 'riomar-recife', 'riomar-aracaju', 'jcpm-trade-center', 'shopping-guararapes'];
 function ActivePreventivasBMSRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_PREVENTIVAS_BMS.includes(tenant) ? children : <ComingSoon />;
+}
+
+const TENANTS_WITH_PREVENTIVAS_SCA = ['riomar-recife'];
+function ActivePreventivasSCARoute({ children }) {
+  const { tenant } = useParams();
+  return TENANTS_WITH_PREVENTIVAS_SCA.includes(tenant) ? children : <ComingSoon />;
 }
 
 const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center', 'beach-class', 'riomar-aracaju'];
@@ -59,7 +66,7 @@ function ActiveCorretivasRoute({ children }) {
 
 function ActiveReportsRoute({ children }) {
   const { tenant } = useParams();
-  const hasAccess = TENANTS_WITH_PREVENTIVAS.includes(tenant) || TENANTS_WITH_CORRETIVAS.includes(tenant) || TENANTS_WITH_PREVENTIVAS_BMS.includes(tenant);
+  const hasAccess = TENANTS_WITH_PREVENTIVAS.includes(tenant) || TENANTS_WITH_CORRETIVAS.includes(tenant) || TENANTS_WITH_PREVENTIVAS_BMS.includes(tenant) || TENANTS_WITH_PREVENTIVAS_SCA.includes(tenant);
   return hasAccess ? children : <ComingSoon />;
 }
 
@@ -317,16 +324,37 @@ function App() {
           } />
           <Route path="bms/cadastros" element={
 
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
               <Cadastros shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
 
           {/* ===== SCA ===== */}
-          <Route path="sca/preventivas/dashboard" element={<ComingSoon />} />
-          <Route path="sca/preventivas" element={<ComingSoon />} />
-          <Route path="sca/corretivas" element={<ComingSoon />} />
-          <Route path="sca/relatorios" element={<ComingSoon />} />
+          <Route path="sca/preventivas/dashboard" element={
+            <ActivePreventivasSCARoute>
+              <DashboardPreventivasSCA user={user} shoppingsMetadata={shoppingsMetadata} />
+            </ActivePreventivasSCARoute>
+          } />
+          <Route path="sca/preventivas/area-comum" element={
+            <ActivePreventivasSCARoute>
+              <PreventivasAreaComum user={user} shoppingsMetadata={shoppingsMetadata} sistema="sca" />
+            </ActivePreventivasSCARoute>
+          } />
+          <Route path="sca/preventivas" element={
+            <ActivePreventivasSCARoute>
+              <PreventivasAreaComum user={user} shoppingsMetadata={shoppingsMetadata} sistema="sca" />
+            </ActivePreventivasSCARoute>
+          } />
+          <Route path="sca/corretivas" element={
+            <ActiveCorretivasRoute>
+              <CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />
+            </ActiveCorretivasRoute>
+          } />
+          <Route path="sca/relatorios" element={
+            <ActiveReportsRoute>
+              <Relatorios shoppingsMetadata={shoppingsMetadata} />
+            </ActiveReportsRoute>
+          } />
           <Route path="sca/cadastros" element={
             <ComingSoonForTenants blocked={['empresarial-cicero-dias']}>
               <Cadastros shoppingsMetadata={shoppingsMetadata} />

@@ -57,12 +57,24 @@ function mapFormToListFields(formData) {
     field_11: formData.tipoLoja || '',                           // Tipo da Loja
 
     // Sistemas
-    field_12: boolToSimNao(sistemas.alarme_do_shopping?.existenteSim,  sistemas.alarme_do_shopping?.existenteNao),   // Alarme Shopping - Existente
-    field_13: boolToSimNao(sistemas.alarme_do_shopping?.funcionandoSim, sistemas.alarme_do_shopping?.funcionandoNao), // Alarme Shopping - Funcionando
+    field_12: boolToSimNao(
+      sistemas.alarme_do_empreendimento?.existenteSim ?? sistemas.alarme_do_shopping?.existenteSim,
+      sistemas.alarme_do_empreendimento?.existenteNao ?? sistemas.alarme_do_shopping?.existenteNao
+    ),   // Alarme Empreendimento - Existente
+    field_13: boolToSimNao(
+      sistemas.alarme_do_empreendimento?.funcionandoSim ?? sistemas.alarme_do_shopping?.funcionandoSim,
+      sistemas.alarme_do_empreendimento?.funcionandoNao ?? sistemas.alarme_do_shopping?.funcionandoNao
+    ), // Alarme Empreendimento - Funcionando
     field_14: boolToSimNao(sistemas.alarme_da_loja?.existenteSim,       sistemas.alarme_da_loja?.existenteNao),       // Alarme Loja - Existente
     field_15: boolToSimNao(sistemas.alarme_da_loja?.funcionandoSim,     sistemas.alarme_da_loja?.funcionandoNao),     // Alarme Loja - Funcionando
-    field_16: boolToSimNao(sistemas.comando_de_gás?.existenteSim,       sistemas.comando_de_gás?.existenteNao),       // Comando de Gás - Existente
-    field_17: boolToSimNao(sistemas.comando_de_gás?.funcionandoSim,     sistemas.comando_de_gás?.funcionandoNao),     // Comando de Gás - Funcionando
+    field_16: boolToSimNao(
+      sistemas['detecção_de_gás']?.existenteSim ?? sistemas.deteccao_de_gas?.existenteSim ?? sistemas['comando_de_gás']?.existenteSim ?? sistemas.comando_de_gas?.existenteSim,
+      sistemas['detecção_de_gás']?.existenteNao ?? sistemas.deteccao_de_gas?.existenteNao ?? sistemas['comando_de_gás']?.existenteNao ?? sistemas.comando_de_gas?.existenteNao
+    ),       // Detecção de Gás - Existente
+    field_17: boolToSimNao(
+      sistemas['detecção_de_gás']?.funcionandoSim ?? sistemas.deteccao_de_gas?.funcionandoSim ?? sistemas['comando_de_gás']?.funcionandoSim ?? sistemas.comando_de_gas?.funcionandoSim,
+      sistemas['detecção_de_gás']?.funcionandoNao ?? sistemas.deteccao_de_gas?.funcionandoNao ?? sistemas['comando_de_gás']?.funcionandoNao ?? sistemas.comando_de_gas?.funcionandoNao
+    ),     // Detecção de Gás - Funcionando
 
     // Especificações
     field_18: formData.centralPropria === 'sim' ? 'Sim' : formData.centralPropria === 'nao' ? 'Não' : '',  // Central Própria
@@ -88,7 +100,11 @@ function mapFormToListFields(formData) {
     field_32: boolToText(formData.pendencias?.['Necessário Abertura do Forro']),
     field_33: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Alimentação']),
     field_34: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Sinal']),
-    field_35: boolToText(formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']),
+    field_35: boolToText(
+      formData.pendencias?.['Interligar o Sistema da Loja com do Empreendimento'] ??
+      formData.pendencias?.['Interligar o Sistema da Loja com o do Empreendimento'] ??
+      formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']
+    ),
     field_36: boolToText(formData.pendencias?.['Necessário Verificar o Sistema da Loja']),
     field_37: boolToText(formData.pendencias?.['Troca de Dispositivo']),
     field_38: formData.pendenciasOutros || '',
@@ -185,7 +201,11 @@ function mapBMSFormToListFields(formData, tenantSlug) {
       field_32: boolToText(formData.pendencias?.['Necessário Abertura do Forro']),
       field_33: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Alimentação']),
       field_34: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Sinal']),
-      field_35: boolToText(formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']),
+      field_35: boolToText(
+        formData.pendencias?.['Interligar o Sistema da Loja com do Empreendimento'] ??
+        formData.pendencias?.['Interligar o Sistema da Loja com o do Empreendimento'] ??
+        formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']
+      ),
       field_36: boolToText(formData.pendencias?.['Necessário Verificar o Sistema da Loja']),
       field_37: boolToText(formData.pendencias?.['Troca de Dispositivo']),
       field_38: formData.pendenciasOutros || '',
@@ -243,7 +263,11 @@ function mapBMSFormToListFields(formData, tenantSlug) {
     field_32: boolToText(formData.pendencias?.['Necessário Abertura do Forro']),
     field_33: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Alimentação']),
     field_34: boolToText(formData.pendencias?.['Verificar Integridade do Cabo de Sinal']),
-    field_35: boolToText(formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']),
+    field_35: boolToText(
+      formData.pendencias?.['Interligar o Sistema da Loja com do Empreendimento'] ??
+      formData.pendencias?.['Interligar o Sistema da Loja com o do Empreendimento'] ??
+      formData.pendencias?.['Interligar o Sistema da Loja com do Shopping']
+    ),
     field_36: boolToText(formData.pendencias?.['Necessário Verificar o Sistema da Loja']),
     field_37: boolToText(formData.pendencias?.['Troca de Dispositivo']),
     field_38: formData.pendenciasOutros || '',
@@ -282,6 +306,10 @@ function mapListFieldsToForm(fields) {
     tipoLoja: fields.field_11 || '',
 
     sistemas: {
+      alarme_do_empreendimento: {
+        existenteSim:   fields.field_12 === 'Sim', existenteNao:    fields.field_12 === 'Não',
+        funcionandoSim: fields.field_13 === 'Sim', funcionandoNao:  fields.field_13 === 'Não',
+      },
       alarme_do_shopping: {
         existenteSim:   fields.field_12 === 'Sim', existenteNao:    fields.field_12 === 'Não',
         funcionandoSim: fields.field_13 === 'Sim', funcionandoNao:  fields.field_13 === 'Não',
@@ -289,6 +317,10 @@ function mapListFieldsToForm(fields) {
       alarme_da_loja: {
         existenteSim:   fields.field_14 === 'Sim', existenteNao:    fields.field_14 === 'Não',
         funcionandoSim: fields.field_15 === 'Sim', funcionandoNao:  fields.field_15 === 'Não',
+      },
+      'detecção_de_gás': {
+        existenteSim:   fields.field_16 === 'Sim', existenteNao:    fields.field_16 === 'Não',
+        funcionandoSim: fields.field_17 === 'Sim', funcionandoNao:  fields.field_17 === 'Não',
       },
       'comando_de_gás': {
         existenteSim:   fields.field_16 === 'Sim', existenteNao:    fields.field_16 === 'Não',
@@ -320,6 +352,7 @@ function mapListFieldsToForm(fields) {
       'Necessário Abertura do Forro':                    fields.field_32 === 'Sim',
       'Verificar Integridade do Cabo de Alimentação':    fields.field_33 === 'Sim',
       'Verificar Integridade do Cabo de Sinal':          fields.field_34 === 'Sim',
+      'Interligar o Sistema da Loja com do Empreendimento': fields.field_35 === 'Sim',
       'Interligar o Sistema da Loja com do Shopping':    fields.field_35 === 'Sim',
       'Necessário Verificar o Sistema da Loja':          fields.field_36 === 'Sim',
       'Troca de Dispositivo':                            fields.field_37 === 'Sim',
@@ -439,6 +472,7 @@ function mapBMSListFieldsToForm(fields, tenantSlug) {
       'Necessário Abertura do Forro':                    fields.field_32 === 'Sim',
       'Verificar Integridade do Cabo de Alimentação':    fields.field_33 === 'Sim',
       'Verificar Integridade do Cabo de Sinal':          fields.field_34 === 'Sim',
+      'Interligar o Sistema da Loja com do Empreendimento': fields.field_35 === 'Sim',
       'Interligar o Sistema da Loja com do Shopping':    fields.field_35 === 'Sim',
       'Necessário Verificar o Sistema da Loja':          fields.field_36 === 'Sim',
       'Troca de Dispositivo':                            fields.field_37 === 'Sim',
