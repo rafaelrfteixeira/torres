@@ -5,10 +5,14 @@ WORKDIR /app
 
 # Copiar arquivos de dependências e instalar
 COPY package*.json ./
-RUN npm install
+RUN npm install && npm install @rolldown/binding-linux-x64-gnu@1.0.0-rc.10
 
 # Copiar o restante do código fonte
 COPY . .
+
+# Argumentos de build para o Vite (EasyPanel)
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
 # Fazer o build de produção (gera os arquivos estáticos na pasta /dist)
 RUN npm run build
