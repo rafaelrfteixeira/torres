@@ -307,6 +307,7 @@ const permissions = {
   'david.teixeira@torrescx.com.br': ['riomar-kennedy'],
   'ruan.lima@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center'],
   'leandro.araujo@torrescx.com.br': ['riomar-kennedy'],
+  'abner.lopes@torrescx.com.br': ['riomar-kennedy'],
   'ananias.santana@torrescx.com.br': ['shopping-guararapes'],
   'arnaldo.justino@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class'],
   'carlos.vinicius@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class'],
