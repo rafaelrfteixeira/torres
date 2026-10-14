@@ -1444,9 +1444,15 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
     const devTag = (dev.tag || '').trim().toUpperCase();
     const devDesc = (dev.descricao || '').trim().toUpperCase();
 
-    // Match na Matriz Mestra por Descrição Exata > Endereço no TAG > Descrição Parcial
+    // Match na Matriz Mestra:
+    // Para BMS e SCA, busca prioritariamente pela TAG única do ativo
     let matched = null;
-    if (devDesc) {
+    const isSCA = String(sistema).toLowerCase() === 'sca';
+    const isBMS = String(sistema).toLowerCase() === 'bms';
+    if ((isBMS || isSCA) && devTag) {
+      matched = todosDispositivos.find((d) => (d.rawTag || d.tag || '').trim().toUpperCase() === devTag);
+    }
+    if (!matched && devDesc) {
       matched = todosDispositivos.find((d) => (d.descricao || '').trim().toUpperCase() === devDesc);
     }
     // Casar por TAG apenas se o TAG não for apenas o circuito compartilhado (ex: 'L2PAV L7')

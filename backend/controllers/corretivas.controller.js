@@ -456,7 +456,9 @@ const updateCorretiva = async (req, res, next) => {
 
     // Processar upload da Imagem_3 se fornecida
     if (imagem3) {
-      const imgName = `OS_${id}_Foto_03.jpg`;
+      const anoAtual = new Date().getFullYear();
+      const slugClean = (req.tenantSlug || 'tenant').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+      const imgName = `${slugClean}_${anoAtual}_OS_${id}_Foto_03.jpg`;
       const imgData = await uploadImageToDrive(graphClient, siteId, imgName, imagem3);
 
       if (imgData) {

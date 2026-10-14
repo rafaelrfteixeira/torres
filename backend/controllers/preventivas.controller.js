@@ -177,13 +177,13 @@ const getDispositivos = async (req, res, next) => {
           }
         });
 
-        // Marca como realizado: para BMS confere preferencialmente pela TAG única; para SDAI pela descrição
+        // Marca como realizado: para BMS e SCA confere preferencialmente pela TAG única; para SDAI pela descrição
         dispositivos.forEach((d) => {
           if (d.realizado) return;
-          const tagKey = (d.rawTag || (isBMS ? d.tag : '') || '').trim().toUpperCase();
+          const tagKey = (d.rawTag || ((isBMS || isSCA) ? d.tag : '') || '').trim().toUpperCase();
           const descKey = (d.descricao || '').trim().toUpperCase();
 
-          if (isBMS && tagKey) {
+          if ((isBMS || isSCA) && tagKey) {
             if (realizadosPorTag.has(tagKey)) {
               d.realizado = true;
               d.status = 'realizado';
@@ -416,9 +416,9 @@ const salvar = async (req, res, next) => {
         const isSameComp = itemMes === compMes && itemAno === compAno;
         if (!isSameComp) return false;
 
-        // Duplicidade: para BMS confere preferencialmente por TAG única; para SDAI por descrição única
-        if (isBMS && targetTag && itemTag) {
-          return targetTag === itemTag;
+        // Duplicidade: para BMS e SCA confere preferencialmente por TAG única; para SDAI por descrição única
+        if ((isBMS || isSCA) && targetTag) {
+          return itemTag ? targetTag === itemTag : false;
         }
         return targetDesc && itemDesc && (itemDesc === targetDesc);
       });
@@ -484,7 +484,7 @@ const salvar = async (req, res, next) => {
       Title: formData.tag || '',
       Localizacao: formData.localizacao || formData.descricao || '',
       Data_Execucao: toIsoDate(formData.dataExecucao),
-      Tipo_Dispositivo: formData.tipoDispositivo || (isBMS ? 'Painel de Automação de Iluminação' : 'Detector de Fumaça'),
+      Tipo_Dispositivo: formData.tipoDispositivo || (isBMS ? 'Painel de Automação de Iluminação' : (isSCA ? 'Dispositivo de Controle de Acesso (SCA)' : 'Detector de Fumaça')),
       Status_Inspecao: formData.statusInspecao || 'Funcionando',
       Log_Checklist: checklistLog || '[]',
       OS_Vinculada: '',
@@ -528,8 +528,12 @@ const salvar = async (req, res, next) => {
     console.log(`   ✅ Histórico salvo. ID: ${historicoItemId}`);
 
     // Salvar mídias na biblioteca do SharePoint e renderizar nas colunas Imagem_1 / Imagem_2
-    let img1Name = formData.imagem1 ? `Hist_${historicoItemId}_Foto_01.jpg` : null;
-    let img2Name = formData.imagem2 ? `Hist_${historicoItemId}_Foto_02.jpg` : null;
+    const anoAtual = new Date().getFullYear();
+    const slugClean = (tenantSlug || 'tenant').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const sistemaClean = (sistema || 'sdai').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+    let img1Name = formData.imagem1 ? `${slugClean}_${sistemaClean}_${anoAtual}_Hist_${historicoItemId}_Foto_01.jpg` : null;
+    let img2Name = formData.imagem2 ? `${slugClean}_${sistemaClean}_${anoAtual}_Hist_${historicoItemId}_Foto_02.jpg` : null;
 
     let img1DriveData = null;
     let img2DriveData = null;
@@ -582,13 +586,18 @@ const salvar = async (req, res, next) => {
           };
           const prioridade = prioridadeMap[(formData.gravidadeFalha || '').toLowerCase()] || 'Normal';
 
-          let categoriaOS = isBMS ? 'BMS - Sistema de Automação Predial' : 'SDAI - Sistema Detecção Alarme Incêndio';
+          let categoriaOS = isSCA
+            ? 'SCA - Sistema de Controle de Acesso'
+            : (isBMS ? 'BMS - Sistema de Automação Predial' : 'SDAI - Sistema Detecção Alarme Incêndio');
           try {
             const cols = await graphClient.api(`/sites/${siteId}/lists/${corretivaListId}/columns`).get();
             const catCol = (cols.value || []).find(c => c.name === 'field_3' || (c.displayName || '').toLowerCase() === 'categoria');
             if (catCol?.choice?.choices?.length) {
               const choices = catCol.choice.choices;
-              if (isBMS) {
+              if (isSCA) {
+                const scaChoice = choices.find(c => c.toUpperCase().includes('SCA') || c.toUpperCase().includes('ACESSO'));
+                if (scaChoice) categoriaOS = scaChoice;
+              } else if (isBMS) {
                 const bmsChoice = choices.find(c => c.toUpperCase().includes('BMS') || c.toUpperCase().includes('AUTOMAÇÃO') || c.toUpperCase().includes('AUTOMACAO'));
                 if (bmsChoice) categoriaOS = bmsChoice;
               } else {
@@ -632,8 +641,8 @@ const salvar = async (req, res, next) => {
 
           // Salvar mídias da OS Corretiva na biblioteca do SharePoint e renderizar nas colunas
           if (osVinculada) {
-            let osImg1Name = formData.imagem1 ? `OS_${osVinculada}_Foto_01.jpg` : null;
-            let osImg2Name = formData.imagem2 ? `OS_${osVinculada}_Foto_02.jpg` : null;
+            let osImg1Name = formData.imagem1 ? `${slugClean}_${sistemaClean}_${anoAtual}_OS_${osVinculada}_Foto_01.jpg` : null;
+            let osImg2Name = formData.imagem2 ? `${slugClean}_${sistemaClean}_${anoAtual}_OS_${osVinculada}_Foto_02.jpg` : null;
 
             let osImg1DriveData = null;
             let osImg2DriveData = null;
@@ -1060,8 +1069,7 @@ const getDashboardStatus = async (req, res, next) => {
       let logsDoAtivo = [];
       if ((isBMS || isSCA) && tagKey) {
         logsDoAtivo = logsPorTag.get(tagKey) || [];
-      }
-      if (logsDoAtivo.length === 0 && descKey) {
+      } else if (descKey) {
         logsDoAtivo = logsPorDesc.get(descKey) || [];
         if (logsDoAtivo.length === 0) {
           for (const [k, arr] of logsPorDesc.entries()) {
