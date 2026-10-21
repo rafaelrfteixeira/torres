@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import {
   FileText,
@@ -45,8 +45,34 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
     name: tenant,
   };
 
+  const currentSistema = (sistema || 'sdai').toLowerCase();
+
+  const getSistemaNome = (sys) => {
+    switch ((sys || '').toLowerCase()) {
+      case 'sdai':
+        return 'SDAI';
+      case 'bms':
+        return 'BMS';
+      case 'sca':
+        return 'SCA';
+      case 'cftv':
+        return 'CFTV';
+      default:
+        return (sys || 'SDAI').toUpperCase();
+    }
+  };
+
   // Tipo de relatório selecionado: 'preventivas' | 'corretivas'
   const [activeReportType, setActiveReportType] = useState('corretivas');
+
+  // Escopo do relatório de corretivas: currentSistema | 'geral'
+  const [escopoCorretivas, setEscopoCorretivas] = useState(currentSistema);
+
+  useEffect(() => {
+    if (sistema) {
+      setEscopoCorretivas(sistema.toLowerCase());
+    }
+  }, [sistema]);
 
   const currentDate = new Date();
   const [mes, setMes] = useState(currentDate.getMonth() + 1);
@@ -71,7 +97,8 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
       if (activeReportType === 'preventivas') {
         endpoint = `${API_URL}/reports/monthly-preventive?tenant=${tenant}&sistema=${sistema || 'sdai'}&mes=${mes}&ano=${ano}`;
       } else {
-        endpoint = `${API_URL}/reports/monthly-corretivas?tenant=${tenant}&mes=${mes}&ano=${ano}&sistema=todos`;
+        const sistemaQuery = escopoCorretivas === 'geral' ? 'todos' : escopoCorretivas;
+        endpoint = `${API_URL}/reports/monthly-corretivas?tenant=${tenant}&mes=${mes}&ano=${ano}&sistema=${sistemaQuery}`;
       }
 
       const response = await fetch(endpoint, {
@@ -227,9 +254,7 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
 
         <form
           onSubmit={handleGerarRelatorio}
-          className={`grid grid-cols-1 sm:grid-cols-2 ${
-            activeReportType === 'corretivas' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
-          } gap-4 items-end`}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
         >
           {/* Mês de Referência */}
           <div className="space-y-1.5">
@@ -269,8 +294,23 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
             </select>
           </div>
 
-          {/* Filtro específico apenas para Preventivas */}
-          {activeReportType === 'preventivas' && (
+          {/* Escopo do Relatório (para Corretivas) ou Sistema Fixo (para Preventivas) */}
+          {activeReportType === 'corretivas' ? (
+            <div className="space-y-1.5">
+              <label htmlFor="select-escopo" className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                Escopo do Relatório
+              </label>
+              <select
+                id="select-escopo"
+                value={escopoCorretivas}
+                onChange={(e) => setEscopoCorretivas(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <option value={currentSistema}>Apenas {getSistemaNome(currentSistema)}</option>
+                <option value="geral">Geral (Todos os Sistemas)</option>
+              </select>
+            </div>
+          ) : (
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
                 Sistema Operacional
@@ -322,7 +362,7 @@ export default function Relatorios({ shoppingsMetadata = [] }) {
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
               <span className="text-sm font-bold text-slate-800">
                 {currentLoadedType === 'corretivas'
-                  ? 'Pré-visualização: Relatório Executivo de Ocorrências & Chamados'
+                  ? `Pré-visualização: Relatório Executivo de Ocorrências (${escopoCorretivas === 'geral' ? 'Geral' : getSistemaNome(escopoCorretivas)})`
                   : 'Pré-visualização: Relatório Técnico de Preventivas'}
               </span>
               <span className="text-xs text-slate-500 hidden md:inline">

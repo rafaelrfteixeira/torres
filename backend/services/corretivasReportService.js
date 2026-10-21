@@ -1261,10 +1261,30 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
   });
 
   // Filtro opcional por sistema se fornecido
-  if (sistemaFiltro && sistemaFiltro !== 'todos' && sistemaFiltro !== 'geral') {
-    const sUpper = sistemaFiltro.toUpperCase();
-    filtered = filtered.filter((item) => item.categoria.includes(sUpper));
+  const isGeral = !sistemaFiltro || sistemaFiltro.toLowerCase() === 'todos' || sistemaFiltro.toLowerCase() === 'geral';
+  if (!isGeral) {
+    const sUpper = sistemaFiltro.toUpperCase().trim();
+    filtered = filtered.filter((item) => {
+      const cat = String(item.categoria || '').toUpperCase();
+      const rawCat = String(item.rawCategory || '').toUpperCase();
+      if (sUpper === 'SDAI') {
+        return cat === 'SDAI' || rawCat.includes('SDAI') || rawCat.includes('INCÊNDIO') || rawCat.includes('INCENDIO') || rawCat.includes('DETECÇÃO') || rawCat.includes('DETECCAO');
+      }
+      if (sUpper === 'BMS') {
+        return cat === 'BMS' || rawCat.includes('BMS') || rawCat.includes('AUTOMAÇÃO') || rawCat.includes('AUTOMACAO');
+      }
+      if (sUpper === 'SCA') {
+        return cat === 'SCA' || rawCat.includes('SCA') || rawCat.includes('ACESSO');
+      }
+      if (sUpper === 'CFTV') {
+        return cat === 'CFTV' || rawCat.includes('CFTV') || rawCat.includes('CAMERA') || rawCat.includes('CÂMERA');
+      }
+      return cat.includes(sUpper) || rawCat.includes(sUpper);
+    });
   }
+
+  const escopoBadgeText = isGeral ? 'Geral • Todos os Sistemas' : `Sistema: ${sistemaFiltro.toUpperCase()}`;
+  const escopoLabel = isGeral ? 'Geral' : sistemaFiltro.toUpperCase();
 
   // Ordenação cronológica decrescente (mais recentes primeiro)
   filtered.sort((a, b) => b.timestamp - a.timestamp);
@@ -1460,7 +1480,7 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
   }).join('') : `
     <tr>
       <td colspan="7" class="empty-table-state">
-        Nenhuma ordem de serviço corretiva registrada para a competência selecionada (${nomeMesStr} / ${ano}).
+        Nenhuma ordem de serviço corretiva registrada para a competência selecionada (${nomeMesStr} / ${ano})${!isGeral ? ` no sistema ${sistemaFiltro.toUpperCase()}` : ''}.
       </td>
     </tr>
   `;
@@ -1470,7 +1490,7 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Relatório Executivo de Ocorrências - ${tenantName} - ${nomeMesStr}/${ano}</title>
+  <title>Relatório Executivo de Ocorrências (${escopoLabel}) - ${tenantName} - ${nomeMesStr}/${ano}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap');
 
@@ -2065,7 +2085,8 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
           <h1 class="report-main-title">Relatório Executivo de Ocorrências & Chamados de Manutenção</h1>
           <div class="header-competence-row">
             <span class="competence-badge">Competência: ${nomeMesStr} / ${ano}</span>
-            <span class="emitido-em">Painel Consolidado de Engenharia</span>
+            <span class="competence-badge" style="background: ${isGeral ? '#e0e7ff' : '#ecfdf5'}; color: ${isGeral ? '#4338ca' : '#047857'}; border: 1px solid ${isGeral ? '#c7d2fe' : '#a7f3d0'};">${escopoBadgeText}</span>
+            <span class="emitido-em">${isGeral ? 'Painel Consolidado de Engenharia' : `Painel Especializado • ${sistemaFiltro.toUpperCase()}`}</span>
           </div>
         </div>
 
@@ -2154,6 +2175,7 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
           <h1 class="report-main-title">Relatório Executivo de Ocorrências & Chamados de Manutenção</h1>
           <div class="header-competence-row">
             <span class="competence-badge">Competência: ${nomeMesStr} / ${ano}</span>
+            <span class="competence-badge" style="background: ${isGeral ? '#e0e7ff' : '#ecfdf5'}; color: ${isGeral ? '#4338ca' : '#047857'}; border: 1px solid ${isGeral ? '#c7d2fe' : '#a7f3d0'};">${escopoBadgeText}</span>
             <span class="emitido-em">Painel de Governança, Solicitantes & Matriz de Risco</span>
           </div>
         </div>
@@ -2208,10 +2230,11 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
         </div>
         <div class="header-center">
           <h2 style="font-size: 16px; font-weight: 800; color: #0f172a;">
-            Relação Consolidada de Ordens de Serviço (${totalChamados})
+            Relação de Ordens de Serviço — ${escopoLabel} (${totalChamados})
           </h2>
           <div class="header-competence-row" style="margin-top: 2px;">
             <span class="competence-badge">Competência: ${nomeMesStr} / ${ano}</span>
+            <span class="competence-badge" style="background: ${isGeral ? '#e0e7ff' : '#ecfdf5'}; color: ${isGeral ? '#4338ca' : '#047857'}; border: 1px solid ${isGeral ? '#c7d2fe' : '#a7f3d0'};">${escopoBadgeText}</span>
             <span class="emitido-em">${tenantName} — Detalhamento Operacional</span>
           </div>
         </div>
