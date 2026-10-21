@@ -175,7 +175,14 @@ async function getListColumnMapping(graphClient, siteId, listId, listName) {
       if (name === 'field_0' || disp === 'os' || disp === 'número os' || disp === 'numero os') {
         mapping.osNumber = name;
       }
-      if (name === 'field_2' || disp === 'solicitante') {
+      if (
+        name === 'field_2' ||
+        disp === 'solicitante' ||
+        disp.includes('solicitante') ||
+        disp.includes('aberto por') ||
+        disp.includes('aberta por') ||
+        disp.includes('requester')
+      ) {
         mapping.solicitante = name;
       }
       if (name === 'field_3' || disp === 'categoria') {
@@ -1231,8 +1238,22 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
     const titulo = f[colMap.title] || f.Title || 'Manutenção Corretiva';
     const descricao = (colMap.descricao && f[colMap.descricao]) || f.field_4 || '';
 
-    const solicitanteRaw = (colMap.solicitante && f[colMap.solicitante]) || f.field_2 || f.Solicitante || '';
-    const solicitante = typeof solicitanteRaw === 'string' ? solicitanteRaw.trim() : (solicitanteRaw?.displayName || '');
+    const solicitanteRaw = (colMap.solicitante && f[colMap.solicitante]) ||
+      f.field_2 ||
+      f.Solicitante ||
+      f.solicitante ||
+      f.Nome_Solicitante ||
+      f.Contato ||
+      f.Author ||
+      '';
+    let solicitante = '';
+    if (typeof solicitanteRaw === 'string') {
+      solicitante = solicitanteRaw.trim();
+    } else if (Array.isArray(solicitanteRaw) && solicitanteRaw.length > 0) {
+      solicitante = (solicitanteRaw[0]?.displayName || solicitanteRaw[0]?.Title || solicitanteRaw[0]?.name || '').trim();
+    } else if (solicitanteRaw && typeof solicitanteRaw === 'object') {
+      solicitante = (solicitanteRaw.displayName || solicitanteRaw.Title || solicitanteRaw.name || solicitanteRaw.lookupValue || '').trim();
+    }
 
     return {
       id: item.id,
@@ -1458,6 +1479,9 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
       <tr class="table-activity-row">
         <td class="col-os">${item.os}</td>
         <td class="col-date">${item.dataFormatada}</td>
+        <td class="col-requester">
+          <div class="os-requester">${item.solicitante || '<span class="text-muted">—</span>'}</div>
+        </td>
         <td class="col-title-desc">
           <div class="os-title">${item.titulo}</div>
           ${item.descricao ? `<div class="os-desc">${item.descricao}</div>` : ''}
@@ -1479,7 +1503,7 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
     `;
   }).join('') : `
     <tr>
-      <td colspan="7" class="empty-table-state">
+      <td colspan="8" class="empty-table-state">
         Nenhuma ordem de serviço corretiva registrada para a competência selecionada (${nomeMesStr} / ${ano})${!isGeral ? ` no sistema ${sistemaFiltro.toUpperCase()}` : ''}.
       </td>
     </tr>
@@ -1859,7 +1883,7 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
     }
 
     .col-os {
-      width: 80px;
+      width: 78px;
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
       color: #0f172a;
@@ -1868,14 +1892,28 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
     }
 
     .col-date {
-      width: 85px;
+      width: 80px;
       color: #475569;
       font-weight: 500;
       white-space: nowrap;
     }
 
+    .col-requester {
+      width: 115px;
+      color: #334155;
+      font-size: 11px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .os-requester {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 11px;
+    }
+
     .col-title-desc {
-      width: 250px;
+      width: 230px;
     }
 
     .os-title {
@@ -2255,6 +2293,7 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
           <tr>
             <th class="col-os">OS</th>
             <th class="col-date">Data</th>
+            <th class="col-requester">Solicitante</th>
             <th class="col-title-desc">Título / Ativo</th>
             <th class="col-cat">Categoria</th>
             <th class="col-crit">Criticidade</th>

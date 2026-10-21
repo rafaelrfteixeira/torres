@@ -119,6 +119,9 @@ const getDispositivos = async (req, res, next) => {
 
     // Cache (ignorado se query.refresh for true)
     const refresh = req.query.refresh === 'true';
+    if (refresh) {
+      _preventivasCache.delete(excelUrl);
+    }
     const cached = _preventivasCache.get(excelUrl);
     if (!refresh && cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
       console.log(`⚡ [Preventivas] Retornando ${cached.data.length} dispositivos do cache`);
@@ -138,73 +141,19 @@ const getDispositivos = async (req, res, next) => {
       return res.json({ success: true, data: filtered });
     }
 
-    // Download e parse da Matriz Mestra
+    // Download e parse da Matriz Mestra (Excel é a fonte da verdade oficial para o cronograma e realizações)
     const { buffer } = await downloadExcelViaGraph(accessToken, excelUrl);
     const { dispositivos } = parseMatrizMestra(buffer);
 
-    // Cruzar com a lista de Histórico do SharePoint (garante sincronização mesmo se a escrita no Excel falhar)
-    if (listaHistorico) {
-      try {
-        const graphClient = getGraphClient(accessToken);
-        const { siteId, listId } = await resolveSharePointIds(graphClient, listaHistorico);
-        const resList = await graphClient
-          .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=999`)
-          .get();
-
-        const anoAtual = new Date().getFullYear();
-        const realizadosPorDesc = new Set();
-        const realizadosPorTag = new Set();
-
-        (resList.value || []).forEach((item) => {
-          const f = item.fields || {};
-          const descField = (f.Localizacao || f.Ponto || f.Descricao || '').trim().toUpperCase();
-          const tagField = (f.Title || f.TAG || '').trim().toUpperCase();
-
-          let anoLog = 0;
-          const rawDateStr = f.Data_Execucao || f.Created;
-          if (rawDateStr) {
-            const d = new Date(rawDateStr);
-            if (!isNaN(d.getTime())) {
-              anoLog = d.getFullYear();
-            } else if (typeof rawDateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawDateStr.trim())) {
-              anoLog = parseInt(rawDateStr.trim().split('-')[0], 10);
-            }
-          }
-
-          if (!anoLog || anoLog === anoAtual) {
-            if (descField) realizadosPorDesc.add(descField);
-            if (tagField) realizadosPorTag.add(tagField);
-          }
-        });
-
-        // Marca como realizado: para BMS e SCA confere preferencialmente pela TAG única; para SDAI pela descrição
-        dispositivos.forEach((d) => {
-          if (d.realizado) return;
-          const tagKey = (d.rawTag || ((isBMS || isSCA) ? d.tag : '') || '').trim().toUpperCase();
-          const descKey = (d.descricao || '').trim().toUpperCase();
-
-          if ((isBMS || isSCA) && tagKey) {
-            if (realizadosPorTag.has(tagKey)) {
-              d.realizado = true;
-              d.status = 'realizado';
-            }
-          } else if (descKey && realizadosPorDesc.has(descKey)) {
-            d.realizado = true;
-            d.status = 'realizado';
-          }
-        });
-      } catch (histErr) {
-        console.warn('⚠️ [Preventivas] Falha ao cruzar histórico em getDispositivos:', histErr.message);
-      }
-    }
-
-    // Salvar no cache (todos, inclusive realizados, para poder invalidar depois)
+    // Salvar no cache (todos, inclusive realizados, para permitir revalidação e filtros)
     _preventivasCache.set(excelUrl, { data: dispositivos, timestamp: Date.now() });
 
-    // Filtrar: apenas pendentes e atrasados
+    // Filtrar: apenas pendentes e atrasados (exclui realizados e futuros)
     const filtered = dispositivos.filter((d) => d.status === 'pendente' || d.status === 'atrasado');
 
-    console.log(`📤 [Preventivas] Retornando ${filtered.length} dispositivos (pendentes/atrasados) de ${dispositivos.length} total`);
+    const totalAtrasados = filtered.filter((d) => d.status === 'atrasado').length;
+    const totalPendentes = filtered.filter((d) => d.status === 'pendente').length;
+    console.log(`📤 [Preventivas] Retornando ${filtered.length} dispositivos (${totalAtrasados} atrasados, ${totalPendentes} pendentes do mês atual) de ${dispositivos.length} total`);
 
     res.json({ success: true, data: filtered });
   } catch (error) {
@@ -1147,7 +1096,7 @@ const getDashboardStatus = async (req, res, next) => {
       : 0;
 
     const pendenciasForaPrazoGeral = dispositivosProcessados.filter(
-      (d) => !d.realizadoGeral && d.mesNumero > 0 && d.mesNumero < mesAtual
+      (d) => !d.realizadoGeral && d.mesNumero > 0 && d.mesNumero < mesAtualReal
     ).length;
 
     const totalNoPrazoGeral = totalBaseGeral - pendenciasForaPrazoGeral;
