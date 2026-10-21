@@ -289,6 +289,22 @@ const shoppings = {
       bms: null,
     },
   },
+  'teatro-riomar-recife': {
+    name: 'Teatro RioMar Recife',
+    logo: '/logo_teatro_riomar_recife.png',
+    listaSDAI: null, // Sem inspeção de lojas
+    listaBMS: null,
+    excelLojasUrl: null, // Sem inspeção de lojas
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum (SDAI)
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQAre1zBmFH0R5PsHlohP8hBAcYS7CwXE-Z4diHldldxzUk',
+    listaHistoricoPreventivas: 'TEATRO_RIOMAR_RECIFE_PREVENTIVAS_2026',
+    listaCorretivas: 'CC-2025-2-1536-MAN-TEATRO_RIOMAR-SDAI',
+    responsavelShopping: {
+      sdai: null, // TODO: Configurar responsável SDAI
+      bms: null,
+    },
+  },
 };
 
 // -----------------------------------------------
@@ -303,14 +319,14 @@ const permissions = {
   'antonio.cezar@torrescx.com.br': ['riomar-recife'],
   'alcy.silva@torrescx.com.br': ['riomar-recife'],
   'jonas.wanderley@torrescx.com.br': ['riomar-recife'],
-  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class', 'riomar-recife'],
+  'carlos.gueiros@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class', 'riomar-recife', 'teatro-riomar-recife'],
   'david.teixeira@torrescx.com.br': ['riomar-kennedy'],
   'ruan.lima@torrescx.com.br': ['riomar-kennedy', 'shopping-recife', 'shopping-guararapes', 'riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center'],
   'leandro.araujo@torrescx.com.br': ['riomar-kennedy'],
   'abner.lopes@torrescx.com.br': ['riomar-kennedy'],
   'ananias.santana@torrescx.com.br': ['shopping-guararapes'],
-  'arnaldo.justino@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class'],
-  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class'],
+  'arnaldo.justino@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class', 'teatro-riomar-recife'],
+  'carlos.vinicius@torrescx.com.br': ['riomar-aracaju', 'empresarial-rui-barbosa', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'jcpm-trade-center', 'beach-class', 'teatro-riomar-recife'],
   'marcos.torres@torrescx.com.br': ['*'],
   'adm.manut@torrescx.com.br': ['*'],
   'rafael.costal@torrescx.com.br': ['salvador-norte'],

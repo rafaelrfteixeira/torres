@@ -101,6 +101,7 @@ A configuração central reside no arquivo [`backend/config/tenants.js`](file://
 | `plaza-shopping-recife` | Plaza Shopping Recife | SDAI | `2026-7-1915-SDAI...` | `PLAZA_SHOPPING_PREVENTIVAS_2026` |
 | `jcpm-trade-center` | JCPM Trade Center | SDAI, BMS | Listas JCPM | `JCPM_TRADE_CENTER_PREVENTIVAS_2026` |
 | `beach-class` | Beach Class Convention | SDAI | Listas Beach Class | `BEACH_CLASS_PREVENTIVAS_2026` |
+| `teatro-riomar-recife` | Teatro RioMar Recife | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)* | `CC-2025-2-1536-MAN-TEATRO_RIOMAR-SDAI` | `TEATRO_RIOMAR_RECIFE_PREVENTIVAS_2026` |
 
 ### Controle de Acesso Baseado em Função (RBAC)
 

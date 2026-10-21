@@ -27,8 +27,9 @@ function getSDAISubmenus(tenant) {
   const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
   const isBeachClass = tenant === 'beach-class';
   const isRioMarAracaju = tenant === 'riomar-aracaju';
+  const isTeatroRioMar = tenant === 'teatro-riomar-recife';
   // Tenants com funcionalidades de preventivas ativas
-  const hasPreventivasActive = isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
+  const hasPreventivasActive = isTeatroRioMar || isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
   // Tenants com funcionalidades de corretivas ativas
   const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife || isRioMarAracaju;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
@@ -85,7 +86,7 @@ function getSDAISubmenus(tenant) {
     },
   ];
 
-  if (isJcpmTradeCenter || isBeachClass) {
+  if (isJcpmTradeCenter || isBeachClass || isTeatroRioMar) {
     return submenus.filter((s) => s.id !== 'dashboard-inspecao' && s.id !== 'inspecao-lojas');
   }
 
@@ -318,6 +319,9 @@ export function getMenuConfig(tenant) {
       { id: 'bms', label: 'BMS', icon: 'cpu', submenus: getBMSSubmenus(tenant) },
     ],
     'beach-class': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+    ],
+    'teatro-riomar-recife': [
       { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
     ],
   };
