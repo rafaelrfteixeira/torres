@@ -201,9 +201,15 @@ const salvar = async (req, res, next) => {
     console.log(`   Dispositivo: ${formData.descricao} (TAG: ${formData.tag})`);
     console.log(`   Status: ${formData.statusInspecao}`);
 
+    // Tenants com `preventivasChaveTag` (ex.: descrições repetidas na Matriz Mestra) identificam o
+    // dispositivo pela TAG (Pavimento + Laço) e só marcam o Excel DEPOIS de validar a duplicidade,
+    // evitando "sim" na planilha sem registro correspondente no List.
+    const chaveTag = Boolean(tenantConfig.preventivasChaveTag);
+
     // =========================================================
     // PASSO 1: Atualizar planilha Excel — "Realizado 2026" → "sim"
     // =========================================================
+    const executarPasso1Excel = async () => {
     console.log('\n📝 [Passo 1] Atualizando Excel — Realizado 2026...');
     try {
       if (excelUrl) {
@@ -289,6 +295,12 @@ const salvar = async (req, res, next) => {
         _preventivasCache.delete(excelUrl);
       }
     }
+    };
+
+    // Comportamento padrão (demais tenants): atualiza o Excel antes da validação de duplicidade
+    if (!chaveTag) {
+      await executarPasso1Excel();
+    }
 
     // =========================================================
     // PASSO 2: Compor o Log de Checklist em JSON string
@@ -366,7 +378,8 @@ const salvar = async (req, res, next) => {
         if (!isSameComp) return false;
 
         // Duplicidade: para BMS e SCA confere preferencialmente por TAG única; para SDAI por descrição única
-        if ((isBMS || isSCA) && targetTag) {
+        // (tenants com `preventivasChaveTag` também usam a TAG, pois a descrição pode se repetir)
+        if ((isBMS || isSCA || (chaveTag && targetTag !== 'TAG-N/A')) && targetTag) {
           return itemTag ? targetTag === itemTag : false;
         }
         return targetDesc && itemDesc && (itemDesc === targetDesc);
@@ -389,6 +402,11 @@ const salvar = async (req, res, next) => {
       }
     } catch (checkErr) {
       console.warn('⚠️ [Preventivas] Falha ao verificar duplicidade no SharePoint:', checkErr.message);
+    }
+
+    // Tenants com chave por TAG: só marca o Excel após passar na validação de duplicidade
+    if (chaveTag) {
+      await executarPasso1Excel();
     }
 
     const toIsoDate = (dateStr) => {
@@ -1008,15 +1026,16 @@ const getDashboardStatus = async (req, res, next) => {
     const mesAtualReal = new Date().getMonth() + 1;
 
     const dispositivosProcessados = todosDispositivos.map((d, index) => {
-      const tag = (isBMS || isSCA)
+      const usaChaveTag = isBMS || isSCA || Boolean(tenantConfig.preventivasChaveTag);
+      const tag = usaChaveTag
         ? (d.rawTag || d.tag || ((d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`)))
         : ((d.pavimento && d.laco) ? `${d.pavimento} ${d.laco}` : (d.laco || d.descricao || `TAG-${index + 1}`));
       const tagKey = tag.trim().toUpperCase();
       const descKey = (d.descricao || '').trim().toUpperCase();
 
-      // Busca prioritária: para BMS e SCA busca primeiro por Tag única; para SDAI por Descrição
+      // Busca prioritária: para BMS, SCA e tenants com chave por TAG busca por Tag única; para SDAI por Descrição
       let logsDoAtivo = [];
-      if ((isBMS || isSCA) && tagKey) {
+      if (usaChaveTag && tagKey) {
         logsDoAtivo = logsPorTag.get(tagKey) || [];
       } else if (descKey) {
         logsDoAtivo = logsPorDesc.get(descKey) || [];

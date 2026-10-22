@@ -300,6 +300,9 @@ const shoppings = {
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQAre1zBmFH0R5PsHlohP8hBAcYS7CwXE-Z4diHldldxzUk',
     listaHistoricoPreventivas: 'TEATRO_RIOMAR_RECIFE_PREVENTIVAS_2026',
     listaCorretivas: 'CC-2025-2-1536-MAN-TEATRO_RIOMAR-SDAI',
+    // Matriz Mestra com descrições repetidas: identifica o dispositivo pela TAG (Pavimento + Laço)
+    // e só marca "sim" no Excel após validar a duplicidade no List de histórico.
+    preventivasChaveTag: true,
     responsavelShopping: {
       sdai: null, // TODO: Configurar responsável SDAI
       bms: null,

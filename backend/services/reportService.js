@@ -1449,7 +1449,7 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
     let matched = null;
     const isSCA = String(sistema).toLowerCase() === 'sca';
     const isBMS = String(sistema).toLowerCase() === 'bms';
-    if ((isBMS || isSCA) && devTag) {
+    if ((isBMS || isSCA || tenantConfig.preventivasChaveTag) && devTag) {
       matched = todosDispositivos.find((d) => (d.rawTag || d.tag || '').trim().toUpperCase() === devTag);
     }
     if (!matched && devDesc) {
