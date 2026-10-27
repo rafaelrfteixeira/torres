@@ -347,11 +347,25 @@ const salvar = async (req, res, next) => {
 
     console.log(`🔍 [Passo 3] Verificando duplicidade para "${targetTag || targetDesc}" em ${compMes}/${compAno}...`);
     try {
-      const existingRes = await graphClient
-        .api(`/sites/${siteId}/lists/${historicoListId}/items?$expand=fields&$top=999`)
+      let existingItems = [];
+      let nextLink = null;
+
+      const firstPage = await graphClient
+        .api(`/sites/${siteId}/lists/${historicoListId}/items`)
+        .expand('fields')
+        .top(500)
         .get();
 
-      const existingItems = existingRes.value || [];
+      existingItems = firstPage.value || [];
+      nextLink = firstPage['@odata.nextLink'] || null;
+
+      let pageCount = 1;
+      while (nextLink && pageCount < 50) {
+        pageCount++;
+        const nextPage = await graphClient.api(nextLink).get();
+        existingItems = existingItems.concat(nextPage.value || []);
+        nextLink = nextPage['@odata.nextLink'] || null;
+      }
       const duplicate = existingItems.find((item) => {
         const f = item.fields || {};
         const itemTag = (f.Title || f.TAG || '').trim().toUpperCase();
@@ -910,11 +924,27 @@ const getDashboardStatus = async (req, res, next) => {
       try {
         const graphClient = getGraphClient(accessToken);
         const { siteId, listId } = await resolveSharePointIds(graphClient, listaHistorico);
-        const resList = await graphClient
-          .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=999`)
+        let allItems = [];
+        let nextLink = null;
+
+        const firstPage = await graphClient
+          .api(`/sites/${siteId}/lists/${listId}/items`)
+          .expand('fields')
+          .top(500)
           .get();
 
-        (resList.value || []).forEach((item) => {
+        allItems = firstPage.value || [];
+        nextLink = firstPage['@odata.nextLink'] || null;
+
+        let pageCount = 1;
+        while (nextLink && pageCount < 50) {
+          pageCount++;
+          const nextPage = await graphClient.api(nextLink).get();
+          allItems = allItems.concat(nextPage.value || []);
+          nextLink = nextPage['@odata.nextLink'] || null;
+        }
+
+        allItems.forEach((item) => {
           const f = item.fields || {};
           const titleTag = (f.Title || f.TAG || '').trim();
           const descField = (f.Localizacao || f.Ponto || f.Descricao || f.Title || f.TAG || '').trim();

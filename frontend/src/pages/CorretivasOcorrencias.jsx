@@ -404,7 +404,7 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
   };
 
   const handleSaved = () => {
-    fetchCorretivas();
+    fetchCorretivas(true);
   };
 
   // Helper para cor do badge de status
@@ -470,7 +470,7 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
           </p>
         </div>
         <button
-          onClick={() => fetchCorretivas()}
+          onClick={() => fetchCorretivas(true)}
           disabled={isLoading}
           className="self-start sm:self-auto flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-sm disabled:opacity-50"
         >
@@ -681,7 +681,7 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
             <h3 className="text-lg font-bold text-red-900">Erro ao carregar dados</h3>
             <p className="text-sm text-red-700 max-w-md mx-auto">{error}</p>
             <button
-              onClick={() => fetchCorretivas()}
+              onClick={() => fetchCorretivas(true)}
               className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold shadow-md hover:bg-red-700 transition-colors"
             >
               Tentar Novamente

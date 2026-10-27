@@ -135,12 +135,26 @@ async function fetchPreventiveHistory(graphClient, tenantConfig, mes, ano, siste
 
   const { siteId, listId } = await resolveSharePointIds(graphClient, listName);
 
-  // Buscar itens
-  const res = await graphClient
-    .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=999`)
+  // Buscar itens com suporte à paginação
+  let items = [];
+  let nextLink = null;
+
+  const firstPage = await graphClient
+    .api(`/sites/${siteId}/lists/${listId}/items`)
+    .expand('fields')
+    .top(500)
     .get();
 
-  const items = res.value || [];
+  items = firstPage.value || [];
+  nextLink = firstPage['@odata.nextLink'] || null;
+
+  let pageCount = 1;
+  while (nextLink && pageCount < 50) {
+    pageCount++;
+    const nextPage = await graphClient.api(nextLink).get();
+    items = items.concat(nextPage.value || []);
+    nextLink = nextPage['@odata.nextLink'] || null;
+  }
 
   // Filtrar por Mês e Ano de Execução
   const filtered = items.filter((item) => {
@@ -358,11 +372,25 @@ async function fetchCorretivas(graphClient, tenantConfig, sistema = 'sdai') {
     const { siteId, listId } = await resolveSharePointIds(graphClient, listName);
     const colMap = await getListColumnMapping(graphClient, siteId, listId, listName);
 
-    const res = await graphClient
-      .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=999`)
+    let items = [];
+    let nextLink = null;
+
+    const firstPage = await graphClient
+      .api(`/sites/${siteId}/lists/${listId}/items`)
+      .expand('fields')
+      .top(500)
       .get();
 
-    const items = res.value || [];
+    items = firstPage.value || [];
+    nextLink = firstPage['@odata.nextLink'] || null;
+
+    let pageCount = 1;
+    while (nextLink && pageCount < 50) {
+      pageCount++;
+      const nextPage = await graphClient.api(nextLink).get();
+      items = items.concat(nextPage.value || []);
+      nextLink = nextPage['@odata.nextLink'] || null;
+    }
     const map = new Map();
 
     items.forEach((item) => {

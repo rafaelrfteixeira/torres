@@ -344,14 +344,28 @@ const getCorretivas = async (req, res, next) => {
     const colMap = await getListColumnMapping(graphClient, siteId, listId, targetListName);
 
     console.log(`📡 [Corretivas] Buscando itens da lista "${targetListName}"...`);
-    const response = await graphClient
+    let rawItems = [];
+    let nextLink = null;
+
+    const firstPage = await graphClient
       .api(`/sites/${siteId}/lists/${listId}/items`)
       .expand('fields')
       .top(500)
       .get();
 
-    const rawItems = response.value || [];
-    console.log(`📋 [Corretivas] ${rawItems.length} itens encontrados.`);
+    rawItems = firstPage.value || [];
+    nextLink = firstPage['@odata.nextLink'] || null;
+
+    let pageCount = 1;
+    while (nextLink && pageCount < 50) {
+      pageCount++;
+      console.log(`📄 [Corretivas] Buscando próxima página de itens... (${rawItems.length} até agora)`);
+      const nextPage = await graphClient.api(nextLink).get();
+      rawItems = rawItems.concat(nextPage.value || []);
+      nextLink = nextPage['@odata.nextLink'] || null;
+    }
+
+    console.log(`📋 [Corretivas] ${rawItems.length} itens encontrados no total.`);
 
     const corretivas = rawItems.map((item) => {
       const f = item.fields || {};

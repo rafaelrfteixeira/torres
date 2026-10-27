@@ -1191,14 +1191,28 @@ async function generateMonthlyCorretivasReport(graphClient, accessToken, tenantC
   const colMap = await getListColumnMapping(graphClient, siteId, listId, listName);
 
   console.log(`📡 [CorretivasReport] Buscando registros da lista "${listName}"...`);
-  const response = await graphClient
+  let rawItems = [];
+  let nextLink = null;
+
+  const firstPage = await graphClient
     .api(`/sites/${siteId}/lists/${listId}/items`)
     .expand('fields')
-    .top(999)
+    .top(500)
     .get();
 
-  const rawItems = response.value || [];
-  console.log(`📋 [CorretivasReport] ${rawItems.length} registros obtidos do SharePoint.`);
+  rawItems = firstPage.value || [];
+  nextLink = firstPage['@odata.nextLink'] || null;
+
+  let pageCount = 1;
+  while (nextLink && pageCount < 50) {
+    pageCount++;
+    console.log(`📄 [CorretivasReport] Buscando próxima página... (${rawItems.length} até agora)`);
+    const nextPage = await graphClient.api(nextLink).get();
+    rawItems = rawItems.concat(nextPage.value || []);
+    nextLink = nextPage['@odata.nextLink'] || null;
+  }
+
+  console.log(`📋 [CorretivasReport] Total de ${rawItems.length} registros obtidos do SharePoint.`);
 
   // Mapear itens brutos
   const allParsed = rawItems.map((item) => {
