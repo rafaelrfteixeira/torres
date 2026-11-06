@@ -697,14 +697,46 @@ function getSharePointSiteGuid(siteId) {
 /**
  * Busca imagem na biblioteca de documentos do Drive (/PreventivasImages/...) usada pelo APP
  */
-async function fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId) {
-  if (!candidateFileName) return null;
+async function fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId, driveItemId = null) {
+  if (!candidateFileName && !driveItemId && !serverRelativeUrl) return null;
 
-  // 1. Tentar Graph API do Drive
-  if (graphClient && siteId) {
+  const cleanFileName = candidateFileName ? decodeURIComponent(candidateFileName) : null;
+
+  // 1. Tentar Graph API pelo driveItemId direto (se disponível, mais rápido e preciso)
+  if (graphClient && siteId && driveItemId) {
     try {
       const driveItem = await graphClient
-        .api(`/sites/${siteId}/drive/root:/PreventivasImages/${encodeURIComponent(candidateFileName)}`)
+        .api(`/sites/${siteId}/drive/items/${driveItemId}`)
+        .select('id,@microsoft.graph.downloadUrl')
+        .get();
+
+      const downloadUrl = driveItem && driveItem['@microsoft.graph.downloadUrl'];
+      if (downloadUrl) {
+        const fetchRes = await fetch(downloadUrl);
+        if (fetchRes.ok) {
+          const buffer = await fetchRes.arrayBuffer();
+          const contentType = fetchRes.headers.get('content-type') || 'image/jpeg';
+          return `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
+        }
+      }
+    } catch (err) {
+      try {
+        const bin = await graphClient
+          .api(`/sites/${siteId}/drive/items/${driveItemId}/content`)
+          .responseType('arraybuffer')
+          .get();
+        if (bin && bin.byteLength > 0) {
+          return `data:image/jpeg;base64,${Buffer.from(bin).toString('base64')}`;
+        }
+      } catch (err2) {}
+    }
+  }
+
+  // 2. Tentar Graph API do Drive pelo caminho /PreventivasImages/<fileName>
+  if (graphClient && siteId && cleanFileName) {
+    try {
+      const driveItem = await graphClient
+        .api(`/sites/${siteId}/drive/root:/PreventivasImages/${encodeURIComponent(cleanFileName)}`)
         .select('id,@microsoft.graph.downloadUrl')
         .get();
 
@@ -721,7 +753,7 @@ async function fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, si
       // Tentar obter conteúdo binário direto via Graph
       try {
         const bin = await graphClient
-          .api(`/sites/${siteId}/drive/root:/PreventivasImages/${encodeURIComponent(candidateFileName)}:/content`)
+          .api(`/sites/${siteId}/drive/root:/PreventivasImages/${encodeURIComponent(cleanFileName)}:/content`)
           .responseType('arraybuffer')
           .get();
         if (bin && bin.byteLength > 0) {
@@ -731,13 +763,14 @@ async function fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, si
     }
   }
 
-  // 2. Tentar baixar via URLs diretas do SharePoint com Bearer token
+  // 3. Tentar baixar via URLs diretas do SharePoint com Bearer token
   const candidateUrls = [
-    `https://${hostname}${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(candidateFileName)}`,
-    `https://${hostname}${sitePath}/Shared%20Documents/PreventivasImages/${encodeURIComponent(candidateFileName)}`,
+    cleanFileName ? `https://${hostname}${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(cleanFileName)}` : null,
+    cleanFileName ? `https://${hostname}${sitePath}/Shared%20Documents/PreventivasImages/${encodeURIComponent(cleanFileName)}` : null,
     serverRelativeUrl ? (serverRelativeUrl.startsWith('http') ? serverRelativeUrl : `https://${hostname}${serverRelativeUrl.startsWith('/') ? '' : '/'}${serverRelativeUrl}`) : null,
-    `https://${hostname}${sitePath}/_api/web/GetFileByServerRelativeUrl('${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(candidateFileName)}')/$value`,
-    `https://${hostname}${sitePath}/_api/web/GetFileByServerRelativeUrl('${sitePath}/Shared%20Documents/PreventivasImages/${encodeURIComponent(candidateFileName)}')/$value`,
+    serverRelativeUrl ? `https://${hostname}${sitePath}/_api/web/GetFileByServerRelativeUrl('${serverRelativeUrl}')/$value` : null,
+    cleanFileName ? `https://${hostname}${sitePath}/_api/web/GetFileByServerRelativeUrl('${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(cleanFileName)}')/$value` : null,
+    cleanFileName ? `https://${hostname}${sitePath}/_api/web/GetFileByServerRelativeUrl('${sitePath}/Shared%20Documents/PreventivasImages/${encodeURIComponent(cleanFileName)}')/$value` : null,
   ].filter(Boolean);
 
   if (accessToken) {
@@ -797,17 +830,14 @@ async function fetchFromListAttachment(val, candidateFileName, serverRelativeUrl
 
 /**
  * Resolve a URL final ou Base64 para exibição de imagens das OSs
- * Para Imagem_3, suporta as duas formas:
- *  1. Diretamente no List (Reserved_ImageAttachment_... ou anexo de item)
- *  2. Carregada pelo APP (salva na biblioteca /PreventivasImages/ do SharePoint)
+ * Suporta universalmente todas as colunas (Imagem_1, Imagem_2, Imagem_3, Imagem_4):
+ *  1. Anexos diretos no List (Reserved_ImageAttachment_... ou anexo de item)
+ *  2. Imagens salvas pelo APP (biblioteca /PreventivasImages/ do SharePoint Drive)
  */
 async function resolvePhotoUrl(val, itemId, siteGuid, listId, accessToken, fieldName = '', graphClient = null, siteId = '') {
   if (!val) return null;
   const hostname = process.env.SHAREPOINT_HOSTNAME || 'torrescx.sharepoint.com';
   const sitePath = process.env.SHAREPOINT_SITE_PATH || '/sites/Manutencao';
-
-  // Identifica se é o campo Imagem_3 (somente ele deve ter as 2 vias de busca)
-  const isImagem3 = fieldName === 'Imagem_3' || fieldName === 'imagem3' || (typeof fieldName === 'string' && fieldName.toLowerCase().includes('imagem_3'));
 
   // Se já for data URL
   if (typeof val === 'string' && val.startsWith('data:image')) {
@@ -835,13 +865,15 @@ async function resolvePhotoUrl(val, itemId, siteGuid, listId, accessToken, field
     return parsedObj.url;
   }
 
-  // 2. Extração de nomes de arquivos candidatos e caminhos
+  // 2. Extração de nomes de arquivos candidatos, caminhos e ID do item no Drive
   let candidateFileName = null;
   let serverRelativeUrl = null;
+  let driveItemId = null;
 
   if (parsedObj) {
     candidateFileName = parsedObj.fileName || parsedObj.name || null;
     serverRelativeUrl = parsedObj.serverRelativeUrl || parsedObj.url || null;
+    driveItemId = parsedObj.id || null;
   } else if (rawStr) {
     if (rawStr.includes('Reserved_ImageAttachment_')) {
       const m = rawStr.match(/Reserved_ImageAttachment_[^"'\s\)]+/);
@@ -855,45 +887,44 @@ async function resolvePhotoUrl(val, itemId, siteGuid, listId, accessToken, field
     }
   }
 
-  // Identificar se a origem parece ser do APP (/PreventivasImages/ ou nome customizado sem prefixo Reserved)
-  const isAppUpload = isImagem3 && (
-    (serverRelativeUrl && serverRelativeUrl.includes('PreventivasImages')) ||
+  // 3. Identificar se a origem é do APP/Drive (/PreventivasImages/ ou nome customizado sem prefixo Reserved)
+  // Válido universalmente para Imagem_1, Imagem_2, Imagem_3, Imagem_4
+  const isAppUpload = Boolean(
+    (serverRelativeUrl && (serverRelativeUrl.includes('PreventivasImages') || serverRelativeUrl.includes('Documentos%20Compartilhados') || serverRelativeUrl.includes('Shared%20Documents'))) ||
     (rawStr && rawStr.includes('PreventivasImages')) ||
     (candidateFileName && !candidateFileName.startsWith('Reserved_ImageAttachment_'))
   );
 
-  // =========================================================================
-  // CASO EXCLUSIVO: Imagem_3 (Suporte às 2 formas com fallback recíproco)
-  // =========================================================================
-  if (isImagem3) {
-    if (isAppUpload) {
-      // Forma A (APP): Busca na pasta PreventivasImages do SharePoint Drive
-      const driveImg = await fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId);
-      if (driveImg) return driveImg;
+  if (isAppUpload) {
+    // Forma A (APP): Busca na pasta PreventivasImages do SharePoint Drive
+    const driveImg = await fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId, driveItemId);
+    if (driveImg && driveImg.startsWith('data:image')) return driveImg;
 
-      // Fallback para Forma B (Direto no List)
-      const listImg = await fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken);
-      if (listImg && listImg.startsWith('data:image')) return listImg;
+    // Fallback para Forma B (Direto no List)
+    const listImg = await fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken);
+    if (listImg && listImg.startsWith('data:image')) return listImg;
 
-      // Fallback de URL direta do APP caso Base64 não tenha sido obtido
-      return `https://${hostname}${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(candidateFileName)}`;
-    } else {
-      // Forma B (Direto no List): Busca nos anexos do item da lista
-      const listImg = await fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken);
-      if (listImg && listImg.startsWith('data:image')) return listImg;
+    if (driveImg) return driveImg;
 
-      // Fallback para Forma A (APP / PreventivasImages)
-      const driveImg = await fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId);
-      if (driveImg) return driveImg;
-
-      return listImg;
+    // Fallback de URL direta caso Base64 não tenha sido obtido
+    if (serverRelativeUrl) {
+      return serverRelativeUrl.startsWith('http') ? serverRelativeUrl : `https://${hostname}${serverRelativeUrl.startsWith('/') ? '' : '/'}${serverRelativeUrl}`;
     }
-  }
+    if (candidateFileName) {
+      return `https://${hostname}${sitePath}/Documentos%20Compartilhados/PreventivasImages/${encodeURIComponent(candidateFileName)}`;
+    }
+    return listImg;
+  } else {
+    // Forma B (Direto no List): Busca nos anexos do item da lista
+    const listImg = await fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken);
+    if (listImg && listImg.startsWith('data:image')) return listImg;
 
-  // =========================================================================
-  // DEMAIS CAMPOS (Imagem_1, Imagem_2, Imagem_4): Mantêm exclusivamente Forma B (List)
-  // =========================================================================
-  return await fetchFromListAttachment(val, candidateFileName, serverRelativeUrl, itemId, siteGuid, listId, hostname, sitePath, accessToken);
+    // Fallback para Forma A (APP / PreventivasImages)
+    const driveImg = await fetchFromDrive(candidateFileName, serverRelativeUrl, hostname, sitePath, accessToken, graphClient, siteId, driveItemId);
+    if (driveImg && driveImg.startsWith('data:image')) return driveImg;
+
+    return listImg || driveImg;
+  }
 }
 
 /**

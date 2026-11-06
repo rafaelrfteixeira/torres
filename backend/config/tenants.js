@@ -19,7 +19,7 @@ const shoppings = {
     listaSDAI: '2024-6-1361-SDAI-Shopping Riomar Recife',
     listaBMS: '2024-6-1361-BMS-Shopping Riomar Recife',
     excelLojasUrl: 'https://torrescx-my.sharepoint.com/:x:/g/personal/msantos_torrescx_com_br/IQBfN8g4jixWQZEVBdGxBqpOAdzKmnnqf37pdxWv8UftGLM',
-    ccEmails: ['msantos@torrescx.com.br'],
+    ccEmails: ['msantos@torrescx.com.br', 'ccco.manutencao@riomarrecife.com.br'],
     // Preventivas Área Comum (SDAI)
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBlgDpkL1BhSYMsWsEGiYA8AVaej4mTPeNeQIjIGngv-_k',
     listaHistoricoPreventivas: 'SHOPPING_RIOMAR_RECIFE_PREVENTIVAS_SDAI_2026',
