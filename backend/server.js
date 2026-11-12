@@ -51,6 +51,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-trocar-em-producao',
   resave: false,
   saveUninitialized: false,
+  rolling: true, // Renova o cookie a cada requisição: expira só após 1h sem atividade
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS em produção
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Permite que o cookie viaje cross-origin no frontend
