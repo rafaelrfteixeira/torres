@@ -204,6 +204,7 @@ function resolveChecklist(tipo, descricao, sistema, tenant) {
   const isRioMarAracaju = tenant === 'riomar-aracaju';
   const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
   const isShoppingGuararapes = tenant === 'shopping-guararapes';
+  const isSalvadorNorte = tenant === 'salvador-norte';
 
   if (isSCA) {
     return {
@@ -213,7 +214,7 @@ function resolveChecklist(tipo, descricao, sistema, tenant) {
   }
 
   if (isBMS) {
-    if (isRioMarRecife || isRioMarAracaju || isJcpmTradeCenter || isShoppingGuararapes) {
+    if (isRioMarRecife || isRioMarAracaju || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte) {
       return {
         label: tipo || 'Controlador / Painel BMS',
         items: CHECKLISTS['Painel de Automação / Controlador BMS'],

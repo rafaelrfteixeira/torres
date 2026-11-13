@@ -105,11 +105,12 @@ function getBMSSubmenus(tenant) {
   const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
   const isBeachClass = tenant === 'beach-class';
   const isShoppingGuararapes = tenant === 'shopping-guararapes';
-  const hasPreventivasBMSActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes;
-  const hasCorretivasActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes;
-  const hasRelatoriosActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes;
-  const hasInspecaoComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias';
-  const isCadastrosComingSoon = tenant === 'salvador-norte' || tenant === 'empresarial-cicero-dias';
+  const isSalvadorNorte = tenant === 'salvador-norte';
+  const hasPreventivasBMSActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
+  const hasCorretivasActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
+  const hasRelatoriosActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
+  const hasInspecaoComingSoon = tenant === 'empresarial-cicero-dias';
+  const isCadastrosComingSoon = tenant === 'empresarial-cicero-dias';
 
   const submenus = [
     {

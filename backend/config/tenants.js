@@ -156,16 +156,24 @@ const shoppings = {
     name: 'Salvador Norte Shopping',
     logo: '/logo_salvador_norte_shooping.png',
     listaSDAI: null,
-    listaBMS: null,
-    excelLojasUrl: null,
-    ccEmails: [],
-    // Preventivas Área Comum
+    listaBMS: '2024-4-1323-BMS-SALVADOR NORTE SHOPPING',
+    excelLojasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQAwhQWZqG_FS6MN5OeMh7JrAe0YVRX-VcW_is1Dgfy3Xyo',
+    ccEmails: ['rafael.teixeira@torrescx.com.br'],
+    // Preventivas Área Comum (SDAI)
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCvuYCgnjCqQpbKdU7tBghuATINDi027SO_KsOy97i-qg4',
     listaHistoricoPreventivas: 'SALVADOR_NORTE_SHOPPING_PREVENTIVAS_2026',
+    // Preventivas Área Comum (BMS)
+    excelPreventivasBmsUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQAXVWCNHcMSS64aOkzjee8yASYs8FBwfzzxLt1CHR9ub6w',
+    listaHistoricoPreventivasBms: 'SALVADOR_NORTE_PREVENTIVAS_BMS_2026',
     listaCorretivas: 'CC-2024-4-1323-MAN-S_NORTE_SALVAD-MANUTENCAO',
+    listaCorretivasBms: 'CC-2024-4-1323-MAN-S_NORTE_SALVAD-MANUTENCAO',
     responsavelShopping: {
       sdai: null, // TODO: Configurar responsável SDAI
-      bms: null,  // TODO: Configurar responsável BMS
+      bms: {
+        solicitante: 'Alan Oliveira',
+        telefone: '7184061745',
+        email: 'alan.oliveira@salvadornorteshopping.com.br',
+      },
     },
   },
   'empresarial-rui-barbosa': {

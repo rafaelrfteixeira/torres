@@ -46,7 +46,7 @@ function ActivePreventivasRoute({ children }) {
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
 }
 
-const TENANTS_WITH_PREVENTIVAS_BMS = ['riomar-kennedy', 'riomar-recife', 'riomar-aracaju', 'jcpm-trade-center', 'shopping-guararapes'];
+const TENANTS_WITH_PREVENTIVAS_BMS = ['riomar-kennedy', 'riomar-recife', 'riomar-aracaju', 'jcpm-trade-center', 'shopping-guararapes', 'salvador-norte'];
 function ActivePreventivasBMSRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_PREVENTIVAS_BMS.includes(tenant) ? children : <ComingSoon />;
@@ -288,17 +288,17 @@ function App() {
 
           {/* ===== BMS ===== */}
           <Route path="bms/inspecao-lojas" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center']}>
               <FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="bms/novo" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center']}>
               <FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="bms/dashboard" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center']}>
               <DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
@@ -324,7 +324,7 @@ function App() {
           } />
           <Route path="bms/cadastros" element={
 
-            <ComingSoonForTenants blocked={['salvador-norte', 'empresarial-cicero-dias']}>
+            <ComingSoonForTenants blocked={['empresarial-cicero-dias']}>
               <Cadastros shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
