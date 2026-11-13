@@ -316,6 +316,22 @@ const shoppings = {
       bms: null,
     },
   },
+  'siemens': {
+    name: 'Siemens Anhanguera',
+    logo: '/logo_siemens.png',
+    listaSDAI: null, // Sem inspeção SDAI de lojas
+    listaBMS: null, // BMS em breve
+    excelLojasUrl: null, // Sem inspeção de lojas
+    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    // Preventivas Área Comum (SDAI)
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCtIMAaIpZwSqa04rT7KQU7AcS5arioCj0qIkukQHY52bo',
+    listaHistoricoPreventivas: 'SIEMENS_ANHANGUERA_PREVENTIVAS_SDAI_2026',
+    listaCorretivas: 'CC-2019-5-127-MAN-SIEMENS SDAI',
+    responsavelShopping: {
+      sdai: null, // TODO: Configurar responsável SDAI
+      bms: null,
+    },
+  },
 };
 
 // -----------------------------------------------
@@ -343,6 +359,9 @@ const permissions = {
   'rafael.costal@torrescx.com.br': ['salvador-norte'],
   'joao.henrique@torrescx.com.br': ['salvador-norte'],
   'christopher.tavares@torrescx.com.br': ['plaza-shopping-recife'],
+  'brian.celestino@torrescx.com.br': ['siemens'],
+  'gabriel.furlanetto@torrescx.com.br': ['siemens'],
+  'pedro.teixeira@torrescx.com.br': ['siemens'],
 };
 
 /**

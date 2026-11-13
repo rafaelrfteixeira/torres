@@ -28,8 +28,9 @@ function getSDAISubmenus(tenant) {
   const isBeachClass = tenant === 'beach-class';
   const isRioMarAracaju = tenant === 'riomar-aracaju';
   const isTeatroRioMar = tenant === 'teatro-riomar-recife';
+  const isSiemens = tenant === 'siemens';
   // Tenants com funcionalidades de preventivas ativas
-  const hasPreventivasActive = isTeatroRioMar || isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
+  const hasPreventivasActive = isSiemens || isTeatroRioMar || isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
   // Tenants com funcionalidades de corretivas ativas
   const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife || isRioMarAracaju;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
@@ -86,7 +87,7 @@ function getSDAISubmenus(tenant) {
     },
   ];
 
-  if (isJcpmTradeCenter || isBeachClass || isTeatroRioMar) {
+  if (isJcpmTradeCenter || isBeachClass || isTeatroRioMar || isSiemens) {
     return submenus.filter((s) => s.id !== 'dashboard-inspecao' && s.id !== 'inspecao-lojas');
   }
 
@@ -106,11 +107,13 @@ function getBMSSubmenus(tenant) {
   const isBeachClass = tenant === 'beach-class';
   const isShoppingGuararapes = tenant === 'shopping-guararapes';
   const isSalvadorNorte = tenant === 'salvador-norte';
+  // Tenants com o sistema BMS inteiro "Em Breve"
+  const isBMSAllComingSoon = tenant === 'siemens';
   const hasPreventivasBMSActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
   const hasCorretivasActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
   const hasRelatoriosActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
-  const hasInspecaoComingSoon = tenant === 'empresarial-cicero-dias';
-  const isCadastrosComingSoon = tenant === 'empresarial-cicero-dias';
+  const hasInspecaoComingSoon = tenant === 'empresarial-cicero-dias' || isBMSAllComingSoon;
+  const isCadastrosComingSoon = tenant === 'empresarial-cicero-dias' || isBMSAllComingSoon;
 
   const submenus = [
     {
@@ -324,6 +327,10 @@ export function getMenuConfig(tenant) {
     ],
     'teatro-riomar-recife': [
       { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+    ],
+    'siemens': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+      { id: 'bms', label: 'BMS', icon: 'cpu', submenus: getBMSSubmenus(tenant) },
     ],
   };
 

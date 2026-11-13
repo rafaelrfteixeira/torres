@@ -102,6 +102,7 @@ A configuração central reside no arquivo [`backend/config/tenants.js`](file://
 | `jcpm-trade-center` | JCPM Trade Center | SDAI, BMS | Listas JCPM | `JCPM_TRADE_CENTER_PREVENTIVAS_2026` |
 | `beach-class` | Beach Class Convention | SDAI | Listas Beach Class | `BEACH_CLASS_PREVENTIVAS_2026` |
 | `teatro-riomar-recife` | Teatro RioMar Recife | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)* | `CC-2025-2-1536-MAN-TEATRO_RIOMAR-SDAI` | `TEATRO_RIOMAR_RECIFE_PREVENTIVAS_2026` |
+| `siemens` | Siemens Anhanguera | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)*, BMS *(Em Breve)* | `CC-2019-5-127-MAN-SIEMENS SDAI` | `SIEMENS_ANHANGUERA_PREVENTIVAS_SDAI_2026` |
 
 ### Controle de Acesso Baseado em Função (RBAC)
 

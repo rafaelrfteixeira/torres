@@ -40,7 +40,7 @@ function TenantRedirect() {
  * Componente que garante que a funcionalidade só está ativa para tenants habilitados.
  * Caso contrário, renderiza a tela "Em Breve".
  */
-const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy', 'jcpm-trade-center', 'beach-class', 'shopping-recife', 'plaza-shopping-recife', 'riomar-recife', 'teatro-riomar-recife'];
+const TENANTS_WITH_PREVENTIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'riomar-kennedy', 'jcpm-trade-center', 'beach-class', 'shopping-recife', 'plaza-shopping-recife', 'riomar-recife', 'teatro-riomar-recife', 'siemens'];
 function ActivePreventivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_PREVENTIVAS.includes(tenant) ? children : <ComingSoon />;
@@ -58,7 +58,7 @@ function ActivePreventivasSCARoute({ children }) {
   return TENANTS_WITH_PREVENTIVAS_SCA.includes(tenant) ? children : <ComingSoon />;
 }
 
-const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center', 'beach-class', 'riomar-aracaju', 'teatro-riomar-recife'];
+const TENANTS_WITH_CORRETIVAS = ['salvador-norte', 'empresarial-rui-barbosa', 'shopping-guararapes', 'empresarial-cicero-dias', 'empresarial-kronos', 'plaza-shopping-recife', 'riomar-kennedy', 'riomar-recife', 'shopping-recife', 'jcpm-trade-center', 'beach-class', 'riomar-aracaju', 'teatro-riomar-recife', 'siemens'];
 function ActiveCorretivasRoute({ children }) {
   const { tenant } = useParams();
   return TENANTS_WITH_CORRETIVAS.includes(tenant) ? children : <ComingSoon />;
@@ -250,17 +250,17 @@ function App() {
 
           {/* ===== SDAI ===== */}
           <Route path="sdai/inspecao-lojas" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class', 'teatro-riomar-recife']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class', 'teatro-riomar-recife', 'siemens']}>
               <ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="sdai/novo" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class', 'teatro-riomar-recife']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class', 'teatro-riomar-recife', 'siemens']}>
               <ChecklistForm user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="sdai/dashboard" element={
-            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class', 'teatro-riomar-recife']}>
+            <ComingSoonForTenants blocked={['salvador-norte', 'jcpm-trade-center', 'beach-class', 'teatro-riomar-recife', 'siemens']}>
               <DashboardSDAI user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
@@ -288,17 +288,17 @@ function App() {
 
           {/* ===== BMS ===== */}
           <Route path="bms/inspecao-lojas" element={
-            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center', 'siemens']}>
               <FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="bms/novo" element={
-            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center', 'siemens']}>
               <FormBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
           <Route path="bms/dashboard" element={
-            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center']}>
+            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'jcpm-trade-center', 'siemens']}>
               <DashboardBMS user={user} shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
@@ -313,18 +313,22 @@ function App() {
             </ActivePreventivasBMSRoute>
           } />
           <Route path="bms/corretivas" element={
-            <ActiveCorretivasRoute>
-              <CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />
-            </ActiveCorretivasRoute>
+            <ComingSoonForTenants blocked={['siemens']}>
+              <ActiveCorretivasRoute>
+                <CorretivasOcorrencias user={user} shoppingsMetadata={shoppingsMetadata} />
+              </ActiveCorretivasRoute>
+            </ComingSoonForTenants>
           } />
           <Route path="bms/relatorios" element={
-            <ActiveReportsRoute>
-              <Relatorios shoppingsMetadata={shoppingsMetadata} />
-            </ActiveReportsRoute>
+            <ComingSoonForTenants blocked={['siemens']}>
+              <ActiveReportsRoute>
+                <Relatorios shoppingsMetadata={shoppingsMetadata} />
+              </ActiveReportsRoute>
+            </ComingSoonForTenants>
           } />
           <Route path="bms/cadastros" element={
 
-            <ComingSoonForTenants blocked={['empresarial-cicero-dias']}>
+            <ComingSoonForTenants blocked={['empresarial-cicero-dias', 'siemens']}>
               <Cadastros shoppingsMetadata={shoppingsMetadata} />
             </ComingSoonForTenants>
           } />
