@@ -322,11 +322,27 @@ const shoppings = {
     listaSDAI: null, // Sem inspeção SDAI de lojas
     listaBMS: null, // BMS em breve
     excelLojasUrl: null, // Sem inspeção de lojas
-    ccEmails: ['carlos.gueiros@torrescx.com.br'],
+    ccEmails: [], // Sem inspeção SDAI/BMS de lojas: sem cópia de e-mail
     // Preventivas Área Comum (SDAI)
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCtIMAaIpZwSqa04rT7KQU7AcS5arioCj0qIkukQHY52bo',
     listaHistoricoPreventivas: 'SIEMENS_ANHANGUERA_PREVENTIVAS_SDAI_2026',
     listaCorretivas: 'CC-2019-5-127-MAN-SIEMENS SDAI',
+    responsavelShopping: {
+      sdai: null, // TODO: Configurar responsável SDAI
+      bms: null,
+    },
+  },
+  'ecourbis': {
+    name: 'Ecourbis',
+    logo: '/logo_ecourbis.png',
+    listaSDAI: null, // Sem inspeção SDAI de lojas
+    listaBMS: null, // BMS em breve
+    excelLojasUrl: null, // Sem inspeção de lojas
+    ccEmails: [], // Sem inspeção SDAI/BMS de lojas: sem cópia de e-mail
+    // Preventivas Área Comum (SDAI)
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBFK_h-uYABTpGWxg4HwwW_Adk-kZx1-YG4o8xYh-7KMAM',
+    listaHistoricoPreventivas: 'ECOURBIS_PREVENTIVAS_SDAI_2026',
+    listaCorretivas: 'CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO',
     responsavelShopping: {
       sdai: null, // TODO: Configurar responsável SDAI
       bms: null,
@@ -359,9 +375,9 @@ const permissions = {
   'rafael.costal@torrescx.com.br': ['salvador-norte'],
   'joao.henrique@torrescx.com.br': ['salvador-norte'],
   'christopher.tavares@torrescx.com.br': ['plaza-shopping-recife'],
-  'brian.celestino@torrescx.com.br': ['siemens'],
-  'gabriel.furlanetto@torrescx.com.br': ['siemens'],
-  'pedro.teixeira@torrescx.com.br': ['siemens'],
+  'brian.celestino@torrescx.com.br': ['siemens', 'ecourbis'],
+  'gabriel.furlanetto@torrescx.com.br': ['siemens', 'ecourbis'],
+  'pedro.teixeira@torrescx.com.br': ['siemens', 'ecourbis'],
 };
 
 /**

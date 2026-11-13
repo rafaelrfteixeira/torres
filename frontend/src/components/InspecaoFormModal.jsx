@@ -55,6 +55,9 @@ const CHECKLISTS = {
     'Teste de acionamento do dispositivo',
     'Conferência de label do painel de Incêndio',
   ],
+  'Acionamento': [
+    'Verificar se todas as sirenes apresentam o correto funcionamento',
+  ],
   // BMS (Building Management System)
   'Medidor MEI-PRO (Automação)': [
     'Inspeção visual e integridade física do medidor MEI-PRO',
@@ -260,6 +263,9 @@ function resolveChecklist(tipo, descricao, sistema, tenant) {
   }
 
   // SDAI
+  if (t.includes('acionamento')) {
+    return { label: tipo || 'Acionamento', items: CHECKLISTS['Acionamento'] };
+  }
   if (t.includes('detector') || t.includes('fumaça') || t.includes('fumaca') || t.includes('termico') || t.includes('térmico') || t === 'df' || t === 'dt') {
     return { label: tipo || 'Detector de Fumaça', items: CHECKLISTS['Detector de Fumaça'] };
   }
