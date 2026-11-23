@@ -17,6 +17,7 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
   const sistema = tenantIndex >= 0 ? pathParts[tenantIndex + 1] : '';
   const isBMS = sistema === 'bms';
   const isSCA = sistema === 'sca';
+  const isCFTV = sistema === 'cftv';
 
   const currentShopping = shoppingsMetadata.find((s) => s.id === tenant) || {
     id: tenant,
@@ -25,12 +26,15 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
     excelPreventivasUrl: '',
     excelPreventivasBmsUrl: '',
     excelPreventivasScaUrl: '',
+    excelPreventivasCftvUrl: '',
     listaHistoricoPreventivas: null,
     listaHistoricoPreventivasBms: null,
     listaHistoricoPreventivasSca: null,
+    listaHistoricoPreventivasCftv: null,
     listaCorretivas: null,
     listaCorretivasBms: null,
     listaCorretivasSca: null,
+    listaCorretivasCftv: null,
   };
 
   const sistemaLabel = (sistema || '').toUpperCase();
@@ -56,22 +60,26 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
       });
     }
 
-    // Link da Matriz Mestra de Preventivas (SDAI, BMS e SCA)
-    const matrizMestraUrl = isSCA
-      ? currentShopping.excelPreventivasScaUrl
-      : (isBMS
-        ? (currentShopping.excelPreventivasBmsUrl || currentShopping.excelPreventivasUrl)
-        : currentShopping.excelPreventivasUrl);
+    // Link da Matriz Mestra de Preventivas (SDAI, BMS, SCA e CFTV)
+    const matrizMestraUrl = isCFTV
+      ? currentShopping.excelPreventivasCftvUrl
+      : (isSCA
+        ? currentShopping.excelPreventivasScaUrl
+        : (isBMS
+          ? (currentShopping.excelPreventivasBmsUrl || currentShopping.excelPreventivasUrl)
+          : currentShopping.excelPreventivasUrl));
 
     if (matrizMestraUrl) {
       links.push({
         id: 'excel-preventivas',
         title: 'Matriz Mestra de Preventivas',
-        subtitle: isSCA
-          ? 'Planilha de cronograma e matriz de preventiva SCA'
-          : (isBMS
-            ? 'Planilha de cronograma e matriz de preventiva BMS'
-            : 'Planilha de cronograma e matriz de manutenção preventiva'),
+        subtitle: isCFTV
+          ? 'Planilha de cronograma e matriz de preventiva CFTV'
+          : (isSCA
+            ? 'Planilha de cronograma e matriz de preventiva SCA'
+            : (isBMS
+              ? 'Planilha de cronograma e matriz de preventiva BMS'
+              : 'Planilha de cronograma e matriz de manutenção preventiva')),
         url: matrizMestraUrl,
         icon: (
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -117,18 +125,27 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
     }
 
     // Lista de Corretivas no SharePoint
-    const corretivasList = isBMS
-      ? (currentShopping.listaCorretivasBms || currentShopping.listaCorretivas)
-      : currentShopping.listaCorretivas;
+    const corretivasList = isCFTV
+      ? (currentShopping.listaCorretivasCftv || currentShopping.listaCorretivas)
+      : (isSCA
+        ? (currentShopping.listaCorretivasSca || currentShopping.listaCorretivas)
+        : (isBMS
+          ? (currentShopping.listaCorretivasBms || currentShopping.listaCorretivas)
+          : currentShopping.listaCorretivas));
 
     if (corretivasList) {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const corretivasParam = isBMS && currentShopping.listaCorretivasBms ? 'listaCorretivasBms' : 'listaCorretivas';
+      const corretivasParam = isCFTV && currentShopping.listaCorretivasCftv
+        ? 'listaCorretivasCftv'
+        : (isSCA && currentShopping.listaCorretivasSca
+          ? 'listaCorretivasSca'
+          : (isBMS && currentShopping.listaCorretivasBms ? 'listaCorretivasBms' : 'listaCorretivas'));
+      const sistemaQueryCorr = isCFTV ? '&sistema=cftv' : (isSCA ? '&sistema=sca' : (isBMS ? '&sistema=bms' : ''));
       links.push({
         id: 'sharepoint-corretivas',
         title: 'Lista de Corretivas / Ocorrências',
         subtitle: 'Base de chamados e ocorrências no SharePoint',
-        url: `${API_URL}/preventivas/go-to-list?list=${corretivasParam}&tenant=${tenant}${isBMS ? '&sistema=bms' : ''}`,
+        url: `${API_URL}/preventivas/go-to-list?list=${corretivasParam}&tenant=${tenant}${sistemaQueryCorr}`,
         icon: (
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -139,28 +156,34 @@ export default function Cadastros({ shoppingsMetadata = [] }) {
     }
 
     // Lista de Histórico de Preventivas no SharePoint
-    const historicoList = isSCA
-      ? currentShopping.listaHistoricoPreventivasSca
-      : (isBMS
-        ? (currentShopping.listaHistoricoPreventivasBms || currentShopping.listaHistoricoPreventivas)
-        : currentShopping.listaHistoricoPreventivas);
+    const historicoList = isCFTV
+      ? currentShopping.listaHistoricoPreventivasCftv
+      : (isSCA
+        ? currentShopping.listaHistoricoPreventivasSca
+        : (isBMS
+          ? (currentShopping.listaHistoricoPreventivasBms || currentShopping.listaHistoricoPreventivas)
+          : currentShopping.listaHistoricoPreventivas));
 
     if (historicoList) {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const historicoParam = isSCA && currentShopping.listaHistoricoPreventivasSca
-        ? 'listaHistoricoPreventivasSca'
-        : (isBMS && currentShopping.listaHistoricoPreventivasBms
-          ? 'listaHistoricoPreventivasBms'
-          : 'listaHistoricoPreventivas');
-      const sistemaQuery = isSCA ? '&sistema=sca' : (isBMS ? '&sistema=bms' : '');
+      const historicoParam = isCFTV && currentShopping.listaHistoricoPreventivasCftv
+        ? 'listaHistoricoPreventivasCftv'
+        : (isSCA && currentShopping.listaHistoricoPreventivasSca
+          ? 'listaHistoricoPreventivasSca'
+          : (isBMS && currentShopping.listaHistoricoPreventivasBms
+            ? 'listaHistoricoPreventivasBms'
+            : 'listaHistoricoPreventivas'));
+      const sistemaQuery = isCFTV ? '&sistema=cftv' : (isSCA ? '&sistema=sca' : (isBMS ? '&sistema=bms' : ''));
       links.push({
         id: 'sharepoint-preventivas',
         title: 'Histórico de Preventivas Realizadas',
-        subtitle: isSCA
-          ? 'Registro e banco de vistorias SCA no SharePoint'
-          : (isBMS
-            ? 'Registro e banco de vistorias BMS no SharePoint'
-            : 'Registro e banco de vistorias no SharePoint'),
+        subtitle: isCFTV
+          ? 'Registro e banco de vistorias CFTV no SharePoint'
+          : (isSCA
+            ? 'Registro e banco de vistorias SCA no SharePoint'
+            : (isBMS
+              ? 'Registro e banco de vistorias BMS no SharePoint'
+              : 'Registro e banco de vistorias no SharePoint')),
         url: `${API_URL}/preventivas/go-to-list?list=${historicoParam}&tenant=${tenant}${sistemaQuery}`,
         icon: (
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

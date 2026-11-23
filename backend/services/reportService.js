@@ -126,11 +126,14 @@ async function resolveSharePointIds(graphClient, targetListName) {
 async function fetchPreventiveHistory(graphClient, tenantConfig, mes, ano, sistema = 'sdai') {
   const isBMS = String(sistema).toLowerCase() === 'bms';
   const isSCA = String(sistema).toLowerCase() === 'sca';
-  const listName = isSCA
-    ? tenantConfig.listaHistoricoPreventivasSca
-    : (isBMS
-      ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
-      : tenantConfig.listaHistoricoPreventivas);
+  const isCFTV = String(sistema).toLowerCase() === 'cftv';
+  const listName = isCFTV
+    ? tenantConfig.listaHistoricoPreventivasCftv
+    : (isSCA
+      ? tenantConfig.listaHistoricoPreventivasSca
+      : (isBMS
+        ? (tenantConfig.listaHistoricoPreventivasBms || tenantConfig.listaHistoricoPreventivas)
+        : tenantConfig.listaHistoricoPreventivas));
   if (!listName) return [];
 
   const { siteId, listId } = await resolveSharePointIds(graphClient, listName);
@@ -363,9 +366,15 @@ async function getListColumnMapping(graphClient, siteId, listId, listName) {
  */
 async function fetchCorretivas(graphClient, tenantConfig, sistema = 'sdai') {
   const isBMS = String(sistema).toLowerCase() === 'bms';
-  const listName = isBMS
-    ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
-    : tenantConfig.listaCorretivas;
+  const isSCA = String(sistema).toLowerCase() === 'sca';
+  const isCFTV = String(sistema).toLowerCase() === 'cftv';
+  const listName = isCFTV
+    ? (tenantConfig.listaCorretivasCftv || tenantConfig.listaCorretivas)
+    : (isSCA
+      ? (tenantConfig.listaCorretivasSca || tenantConfig.listaCorretivas)
+      : (isBMS
+        ? (tenantConfig.listaCorretivasBms || tenantConfig.listaCorretivas)
+        : tenantConfig.listaCorretivas));
   if (!listName) return new Map();
 
   try {
@@ -439,11 +448,14 @@ async function fetchCorretivas(graphClient, tenantConfig, sistema = 'sdai') {
 async function fetchMatrizMestra(accessToken, tenantConfig, sistema = 'sdai') {
   const isBMS = String(sistema).toLowerCase() === 'bms';
   const isSCA = String(sistema).toLowerCase() === 'sca';
-  const excelUrl = isSCA
-    ? tenantConfig.excelPreventivasScaUrl
-    : (isBMS
-      ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
-      : tenantConfig.excelPreventivasUrl);
+  const isCFTV = String(sistema).toLowerCase() === 'cftv';
+  const excelUrl = isCFTV
+    ? tenantConfig.excelPreventivasCftvUrl
+    : (isSCA
+      ? tenantConfig.excelPreventivasScaUrl
+      : (isBMS
+        ? (tenantConfig.excelPreventivasBmsUrl || tenantConfig.excelPreventivasUrl)
+        : tenantConfig.excelPreventivasUrl));
 
   if (!excelUrl) {
     return [];
@@ -467,12 +479,14 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
   const sistemaUpper = String(sistema || 'sdai').toUpperCase();
   const isBMS = sistemaUpper === 'BMS';
   const isSCA = sistemaUpper === 'SCA';
+  const isCFTV = sistemaUpper === 'CFTV';
   const dataEmissaoStr = new Date().toLocaleDateString('pt-BR');
 
   const SISTEMAS_MAP = {
     SDAI: 'Sistema de Detecção e Alarme de Incêndio',
     BMS: 'Sistema de Gerenciamento Predial',
     SCA: 'Sistema de Controle de Acesso',
+    CFTV: 'Circuito Fechado de TV (CFTV)',
   };
   const sistemaCompleto = SISTEMAS_MAP[sistemaUpper] || `Sistema de ${sistemaUpper}`;
 
@@ -1411,7 +1425,7 @@ function generateHTMLReport({ tenantName, tenantConfig, mes, ano, sistema = 'sda
 
         <!-- Rodapé -->
         <footer class="norm-footer">
-            ${isBMS || isSCA ? `
+            ${isBMS || isSCA || isCFTV ? `
             * Este documento emite o parecer de conformidade situacional técnica com base nos ensaios executados por
             amostragem programada. As pendências críticas listadas acima demandam acompanhamento cronológico através das Ordens de Serviço
             supracitadas.
@@ -1477,7 +1491,8 @@ async function generateMonthlyPreventiveReport(graphClient, accessToken, tenantC
     let matched = null;
     const isSCA = String(sistema).toLowerCase() === 'sca';
     const isBMS = String(sistema).toLowerCase() === 'bms';
-    if ((isBMS || isSCA || tenantConfig.preventivasChaveTag) && devTag) {
+    const isCFTV = String(sistema).toLowerCase() === 'cftv';
+    if ((isBMS || isSCA || isCFTV || tenantConfig.preventivasChaveTag) && devTag) {
       matched = todosDispositivos.find((d) => (d.rawTag || d.tag || '').trim().toUpperCase() === devTag);
     }
     if (!matched && devDesc) {

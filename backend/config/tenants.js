@@ -336,13 +336,57 @@ const shoppings = {
     name: 'Ecourbis',
     logo: '/logo_ecourbis.png',
     listaSDAI: null, // Sem inspeção SDAI de lojas
-    listaBMS: null, // BMS em breve
+    listaBMS: null, // Sem inspeção BMS de lojas
     excelLojasUrl: null, // Sem inspeção de lojas
     ccEmails: [], // Sem inspeção SDAI/BMS de lojas: sem cópia de e-mail
     // Preventivas Área Comum (SDAI)
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQBFK_h-uYABTpGWxg4HwwW_Adk-kZx1-YG4o8xYh-7KMAM',
     listaHistoricoPreventivas: 'ECOURBIS_PREVENTIVAS_SDAI_2026',
+    // Preventivas Área Comum (BMS)
+    excelPreventivasBmsUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCxulbNWly3S6F2hF0nlC2PAeQ2B86B3rAe4ompAf_2ZLA',
+    listaHistoricoPreventivasBms: 'ECOURBIS_PREVENTIVAS_BMS_2026',
+    // Preventivas Área Comum (CFTV)
+    excelPreventivasCftvUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQDXvU2cmmasTq_PQ9txwBLPAVFRvxZ8Uel_7PtVPfxEDsQ',
+    listaHistoricoPreventivasCftv: 'ECOURBIS_PREVENTIVAS_CFTV_2026',
+    // Preventivas Área Comum (SCA)
+    excelPreventivasScaUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQA747fibKTQSYVK_0rFfWyBAb0m1PSt5nujd3U0eZirSxw',
+    listaHistoricoPreventivasSca: 'ECOURBIS_PREVENTIVAS_SCA_2026',
     listaCorretivas: 'CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO',
+    listaCorretivasBms: 'CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO',
+    listaCorretivasCftv: 'CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO',
+    listaCorretivasSca: 'CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO',
+    responsavelShopping: {
+      sdai: null, // TODO: Configurar responsável SDAI
+      bms: null,
+    },
+  },
+  'radisson-vila-olimpia': {
+    name: 'Radisson Vila Olimpia',
+    logo: '/logo_radisson.png',
+    listaSDAI: null, // Sem inspeção SDAI de lojas
+    listaBMS: null,
+    excelLojasUrl: null, // Sem inspeção de lojas
+    ccEmails: [], // Sem inspeção SDAI/BMS de lojas: sem cópia de e-mail
+    // Preventivas Área Comum (SDAI)
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQDEPxoLpfMsQadPnc7rpe9VAbA0xKr254KBY5MPkYGvTqs',
+    listaHistoricoPreventivas: 'RADISSON_PREVENTIVAS_SDAI_2026',
+    listaCorretivas: 'CC-2026-5-1867-MAN-RADISSON-HOTEL',
+    responsavelShopping: {
+      sdai: null, // TODO: Configurar responsável SDAI
+      bms: null,
+    },
+  },
+  'white-martins-cubatao': {
+    name: 'White Martins Cubatão',
+    logo: '/logo_white_martins.png',
+    listaSDAI: null, // Sem inspeção SDAI de lojas
+    listaBMS: null,
+    excelLojasUrl: null, // Sem inspeção de lojas
+    ccEmails: [], // Sem inspeção SDAI/BMS de lojas: sem cópia de e-mail
+    // Preventivas Área Comum (SDAI)
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCiNtHCJTFpQ6DbXa7nRDKqAYANfdEDrHyb_MBog2F2R3M',
+    listaHistoricoPreventivas: 'WHITE_MARTINS_PREVENTIVAS_SDAI_2026',
+    listaCorretivas: 'CC-2026-4-1859-MAN-WHITE_MARTINS-SDAI',
     responsavelShopping: {
       sdai: null, // TODO: Configurar responsável SDAI
       bms: null,
@@ -375,9 +419,9 @@ const permissions = {
   'rafael.costal@torrescx.com.br': ['salvador-norte'],
   'joao.henrique@torrescx.com.br': ['salvador-norte'],
   'christopher.tavares@torrescx.com.br': ['plaza-shopping-recife'],
-  'brian.celestino@torrescx.com.br': ['siemens', 'ecourbis'],
-  'gabriel.furlanetto@torrescx.com.br': ['siemens', 'ecourbis'],
-  'pedro.teixeira@torrescx.com.br': ['siemens', 'ecourbis'],
+  'brian.celestino@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao'],
+  'gabriel.furlanetto@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao'],
+  'pedro.teixeira@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao'],
 };
 
 /**

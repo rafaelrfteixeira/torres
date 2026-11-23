@@ -104,6 +104,8 @@ A configuração central reside no arquivo [`backend/config/tenants.js`](file://
 | `teatro-riomar-recife` | Teatro RioMar Recife | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)* | `CC-2025-2-1536-MAN-TEATRO_RIOMAR-SDAI` | `TEATRO_RIOMAR_RECIFE_PREVENTIVAS_2026` |
 | `siemens` | Siemens Anhanguera | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)*, BMS *(Em Breve)* | `CC-2019-5-127-MAN-SIEMENS SDAI` | `SIEMENS_ANHANGUERA_PREVENTIVAS_SDAI_2026` |
 | `ecourbis` | Ecourbis | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)*, BMS, CFTV, SCA *(Em Breve)* | `CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO` | `ECOURBIS_PREVENTIVAS_SDAI_2026` |
+| `radisson-vila-olimpia` | Radisson Vila Olimpia | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)* | `CC-2026-5-1867-MAN-RADISSON-HOTEL` | `RADISSON_PREVENTIVAS_SDAI_2026` |
+| `white-martins-cubatao` | White Martins Cubatão | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)* | `CC-2026-4-1859-MAN-WHITE_MARTINS-SDAI` | `WHITE_MARTINS_PREVENTIVAS_SDAI_2026` |
 
 ### Controle de Acesso Baseado em Função (RBAC)
 

@@ -30,8 +30,10 @@ function getSDAISubmenus(tenant) {
   const isTeatroRioMar = tenant === 'teatro-riomar-recife';
   const isSiemens = tenant === 'siemens';
   const isEcourbis = tenant === 'ecourbis';
+  const isRadissonVilaOlimpia = tenant === 'radisson-vila-olimpia';
+  const isWhiteMartinsCubatao = tenant === 'white-martins-cubatao';
   // Tenants com funcionalidades de preventivas ativas
-  const hasPreventivasActive = isEcourbis || isSiemens || isTeatroRioMar || isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
+  const hasPreventivasActive = isWhiteMartinsCubatao || isRadissonVilaOlimpia || isEcourbis || isSiemens || isTeatroRioMar || isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
   // Tenants com funcionalidades de corretivas ativas
   const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife || isRioMarAracaju;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
@@ -88,7 +90,7 @@ function getSDAISubmenus(tenant) {
     },
   ];
 
-  if (isJcpmTradeCenter || isBeachClass || isTeatroRioMar || isSiemens || isEcourbis) {
+  if (isJcpmTradeCenter || isBeachClass || isTeatroRioMar || isSiemens || isEcourbis || isRadissonVilaOlimpia || isWhiteMartinsCubatao) {
     return submenus.filter((s) => s.id !== 'dashboard-inspecao' && s.id !== 'inspecao-lojas');
   }
 
@@ -108,11 +110,12 @@ function getBMSSubmenus(tenant) {
   const isBeachClass = tenant === 'beach-class';
   const isShoppingGuararapes = tenant === 'shopping-guararapes';
   const isSalvadorNorte = tenant === 'salvador-norte';
+  const isEcourbis = tenant === 'ecourbis';
   // Tenants com o sistema BMS inteiro "Em Breve"
-  const isBMSAllComingSoon = tenant === 'siemens' || tenant === 'ecourbis';
-  const hasPreventivasBMSActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
-  const hasCorretivasActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
-  const hasRelatoriosActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte;
+  const isBMSAllComingSoon = tenant === 'siemens';
+  const hasPreventivasBMSActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte || isEcourbis;
+  const hasCorretivasActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte || isEcourbis;
+  const hasRelatoriosActive = isRioMarAracaju || isRioMarKennedy || isRioMarRecife || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte || isEcourbis;
   const hasInspecaoComingSoon = tenant === 'empresarial-cicero-dias' || isBMSAllComingSoon;
   const isCadastrosComingSoon = tenant === 'empresarial-cicero-dias' || isBMSAllComingSoon;
 
@@ -169,7 +172,7 @@ function getBMSSubmenus(tenant) {
     },
   ];
 
-  if (isJcpmTradeCenter || isBeachClass) {
+  if (isJcpmTradeCenter || isBeachClass || isEcourbis) {
     return submenus.filter((s) => s.id !== 'dashboard-inspecao' && s.id !== 'inspecao-lojas');
   }
 
@@ -183,10 +186,11 @@ function getBMSSubmenus(tenant) {
  */
 function getSCASubmenus(tenant) {
   const isRioMarRecife = tenant === 'riomar-recife';
-  const allComingSoon = tenant === 'empresarial-cicero-dias' || tenant === 'ecourbis';
-  const hasPreventivasSCAActive = isRioMarRecife;
-  const hasCorretivasActive = isRioMarRecife;
-  const hasRelatoriosActive = isRioMarRecife;
+  const isEcourbis = tenant === 'ecourbis';
+  const allComingSoon = tenant === 'empresarial-cicero-dias';
+  const hasPreventivasSCAActive = isRioMarRecife || isEcourbis;
+  const hasCorretivasActive = isRioMarRecife || isEcourbis;
+  const hasRelatoriosActive = isRioMarRecife || isEcourbis;
 
   return [
     {
@@ -234,34 +238,39 @@ function getSCASubmenus(tenant) {
  * @returns {Array} Lista de submenus
  */
 function getCFTVSubmenus(tenant) {
+  const isEcourbis = tenant === 'ecourbis';
+  const hasPreventivasCFTVActive = isEcourbis;
+  const hasCorretivasActive = isEcourbis;
+  const hasRelatoriosActive = isEcourbis;
+
   return [
     {
       id: 'dashboard-preventivas',
       label: 'Dashboard Preventivas',
       route: `/${tenant}/cftv/preventivas/dashboard`,
       icon: 'activity',
-      comingSoon: true,
+      comingSoon: !hasPreventivasCFTVActive,
     },
     {
       id: 'preventivas',
       label: 'Preventivas',
       route: `/${tenant}/cftv/preventivas`,
       icon: 'wrench',
-      comingSoon: true,
+      comingSoon: !hasPreventivasCFTVActive,
     },
     {
       id: 'corretivas',
       label: 'Corretivas/Ocorrências',
       route: `/${tenant}/cftv/corretivas`,
       icon: 'alert-triangle',
-      comingSoon: true,
+      comingSoon: !hasCorretivasActive,
     },
     {
       id: 'relatorios',
       label: 'Relatórios',
       route: `/${tenant}/cftv/relatorios`,
       icon: 'file-text',
-      comingSoon: true,
+      comingSoon: !hasRelatoriosActive,
     },
     {
       id: 'cadastros',
@@ -269,7 +278,7 @@ function getCFTVSubmenus(tenant) {
       route: `/${tenant}/cftv/cadastros`,
       icon: 'database',
       isCadastros: true,
-      comingSoon: true,
+      comingSoon: !hasPreventivasCFTVActive,
     },
   ];
 }
@@ -338,6 +347,12 @@ export function getMenuConfig(tenant) {
       { id: 'bms', label: 'BMS', icon: 'cpu', submenus: getBMSSubmenus(tenant) },
       { id: 'cftv', label: 'CFTV', icon: 'video', submenus: getCFTVSubmenus(tenant) },
       { id: 'sca', label: 'SCA', icon: 'shield', submenus: getSCASubmenus(tenant) },
+    ],
+    'radisson-vila-olimpia': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+    ],
+    'white-martins-cubatao': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
     ],
   };
 

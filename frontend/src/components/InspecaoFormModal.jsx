@@ -134,6 +134,20 @@ const CHECKLISTS = {
     'Inspeção do eletroímã',
     'Inspeção do botão de requisição de saída',
   ],
+  'Dispositivo de Controle de Acesso (SCA) - Ecourbis': [
+    'Inspeção física do dispositivo',
+    'Reaperto dos periféricos(Eletroímã, leitoras, botões de liberação, e botão de emergência)',
+    'Realizar testes de funcionamento da leitora, liberação do eletroímã, liberação de acesso e botão de emergência)',
+    'Confirmar presença de etiqueta de identificação',
+  ],
+  // CFTV (Circuito Fechado de TV)
+  'Câmera / Dispositivo CFTV': [
+    'Confirmar integridade física do dispositivo',
+    'Realizar reaperto das conexões',
+    'Realizar limpeza da câmera',
+    'Confirmar armazenamento de imagem da câmera',
+    'Confirmar presença de etiqueta de identificação',
+  ],
 };
 
 // Fallback genérico
@@ -201,6 +215,7 @@ function compressImage(file, maxWidth = 800, quality = 0.5) {
 function resolveChecklist(tipo, descricao, sistema, tenant) {
   const isBMS = String(sistema || '').toLowerCase() === 'bms';
   const isSCA = String(sistema || '').toLowerCase() === 'sca';
+  const isCFTV = String(sistema || '').toLowerCase() === 'cftv';
   const t = String(tipo || '').toLowerCase();
   const d = String(descricao || '').toLowerCase();
   const isRioMarRecife = tenant === 'riomar-recife';
@@ -208,16 +223,26 @@ function resolveChecklist(tipo, descricao, sistema, tenant) {
   const isJcpmTradeCenter = tenant === 'jcpm-trade-center';
   const isShoppingGuararapes = tenant === 'shopping-guararapes';
   const isSalvadorNorte = tenant === 'salvador-norte';
+  const isEcourbis = tenant === 'ecourbis';
+
+  if (isCFTV) {
+    return {
+      label: tipo || 'Câmera / Dispositivo CFTV',
+      items: CHECKLISTS['Câmera / Dispositivo CFTV'],
+    };
+  }
 
   if (isSCA) {
     return {
       label: tipo || 'Dispositivo SCA',
-      items: CHECKLISTS['Dispositivo de Controle de Acesso (SCA)'],
+      items: isEcourbis
+        ? CHECKLISTS['Dispositivo de Controle de Acesso (SCA) - Ecourbis']
+        : CHECKLISTS['Dispositivo de Controle de Acesso (SCA)'],
     };
   }
 
   if (isBMS) {
-    if (isRioMarRecife || isRioMarAracaju || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte) {
+    if (isRioMarRecife || isRioMarAracaju || isJcpmTradeCenter || isShoppingGuararapes || isSalvadorNorte || isEcourbis) {
       return {
         label: tipo || 'Controlador / Painel BMS',
         items: CHECKLISTS['Painel de Automação / Controlador BMS'],
@@ -298,6 +323,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
   const [submitStatus, setSubmitStatus] = useState(null);
   const isBMS = String(sistema || '').toLowerCase() === 'bms';
   const isSCA = String(sistema || '').toLowerCase() === 'sca';
+  const isCFTV = String(sistema || '').toLowerCase() === 'cftv';
 
   // Form state
   const [dataExecucao, setDataExecucao] = useState(getTodayDateString());
@@ -507,7 +533,7 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
     // Payload
     const payload = {
       tenant,
-      sistema: isSCA ? 'sca' : (isBMS ? 'bms' : 'sdai'),
+      sistema: isCFTV ? 'cftv' : (isSCA ? 'sca' : (isBMS ? 'bms' : 'sdai')),
       tag: resolveTag(dispositivo),
       localizacao: dispositivo?.descricao || '',
       descricao: dispositivo?.descricao || '',
@@ -617,13 +643,15 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
                   <img src={currentShopping.logo} alt={currentShopping.name} className="h-3 sm:h-4 object-contain" />
                 </div>
               )}
-              <span className={`font-medium ${isSCA ? 'text-emerald-100' : (isBMS ? 'text-blue-100' : 'text-red-50')}`}>
-                {currentShopping?.name} <span className={isSCA ? 'text-emerald-300 mx-1' : (isBMS ? 'text-blue-300 mx-1' : 'text-red-200 mx-1')}>&gt;</span> {
-                  isSCA
-                    ? 'Preventiva SCA (Controle de Acesso)'
-                    : isBMS
-                      ? 'Preventiva BMS (Automação)'
-                      : 'Preventiva SDAI'
+              <span className={`font-medium ${isSCA ? 'text-emerald-100' : (isBMS || isCFTV ? 'text-blue-100' : 'text-red-50')}`}>
+                {currentShopping?.name} <span className={isSCA ? 'text-emerald-300 mx-1' : (isBMS || isCFTV ? 'text-blue-300 mx-1' : 'text-red-200 mx-1')}>&gt;</span> {
+                  isCFTV
+                    ? 'Preventiva CFTV'
+                    : isSCA
+                      ? 'Preventiva SCA (Controle de Acesso)'
+                      : isBMS
+                        ? 'Preventiva BMS (Automação)'
+                        : 'Preventiva SDAI'
                 }
               </span>
             </div>
@@ -643,13 +671,15 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
               </div>
             </div>
             <h2 className="text-base sm:text-lg font-bold tracking-wide uppercase">Relatório Operacional</h2>
-            <p className={`${isSCA ? 'text-emerald-200' : (isBMS ? 'text-blue-200' : 'text-red-200')} text-xs sm:text-sm mt-0.5`}>
+            <p className={`${isSCA ? 'text-emerald-200' : (isBMS || isCFTV ? 'text-blue-200' : 'text-red-200')} text-xs sm:text-sm mt-0.5`}>
               Checklist — Manutenção Preventiva ({
-                isSCA
-                  ? 'Áreas Comuns SCA'
-                  : isBMS
-                    ? 'Áreas Comuns BMS'
-                    : 'Áreas Comuns SDAI'
+                isCFTV
+                  ? 'Áreas Comuns CFTV'
+                  : isSCA
+                    ? 'Áreas Comuns SCA'
+                    : isBMS
+                      ? 'Áreas Comuns BMS'
+                      : 'Áreas Comuns SDAI'
               })
             </p>
           </div>
@@ -1091,11 +1121,13 @@ export default function InspecaoFormModal({ dispositivo, user, currentShopping, 
 
           {/* ---- NOTA LEGAL ---- */}
           <p className="text-[10px] text-slate-400 leading-relaxed px-1">
-            {isSCA
-              ? '* A manutenção preventiva de Controle de Acesso (SCA) visa assegurar o correto funcionamento de leitoras, eletroímãs, botoeiras, fontes e controladoras, mantendo a integridade da segurança física patrimonial.'
-              : isBMS
-                ? '* A manutenção preventiva deve assegurar a operacionalidade contínua dos sistemas de automação predial, medição de energia e utilidades, registrando em relatório quaisquer desvios operacionais.'
-                : '* Conforme NBR 17240 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio esteja em pleno funcionamento, visando registrar em relatório suas restrições ou falhas.'}
+            {isCFTV
+              ? '* A manutenção preventiva de Circuito Fechado de TV (CFTV) visa assegurar a integridade física, limpeza, conectividade e armazenamento de imagens das câmeras e equipamentos de monitoramento.'
+              : isSCA
+                ? '* A manutenção preventiva de Controle de Acesso (SCA) visa assegurar o correto funcionamento de leitoras, eletroímãs, botoeiras, fontes e controladoras, mantendo a integridade da segurança física patrimonial.'
+                : isBMS
+                  ? '* A manutenção preventiva deve assegurar a operacionalidade contínua dos sistemas de automação predial, medição de energia e utilidades, registrando em relatório quaisquer desvios operacionais.'
+                  : '* Conforme NBR 17240 – A manutenção preventiva deve garantir que o sistema de detecção e alarme de incêndio esteja em pleno funcionamento, visando registrar em relatório suas restrições ou falhas.'}
           </p>
 
           {/* ---- BOTÃO DE AÇÃO ---- */}
