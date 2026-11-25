@@ -32,8 +32,9 @@ function getSDAISubmenus(tenant) {
   const isEcourbis = tenant === 'ecourbis';
   const isRadissonVilaOlimpia = tenant === 'radisson-vila-olimpia';
   const isWhiteMartinsCubatao = tenant === 'white-martins-cubatao';
+  const isSandoz = tenant === 'sandoz';
   // Tenants com funcionalidades de preventivas ativas
-  const hasPreventivasActive = isWhiteMartinsCubatao || isRadissonVilaOlimpia || isEcourbis || isSiemens || isTeatroRioMar || isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
+  const hasPreventivasActive = isSandoz || isWhiteMartinsCubatao || isRadissonVilaOlimpia || isEcourbis || isSiemens || isTeatroRioMar || isSalvadorNorte || isEmpresarialRuiBarbosa || isShoppingGuararapes || isEmpresarialCiceroDias || isEmpresarialKronos || isRioMarKennedy || isJcpmTradeCenter || isBeachClass || isShoppingRecife || isPlazaShoppingRecife || isRioMarRecife;
   // Tenants com funcionalidades de corretivas ativas
   const hasCorretivasActive = hasPreventivasActive || isPlazaShoppingRecife || isRioMarRecife || isShoppingRecife || isRioMarAracaju;
   // Tenants com inspeção de lojas desabilitada (Em Breve)
@@ -90,7 +91,7 @@ function getSDAISubmenus(tenant) {
     },
   ];
 
-  if (isJcpmTradeCenter || isBeachClass || isTeatroRioMar || isSiemens || isEcourbis || isRadissonVilaOlimpia || isWhiteMartinsCubatao) {
+  if (isJcpmTradeCenter || isBeachClass || isTeatroRioMar || isSiemens || isEcourbis || isRadissonVilaOlimpia || isWhiteMartinsCubatao || isSandoz) {
     return submenus.filter((s) => s.id !== 'dashboard-inspecao' && s.id !== 'inspecao-lojas');
   }
 
@@ -352,6 +353,9 @@ export function getMenuConfig(tenant) {
       { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
     ],
     'white-martins-cubatao': [
+      { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
+    ],
+    'sandoz': [
       { id: 'sdai', label: 'SDAI', icon: 'flame', submenus: getSDAISubmenus(tenant) },
     ],
   };

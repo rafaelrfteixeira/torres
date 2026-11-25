@@ -15,6 +15,7 @@
 const shoppings = {
   'riomar-recife': {
     name: 'Shopping RioMar Recife',
+    region: 'Nordeste',
     logo: '/logo_riomar_recife.png',
     listaSDAI: '2024-6-1361-SDAI-Shopping Riomar Recife',
     listaBMS: '2024-6-1361-BMS-Shopping Riomar Recife',
@@ -53,6 +54,7 @@ const shoppings = {
   },
   'riomar-kennedy': {
     name: 'Shopping RioMar Kennedy',
+    region: 'Nordeste',
     logo: '/logo_riomar_kennedy.png',
     listaSDAI: '2021-5-491-SDAI-Shopping Riomar Kennedy',
     listaBMS: '2021-5-491-BMS-Shopping Riomar Kennedy',
@@ -81,6 +83,7 @@ const shoppings = {
   },
   'shopping-recife': {
     name: 'Shopping Recife',
+    region: 'Nordeste',
     logo: '/logo_shopping_recife.png',
     listaSDAI: '2026-3-180-SDAI-Shopping Recife SDAI',
     listaBMS: '2026-3-180-BMS-Shopping Recife BMS',
@@ -105,6 +108,7 @@ const shoppings = {
   },
   'shopping-guararapes': {
     name: 'Shopping Guararapes',
+    region: 'Nordeste',
     logo: '/logo_shopping_guararapes.png',
     listaSDAI: '2026-1-1765-SDAI-GUARARAPES SHOPPING',
     listaBMS: '2026-1-1765-BMS-GUARARAPES SHOPPING',
@@ -133,6 +137,7 @@ const shoppings = {
   },
   'riomar-aracaju': {
     name: 'Shopping RioMar Aracaju',
+    region: 'Nordeste',
     logo: '/logo_shopping_riomar_aracaju.png',
     listaSDAI: null,
     listaBMS: '2018-6-26-BMS-Shopping Aracaju BMS',
@@ -154,6 +159,7 @@ const shoppings = {
   },
   'salvador-norte': {
     name: 'Salvador Norte Shopping',
+    region: 'Nordeste',
     logo: '/logo_salvador_norte_shooping.png',
     listaSDAI: null,
     listaBMS: '2024-4-1323-BMS-SALVADOR NORTE SHOPPING',
@@ -178,6 +184,7 @@ const shoppings = {
   },
   'empresarial-rui-barbosa': {
     name: 'Empresarial Rui Barbosa',
+    region: 'Nordeste',
     logo: '/logo_empresarial_rui_barbosa.png',
     listaSDAI: '2024-3-1308-MAN-EMPESARIAL RUI BARBOSA_SDAI',
     listaBMS: null,
@@ -198,6 +205,7 @@ const shoppings = {
   },
   'empresarial-cicero-dias': {
     name: 'Empresarial Cicero Dias',
+    region: 'Nordeste',
     logo: '/logo_empresarial_cicero_dias.png',
     listaSDAI: '2021-11-656-SDAI-MAN-CD-SISTEMAS',
     listaBMS: null,
@@ -222,6 +230,7 @@ const shoppings = {
   },
   'empresarial-kronos': {
     name: 'Empresarial Kronos',
+    region: 'Nordeste',
     logo: '/logo_empresarial_kronos.png',
     listaSDAI: '2024-11-1485-SDAI-MAN-EMPRESARIA KRONOS',
     listaBMS: null,
@@ -242,6 +251,7 @@ const shoppings = {
   },
   'plaza-shopping-recife': {
     name: 'Plaza Shopping Recife',
+    region: 'Nordeste',
     logo: '/logo_plaza_shopping.png',
     listaSDAI: '2026-7-1915-SDAI-MAN-PLAZA-SHOPPING',
     listaBMS: null,
@@ -263,6 +273,7 @@ const shoppings = {
   },
   'jcpm-trade-center': {
     name: 'JCPM Trade Center',
+    region: 'Nordeste',
     logo: '/logo_jcpm_trade_center.png',
     listaSDAI: null,
     listaBMS: null,
@@ -283,6 +294,7 @@ const shoppings = {
   },
   'beach-class': {
     name: 'Beach Class',
+    region: 'Nordeste',
     logo: '/logo_beach_class.png',
     listaSDAI: null,
     listaBMS: null,
@@ -299,6 +311,7 @@ const shoppings = {
   },
   'teatro-riomar-recife': {
     name: 'Teatro RioMar Recife',
+    region: 'Nordeste',
     logo: '/logo_teatro_riomar_recife.png',
     listaSDAI: null, // Sem inspeção de lojas
     listaBMS: null,
@@ -318,6 +331,7 @@ const shoppings = {
   },
   'siemens': {
     name: 'Siemens Anhanguera',
+    region: 'Sudeste',
     logo: '/logo_siemens.png',
     listaSDAI: null, // Sem inspeção SDAI de lojas
     listaBMS: null, // BMS em breve
@@ -327,6 +341,7 @@ const shoppings = {
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCtIMAaIpZwSqa04rT7KQU7AcS5arioCj0qIkukQHY52bo',
     listaHistoricoPreventivas: 'SIEMENS_ANHANGUERA_PREVENTIVAS_SDAI_2026',
     listaCorretivas: 'CC-2019-5-127-MAN-SIEMENS SDAI',
+    novaCorretivaUrl: 'https://torrescx.sharepoint.com/:l:/s/Manutencao/JADsXIxGQKw8RogPsPqBmN2hAWq0VrUsWRyc57udJW8y1Kk?nav=YzdjZWYzODAtNDM0Yy00Yzc3LWI1ODgtYjkxZjVhZjc3MDM3',
     responsavelShopping: {
       sdai: null, // TODO: Configurar responsável SDAI
       bms: null,
@@ -334,6 +349,7 @@ const shoppings = {
   },
   'ecourbis': {
     name: 'Ecourbis',
+    region: 'Sudeste',
     logo: '/logo_ecourbis.png',
     listaSDAI: null, // Sem inspeção SDAI de lojas
     listaBMS: null, // Sem inspeção BMS de lojas
@@ -355,6 +371,7 @@ const shoppings = {
     listaCorretivasBms: 'CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO',
     listaCorretivasCftv: 'CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO',
     listaCorretivasSca: 'CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO',
+    novaCorretivaUrl: 'https://torrescx.sharepoint.com/:l:/s/Manutencao/JADj3MRczu2qSayKPUAzJpTMATo-g-C7-H0zsu-jlVuArxY?nav=NTk1M2NhYWQtZTY5My00YWQyLTkxYjgtMDhmMWM5ZDJmODkw',
     responsavelShopping: {
       sdai: null, // TODO: Configurar responsável SDAI
       bms: null,
@@ -362,6 +379,7 @@ const shoppings = {
   },
   'radisson-vila-olimpia': {
     name: 'Radisson Vila Olimpia',
+    region: 'Sudeste',
     logo: '/logo_radisson.png',
     listaSDAI: null, // Sem inspeção SDAI de lojas
     listaBMS: null,
@@ -371,6 +389,7 @@ const shoppings = {
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQDEPxoLpfMsQadPnc7rpe9VAbA0xKr254KBY5MPkYGvTqs',
     listaHistoricoPreventivas: 'RADISSON_PREVENTIVAS_SDAI_2026',
     listaCorretivas: 'CC-2026-5-1867-MAN-RADISSON-HOTEL',
+    novaCorretivaUrl: 'https://torrescx.sharepoint.com/:l:/s/Manutencao/JABa-XXU3ndoT64881DeszJDAfMZJAyup7LOFd2xN4TboX4?nav=MjY4YzIyMjQtNTgyMS00MjkyLTkxZGQtZGFiNDdkYzA2YzYz',
     responsavelShopping: {
       sdai: null, // TODO: Configurar responsável SDAI
       bms: null,
@@ -378,6 +397,7 @@ const shoppings = {
   },
   'white-martins-cubatao': {
     name: 'White Martins Cubatão',
+    region: 'Sudeste',
     logo: '/logo_white_martins.png',
     listaSDAI: null, // Sem inspeção SDAI de lojas
     listaBMS: null,
@@ -387,6 +407,25 @@ const shoppings = {
     excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCiNtHCJTFpQ6DbXa7nRDKqAYANfdEDrHyb_MBog2F2R3M',
     listaHistoricoPreventivas: 'WHITE_MARTINS_PREVENTIVAS_SDAI_2026',
     listaCorretivas: 'CC-2026-4-1859-MAN-WHITE_MARTINS-SDAI',
+    novaCorretivaUrl: 'https://torrescx.sharepoint.com/:l:/s/Manutencao/JAB6ZnukrUwhRrhCLK0ltrazAUjZlJDBjw3I3rml_CXZzWQ?nav=ZGQ3MDgxZDUtNDliMS00NDhmLTliZWYtMTg4NjVmZWFhOTA2',
+    responsavelShopping: {
+      sdai: null, // TODO: Configurar responsável SDAI
+      bms: null,
+    },
+  },
+  'sandoz': {
+    name: 'Sandoz',
+    region: 'Sul',
+    logo: '/logo_sandoz.png',
+    listaSDAI: null, // Sem inspeção SDAI de lojas
+    listaBMS: null,
+    excelLojasUrl: null, // Sem inspeção de lojas
+    ccEmails: [], // Sem inspeção SDAI/BMS de lojas: sem cópia de e-mail
+    // Preventivas Área Comum (SDAI)
+    excelPreventivasUrl: 'https://torrescx.sharepoint.com/:x:/s/Manutencao/IQCP7Bfhiz0FTIOwyiegLN0KAfcUSor5O-XKni58fZEyNo4',
+    listaHistoricoPreventivas: 'SANDOZ_PREVENTIVAS_SDAI_2026',
+    listaCorretivas: 'CC-2019-10-182-MAN-SANDOZ-SDAI',
+    novaCorretivaUrl: 'https://torrescx.sharepoint.com/:l:/s/Manutencao/JAAAf9MgnDsyR7zH4HoqGA3RARNSoNc8RNWLUTd5IjeRrqQ?nav=MjQ2ZDRmNTAtMmRmOS00ODlkLWI4NDYtNWNjNzcxNGM0NjY0',
     responsavelShopping: {
       sdai: null, // TODO: Configurar responsável SDAI
       bms: null,
@@ -419,9 +458,9 @@ const permissions = {
   'rafael.costal@torrescx.com.br': ['salvador-norte'],
   'joao.henrique@torrescx.com.br': ['salvador-norte'],
   'christopher.tavares@torrescx.com.br': ['plaza-shopping-recife'],
-  'brian.celestino@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao'],
-  'gabriel.furlanetto@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao'],
-  'pedro.teixeira@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao'],
+  'brian.celestino@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao', 'sandoz'],
+  'gabriel.furlanetto@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao', 'sandoz'],
+  'pedro.teixeira@torrescx.com.br': ['siemens', 'ecourbis', 'radisson-vila-olimpia', 'white-martins-cubatao', 'sandoz'],
 };
 
 /**

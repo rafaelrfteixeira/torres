@@ -127,6 +127,7 @@ router.get('/profile', (req, res) => {
   const shoppingsMetadata = allowedShoppings.map((key) => ({
     id: key,
     name: shoppings[key]?.name || key,
+    region: shoppings[key]?.region || 'Nordeste',
     logo: shoppings[key]?.logo || '',
     excelLojasUrl: shoppings[key]?.excelLojasUrl || '',
     excelPreventivasUrl: shoppings[key]?.excelPreventivasUrl || '',
@@ -146,6 +147,7 @@ router.get('/profile', (req, res) => {
     listaCorretivasBms: shoppings[key]?.listaCorretivasBms || null,
     listaCorretivasSca: shoppings[key]?.listaCorretivasSca || null,
     listaCorretivasCftv: shoppings[key]?.listaCorretivasCftv || null,
+    novaCorretivaUrl: shoppings[key]?.novaCorretivaUrl || null,
   }));
 
   res.json({

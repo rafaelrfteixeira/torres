@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
   AlertTriangle, Clock, CheckCircle, Package, Search, RefreshCw,
   Loader2, Filter, FileText, Image as ImageIcon, Edit3, ChevronRight,
-  ShieldAlert, Sparkles, SlidersHorizontal, X
+  ShieldAlert, Sparkles, SlidersHorizontal, X, Plus, ExternalLink
 } from 'lucide-react';
 import CorretivaEditModal from '../components/CorretivaEditModal';
 import { syncManager } from '../services/syncManager';
@@ -177,6 +177,8 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
     name: tenant,
     logo: '',
   };
+
+  const novaCorretivaUrl = currentShopping.novaCorretivaUrl || null;
 
   const fetchCorretivas = async (refresh = false) => {
     setIsLoading(true);
@@ -398,6 +400,21 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
     }
   ).length;
 
+  const handleOpenNovaCorretivaPopup = () => {
+    if (!novaCorretivaUrl) return;
+    const width = Math.min(960, window.screen.availWidth - 40);
+    const height = Math.min(800, window.screen.availHeight - 60);
+    const left = Math.max(0, Math.round((window.screen.availWidth - width) / 2));
+    const top = Math.max(0, Math.round((window.screen.availHeight - height) / 2));
+    const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+    const popup = window.open(novaCorretivaUrl, 'novaCorretivaPopup', features);
+    if (popup) {
+      popup.focus();
+    } else {
+      window.open(novaCorretivaUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const handleOpenEdit = (corretiva) => {
     setSelectedCorretiva({ ...corretiva, tenantSlug: tenant });
     setIsModalOpen(true);
@@ -469,14 +486,27 @@ export default function CorretivasOcorrencias({ user, shoppingsMetadata = [] }) 
             Painel operacional — {currentShopping.name}
           </p>
         </div>
-        <button
-          onClick={() => fetchCorretivas(true)}
-          disabled={isLoading}
-          className="self-start sm:self-auto flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-sm disabled:opacity-50"
-        >
-          <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-          Atualizar
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {novaCorretivaUrl && (
+            <button
+              type="button"
+              onClick={handleOpenNovaCorretivaPopup}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-sm"
+            >
+              <Plus size={16} />
+              <span>Adicionar Corretiva / Ocorrência</span>
+              <ExternalLink size={14} className="opacity-80" />
+            </button>
+          )}
+          <button
+            onClick={() => fetchCorretivas(true)}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+            Atualizar
+          </button>
+        </div>
       </div>
         
         {/* ---------------------------------------------------- */}

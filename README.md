@@ -106,6 +106,7 @@ A configuração central reside no arquivo [`backend/config/tenants.js`](file://
 | `ecourbis` | Ecourbis | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)*, BMS, CFTV, SCA *(Em Breve)* | `CC-2023-3-1006-MAN-ECOURBIS-MANUTENCAO` | `ECOURBIS_PREVENTIVAS_SDAI_2026` |
 | `radisson-vila-olimpia` | Radisson Vila Olimpia | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)* | `CC-2026-5-1867-MAN-RADISSON-HOTEL` | `RADISSON_PREVENTIVAS_SDAI_2026` |
 | `white-martins-cubatao` | White Martins Cubatão | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)* | `CC-2026-4-1859-MAN-WHITE_MARTINS-SDAI` | `WHITE_MARTINS_PREVENTIVAS_SDAI_2026` |
+| `sandoz` | Sandoz | SDAI *(Preventiva SDAI ativa, sem inspeção de lojas)* | `CC-2019-10-182-MAN-SANDOZ-SDAI` | `SANDOZ_PREVENTIVAS_SDAI_2026` |
 
 ### Controle de Acesso Baseado em Função (RBAC)
 
